@@ -48,6 +48,7 @@ if (location.protocol === 'file:') {
 
   <nav class="tabs" id="tabs" aria-label="Boʻlimlar">
     <button data-tab="pult" class="on" type="button">Pult</button>
+    <button data-tab="sahna" type="button">Sahna</button>
     <button data-tab="patch" type="button">Patch (chiroqlar)</button>
     <button data-tab="profil" type="button">Profillar</button>
     <button data-tab="ulanish" type="button">Ulanish</button>
@@ -113,6 +114,83 @@ if (location.protocol === 'file:') {
       <div class="ph"><h2>PLAYBACK FADERLAR</h2><span class="muted">Faderni suring · FLASH bosib turilganda guruh toʻliq yonadi</span></div>
       <div class="faders" id="faders"></div>
     </section>
+  </section>
+
+  <!-- ================= SAHNA ================= -->
+  <section class="tab" id="tab-sahna" hidden>
+    <div class="row2">
+      <section class="panel grow2 stage-panel">
+        <div class="ph"><h2 id="stageTitle">SAHNA PLANI</h2><span class="muted" id="stageCoord"></span></div>
+        <div class="grid4 stage-modes" id="stageModes">
+          <button class="btn on" data-sm="aim" type="button">NUR YOʻNALTIRISH</button>
+          <button class="btn" data-sm="place" type="button">CHIROQLARNI JOYLASH</button>
+          <button class="btn" data-sm="corners" type="button">4 BURCHAK</button>
+          <button class="btn" data-sm="calib" type="button">KALIBRLASH</button>
+        </div>
+        <p class="stage-hint" id="stageHint"></p>
+        <div class="stage-wrap" id="stageWrap">
+          <img id="stageImg" alt="Sahna rasmi" hidden>
+          <svg id="stageSvg" aria-hidden="true"></svg>
+          <div id="stageFx"></div>
+        </div>
+        <div class="stage-legend">
+          <span><i class="lg round"></i>Moving head (Pan/Tilt)</span>
+          <span><i class="lg"></i>Boshqa chiroqlar</span>
+          <span><i class="lg on"></i>Tanlangan</span>
+          <span><i class="lg corner"></i>Sahna burchagi</span>
+          <span><i class="lg dot"></i>Kalibrlash nuqtasi</span>
+        </div>
+      </section>
+      <section class="panel grow1 stage-side">
+        <h2>SAHNA RASMI YOKI CHIZMASI</h2>
+        <div class="grid2">
+          <button class="btn" id="stUpload" type="button">RASM YUKLASH</button>
+          <button class="btn" id="stClear" type="button">RASMNI OLIB TASHLASH</button>
+        </div>
+        <input type="file" id="stFile" accept="image/*" hidden>
+        <p class="muted small">Eng aniq: yuqoridan chizilgan plan. Zaldan olingan foto ham boʻladi — keyin „4 BURCHAK“ bilan sahna burchaklarini belgilaysiz.</p>
+        <div class="grid3">
+          <label class="f">Eni (m)<input id="stW" type="number" min="2" max="60" step="0.5"></label>
+          <label class="f">Chuqurligi (m)<input id="stD" type="number" min="2" max="60" step="0.5"></label>
+          <label class="f">Ferma (m)<input id="stH" type="number" min="1" max="30" step="0.1"></label>
+        </div>
+        <button class="btn wide" id="stHAll" type="button">FERMA BALANDLIGINI BARCHA BEAM’LARGA</button>
+
+        <div class="sep"></div>
+        <h2 id="stSelTitle">TANLANGAN CHIROQ</h2>
+        <div class="grid3" id="stSelPos">
+          <label class="f">X (m)<input id="stX" type="number" step="0.1"></label>
+          <label class="f">Y (m)<input id="stY" type="number" step="0.1"></label>
+          <label class="f">Balandlik (m)<input id="stZ" type="number" step="0.1" min="0"></label>
+        </div>
+        <div class="readout">
+          <div><span>Tanlangan</span><b id="roSel">0</b></div>
+          <div><span>Pan</span><b id="roPan">—</b></div>
+          <div><span>Tilt</span><b id="roTilt">—</b></div>
+        </div>
+        <label class="lab" for="sPan"><span>Pan (qoʻlda)</span><b id="sPanV">—</b></label>
+        <input id="sPan" type="range" min="0" max="255" step="0.1" value="128">
+        <label class="lab" for="sTilt"><span>Tilt (qoʻlda)</span><b id="sTiltV">—</b></label>
+        <input id="sTilt" type="range" min="0" max="255" step="0.1" value="128">
+        <div class="grid2">
+          <button class="btn" id="stBeams" type="button">HAMMA BEAM’LAR</button>
+          <button class="btn" id="stDim" type="button">NURNI YOQISH (FULL)</button>
+        </div>
+
+        <div class="sep"></div>
+        <h2>KALIBRLASH</h2>
+        <p class="muted small" id="calInfo"></p>
+        <button class="btn wide" id="calClear" type="button">SHU CHIROQ NUQTALARINI TOZALASH</button>
+
+        <div class="sep"></div>
+        <h2>SAHNA NUQTALARI</h2>
+        <div class="code-row">
+          <input id="ptName" placeholder="masalan: Solo chap" maxlength="24" aria-label="Nuqta nomi">
+          <button class="btn" id="ptSave" type="button">SAQLASH</button>
+        </div>
+        <div class="grid3" id="ptList"></div>
+      </section>
+    </div>
   </section>
 
   <!-- ================= PATCH ================= -->

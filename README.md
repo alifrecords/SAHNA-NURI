@@ -57,7 +57,19 @@ Tarif kodi `ST` bilan boshlansa — **Start** (32 tagacha chiroq, 100 tagacha cu
 
 **iPad / iPhone:** Safari USB'ga ruxsat bermaydi — ularda simulyatsiya va mashq rejimi ishlaydi.
 
-## 6. Toʻlov jarayoni
+## 6. Sahna boʻlimi (nur yoʻnaltirish)
+
+| Qadam | Nima qilinadi |
+| --- | --- |
+| 1 | **Sahna** → eni, chuqurligi va ferma balandligini (metr) kiriting |
+| 2 | Ixtiyoriy: **RASM YUKLASH** — yuqoridan chizilgan plan yoki zaldan olingan foto. Keyin **4 BURCHAK** bilan sahna burchaklarini bosing |
+| 3 | **CHIROQLARNI JOYLASH** — har chiroq belgisini haqiqiy joyiga suring (yoki X, Y, balandlikni yozing) |
+| 4 | **KALIBRLASH** — bitta Beam tanlang, Pan/Tilt slayderlari bilan nurni poldagi belgiga tushiring, planda oʻsha belgini bosing. 3–4 nuqta |
+| 5 | **NUR YOʻNALTIRISH** — planni bosing: tanlangan Beam’lar oʻsha nuqtaga buriladi. Nuqtani nom bilan saqlash mumkin; keyin CUE YOZISH |
+
+Pan/Tilt diapazoni (odatda 540° / 270°) **Profillar**da sozlanadi. Nuqtani oʻchirish: tugmasini oʻng tugma bilan ikki marta bosing.
+
+## 7. Toʻlov jarayoni
 
 | Qadam | Kim | Nima boʻladi |
 | --- | --- | --- |
