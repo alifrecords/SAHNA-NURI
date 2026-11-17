@@ -254,3 +254,4 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .mini { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #333; }
 .mini input { width: 64px; min-height: 34px; border: 1px solid #d4d4d8; border-radius: 8px; padding: 0 8px; font-weight: 700; }
 .cue-opts .muted { flex: 1 1 220px; }
+.cue.cur input.auto:placeholder-shown { color: rgba(255,255,255,.75); }
