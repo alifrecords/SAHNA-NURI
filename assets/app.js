@@ -295,7 +295,7 @@
     };
   }
   function renderFixtures() {
-    $('#fixtureBtns').innerHTML = show.fixtures.map((f) => `<button class="btn ${sel.has(f.id) ? 'on' : ''}" data-f="${f.id}" type="button" aria-pressed="${sel.has(f.id)}"><span>${esc(f.name)}</span><small>DMX ${String(f.addr).padStart(3, '0')}</small><span class="lvl"><i data-lv="${f.id}"></i></span></button>`).join('')
+    $('#fixtureBtns').innerHTML = show.fixtures.map((f) => `<button class="btn ${sel.has(f.id) ? 'on' : ''}" data-f="${f.id}" type="button" aria-pressed="${sel.has(f.id)}"><span>${esc(f.name)}</span><small>DMX ${String(f.addr).padStart(3, '0')}${hasRole(prof(f), 'pan') ? ` <b class="dir" data-dir="${f.id}"></b>` : ''}</small><span class="lvl"><i data-lv="${f.id}"></i></span></button>`).join('')
       || '<div class="empty" style="grid-column:1/-1">Chiroqlar yoʻq. Patch boʻlimida qoʻshing.</div>';
   }
   $('#fixtureBtns').addEventListener('click', (e) => {
@@ -312,8 +312,26 @@
       if (k >= 0) v = buf[f.addr - 1 + k] || 0;
       else { const ks = ['r', 'g', 'b', 'w'].map((r) => pr.ch.findIndex((x) => x.r === r)).filter((x) => x >= 0); v = Math.max(0, ...ks.map((x) => buf[f.addr - 1 + x] || 0)); }
       el.style.width = (v / 2.55).toFixed(0) + '%';
+      const d = document.querySelector(`[data-dir="${f.id}"]`);
+      if (d) {
+        const kp = pr.ch.findIndex((x) => x.r === 'pan');
+        const pv = kp >= 0 ? (buf[f.addr - 1 + kp] || 0) : 128;
+        const t = pv < 112 ? '◀' : pv > 144 ? '▶' : '●';
+        if (d.textContent !== t) d.textContent = t;
+      }
     }
   }
+  // Tanlovni ajratish: tanlanganlar ichidan toq / juft / 1-yarmi / 2-yarmi
+  const selOrdered = () => show.fixtures.filter((f) => sel.has(f.id));
+  $('#selHelp').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sh]'); if (!b) return;
+    const list = selOrdered();
+    if (!list.length) { toast('Avval chiroq tanlang'); return; }
+    const n = list.length, h = Math.ceil(n / 2);
+    const keep = list.filter((f, i) => ({ odd: i % 2 === 0, even: i % 2 === 1, h1: i < h, h2: i >= h })[b.dataset.sh]);
+    sel.clear(); keep.forEach((f) => sel.add(f.id));
+    renderSel(); flashBtn(b);
+  });
   function renderSel() {
     $$('#fixtureBtns [data-f]').forEach((b) => { const on = sel.has(b.dataset.f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     renderGroups();
@@ -359,6 +377,29 @@
     if (!setProg('col', x.n, ids)) return;
     ids.forEach((id) => { const [r, g, b, w] = x.rgbw; Object.assign(prog.vals[id], { r, g, b, w }); });
     renderProgrammer();
+  });
+  // Bo'lish: tanlangan chiroqlarni chap / o'ng bo'yicha taqsimlash (tilt o'zgarmaydi)
+  $('#splitBtns').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-split]'); if (!b) return;
+    const list = selOrdered().filter((f) => hasRole(prof(f), 'pan'));
+    if (!list.length) { toast('Avval moving head tanlang'); return; }
+    if (!guardAction()) return;
+    const L = POSITIONS[1].pan, R = POSITIONS[2].pan, n = list.length, h = Math.ceil(n / 2);
+    let nl = 0, nr = 0;
+    list.forEach((f, i) => {
+      let pan;
+      switch (b.dataset.split) {
+        case 'half': pan = i < h ? L : R; break;
+        case 'alt': pan = i % 2 === 0 ? L : R; break;
+        case 'cross': pan = i < h ? R : L; break;
+        default: pan = n === 1 ? 128 : Math.round((L + (R - L) * i / (n - 1)) * 100) / 100;
+      }
+      if (pan < 128) nl++; else if (pan > 128) nr++;
+      prog.vals[f.id] = prog.vals[f.id] || {};
+      prog.vals[f.id].pan = pan;
+    });
+    renderProgrammer(); flashBtn(b);
+    toast(`Boʻlindi: ${nl} ta chapga, ${nr} ta oʻngga`);
   });
   $('#posBtns').addEventListener('click', (e) => {
     const el = e.target.closest('[data-p]'); if (!el) return;

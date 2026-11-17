@@ -255,3 +255,7 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .mini input { width: 64px; min-height: 34px; border: 1px solid #d4d4d8; border-radius: 8px; padding: 0 8px; font-weight: 700; }
 .cue-opts .muted { flex: 1 1 220px; }
 .cue.cur input.auto:placeholder-shown { color: rgba(255,255,255,.75); }
+
+.selhelp .btn { min-height: 34px; font-size: 11px; }
+.fixtures .btn small .dir { font-size: 10px; margin-left: 2px; }
+#splitBtns .btn { min-height: 38px; }

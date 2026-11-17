@@ -93,7 +93,16 @@ Cue roʻyxati ostidagi **QORONGʻIDA BURILISH YOQIQ** (standart holatda yoqilgan
 - Burilish vaqtini chiroqlaringiz tezligiga moslang: toʻliq aylanishga qancha vaqt ketsa, shuncha.
 - Nur ataylab yonib turgan holda sahna boʻylab yurishi kerak boʻlsa — tugmani **OʻCHIQ** qiling.
 
-## 9. Toʻlov jarayoni
+## 9. Chiroqlarni chap / oʻng boʻlish
+
+Bitta sahnada har chiroq alohida pozitsiyada turishi mumkin — programmer har chiroqni alohida eslaydi.
+
+- **Tez usul:** chiroqlarni tanlang → Programmer → **Boʻlish**: `Chap | Oʻng` (yarmi chapga, yarmi oʻngga), `Toq | Juft` (navbatma-navbat), `Yelpigʻich` (chapdan oʻngga tekis), `Kesishish` (chapdagilar oʻngga, oʻngdagilar chapga).
+- **Qoʻlda:** `1-yarmi` / `2-yarmi` / `Toq` / `Juft` bilan tanlovni ajrating → Pozitsiyadan `Chap` yoki `Oʻng`.
+- Har chiroq tugmasida yoʻnalish belgisi: ◀ chapda, ● markazda, ▶ oʻngda.
+- Keyin **CUE YOZISH** — hammasi bitta cue’ga yoziladi.
+
+## 10. Toʻlov jarayoni
 
 | Qadam | Kim | Nima boʻladi |
 | --- | --- | --- |
