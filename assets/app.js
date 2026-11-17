@@ -71,7 +71,7 @@
   function newStage() { return { w: 12, d: 7, h: 6, img: null, corners: null, pos: {}, cal: {}, points: [] }; }
   function newShow() {
     const profiles = DEFAULT_PROFILES();
-    return { v: 1, title: 'Yangi spektakl', profiles, fixtures: defaultPatch(profiles), cues: [], levels: {}, fxDepth: 100, fxSpeed: 40, master: 100, autoOn: true, stage: newStage() };
+    return { v: 1, title: 'Yangi spektakl', profiles, fixtures: defaultPatch(profiles), cues: [], levels: {}, fxDepth: 100, fxSpeed: 40, master: 100, autoOn: true, mib: true, mibMove: 1.5, stage: newStage() };
   }
 
   const SHOW_KEY = 'sn_show_v1';
@@ -105,21 +105,66 @@
     return l;
   }
 
+  /* ---- Qorong'ida burilish (Move in Black) ----
+     Joyi (pan/tilt, rang g'ildiragi, gobo) o'zgaradigan chiroq: 1) yonib turgan bo'lsa tez o'chadi,
+     2) qorong'ida yangi joyiga buriladi, 3) cue fade vaqti bilan yonadi.
+     Cue'da o'chiq turgan chiroqlar keyingi cue'dagi joyiga oldindan qorong'ida burilib turadi. */
+  const MIB_OUT_MS = 400;
+  const fxById = (id) => show.fixtures.find((f) => f.id === id);
+  function mibCapable(f) { const p = f && prof(f); return !!p && (hasRole(p, 'pan') || hasRole(p, 'tilt') || hasRole(p, 'cwheel') || hasRole(p, 'gobo')); }
+  function posChanged(a, b, f) {
+    const p = prof(f);
+    return (hasRole(p, 'pan') && Math.abs((b.pan ?? 128) - (a.pan ?? 128)) > 0.5)
+      || (hasRole(p, 'tilt') && Math.abs((b.tilt ?? 128) - (a.tilt ?? 128)) > 0.5)
+      || (hasRole(p, 'cwheel') && a.col !== b.col)
+      || (hasRole(p, 'gobo') && (a.gobo || 0) !== (b.gobo || 0));
+  }
+  const mibOn = () => show.mib !== false;
+  const mibMoveMs = () => clamp(+show.mibMove || 0, 0, 10) * 1000;
+  function lerpParams(a, b, k) {
+    const o = {};
+    for (const key in b) o[key] = typeof b[key] === 'number' ? a[key] + (b[key] - a[key]) * k : (k < 0.5 ? a[key] : b[key]);
+    return o;
+  }
+  function mixFixture(id, a, b, t) {
+    const fade = play.fadeMs || 0;
+    const f = fxById(id);
+    if (!play.mib || !f || !mibCapable(f) || !posChanged(a, b, f)) return lerpParams(a, b, fade > 0 ? clamp(t / fade, 0, 1) : 1);
+    if (b.dim > 0.5) {
+      const outMs = a.dim > 0.5 ? MIB_OUT_MS : 0, mv = play.moveMs;
+      if (t < outMs) return { ...a, dim: a.dim * (1 - t / outMs) };
+      if (t < outMs + mv) return { ...b, dim: 0 };
+      const k = fade > 0 ? clamp((t - outMs - mv) / fade, 0, 1) : 1;
+      return { ...b, dim: b.dim * k };
+    }
+    // o'chib ketadigan chiroq: joyidan qimirlamay o'chadi, keyin yangi joyga o'tadi
+    const k = fade > 0 ? clamp(t / fade, 0, 1) : 1;
+    return k >= 1 ? { ...b } : { ...a, dim: a.dim * (1 - k) };
+  }
+  // O'chiq chiroqlarni keyingi cue'dagi joyiga oldindan burish
+  function preposition(look) {
+    if (!mibOn()) return look;
+    const ni = play.next;
+    if (ni == null || ni < 0 || ni >= show.cues.length || ni === play.cur) return look;
+    const nl = cueLook(show.cues[ni]);
+    let out = look;
+    for (const id in look) {
+      const cur = look[id], nx = nl[id];
+      if (!nx || cur.dim > 0.5 || nx.dim <= 0.5) continue;
+      const f = fxById(id);
+      if (!f || !mibCapable(f) || !posChanged(cur, nx, f)) continue;
+      if (out === look) out = { ...look };
+      out[id] = { ...cur, pan: nx.pan, tilt: nx.tilt, col: nx.col, gobo: nx.gobo };
+    }
+    return out;
+  }
   // Joriy (fade bilan) bazaviy holat
   function baseLook(now) {
-    if (!play.to) return emptyLook();
-    let k = 1;
-    if (play.dur > 0) {
-      const t = (play.paused ? play.pausedAt : now) - play.start;
-      k = clamp(t / play.dur, 0, 1);
-    }
-    if (k >= 1 || !play.from) return play.to;
+    if (!play.to) return preposition(emptyLook());
+    const t = (play.paused ? play.pausedAt : now) - play.start;
+    if (!play.from || t >= play.dur) return preposition(play.to);
     const out = {};
-    for (const id in play.to) {
-      const a = play.from[id] || defParams(), b = play.to[id], o = {};
-      for (const key in b) o[key] = typeof b[key] === 'number' ? a[key] + (b[key] - a[key]) * k : (k < 0.5 ? a[key] : b[key]);
-      out[id] = o;
-    }
+    for (const id in play.to) out[id] = mixFixture(id, play.from[id] || defParams(), play.to[id], t);
     return out;
   }
   function fadeProgress(now) {
@@ -391,7 +436,15 @@
     const now = performance.now();
     play.from = baseLook(now);
     play.to = cueLook(show.cues[i]);
-    play.dur = (show.cues[i].fade || 0) * 1000;
+    play.fadeMs = (show.cues[i].fade || 0) * 1000;
+    play.mib = mibOn(); play.moveMs = mibMoveMs();
+    // eng uzun vaqt: o'chish + burilish + fade (qorong'ida buriladigan chiroq bo'lsa)
+    let extra = 0;
+    if (play.mib) for (const id in play.to) {
+      const a = play.from[id] || defParams(), b = play.to[id], f = fxById(id);
+      if (f && mibCapable(f) && b.dim > 0.5 && posChanged(a, b, f)) extra = Math.max(extra, (a.dim > 0.5 ? MIB_OUT_MS : 0) + play.moveMs);
+    }
+    play.dur = play.fadeMs + extra;
     play.start = now; play.paused = false;
     play.fx = (show.cues[i].fx || []).map((x) => ({ type: x.type, fids: x.fids.filter((id) => show.fixtures.some((f) => f.id === id)) }));
     play.cur = i; play.next = i + 1 < show.cues.length ? i + 1 : i;
@@ -464,6 +517,18 @@
     b.classList.toggle('on', !!show.autoOn); b.setAttribute('aria-pressed', !!show.autoOn);
     b.textContent = show.autoOn ? 'AVTO YOQIQ' : 'AVTO OʻCHIQ';
   }
+  function renderMib() {
+    const b = $('#mibBtn');
+    b.classList.toggle('on', mibOn()); b.setAttribute('aria-pressed', mibOn());
+    b.textContent = mibOn() ? 'QORONGʻIDA BURILISH YOQIQ' : 'QORONGʻIDA BURILISH OʻCHIQ';
+    $('#mibTime').value = show.mibMove ?? 1.5;
+    $('#mibTime').disabled = !mibOn();
+  }
+  $('#mibBtn').addEventListener('click', () => {
+    show.mib = !mibOn(); save(); renderMib();
+    toast(mibOn() ? 'Moving head’lar qorongʻida buriladi, keyin fade bilan yonadi' : 'Qorongʻida burilish oʻchirildi: nur yonib turgan holda buriladi');
+  });
+  $('#mibTime').addEventListener('change', (e) => { show.mibMove = clamp(+e.target.value || 0, 0, 10); e.target.value = show.mibMove; save(); });
   $('#autoBtn').addEventListener('click', () => {
     show.autoOn = !show.autoOn; save(); renderAutoBtn();
     toast(show.autoOn ? 'Avtomatik oʻtish yoqildi' : 'Avtomatik oʻtish oʻchirildi — faqat GO bilan');
@@ -489,7 +554,7 @@
     const q = { id: uid(), num: nextNum(), name: sceneWord + ' ' + (show.cues.length + 1), fade: 2, ...s };
     show.cues.splice(at, 0, q);
     prog.vals = {}; prog.fx = [];
-    play.cur = at; play.to = cueLook(q); play.from = null; play.dur = 0; play.fx = q.fx.map((x) => ({ ...x, fids: [...x.fids] }));
+    play.cur = at; play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0; play.fx = q.fx.map((x) => ({ ...x, fids: [...x.fids] }));
     play.next = Math.min(at + 1, show.cues.length - 1);
     save(); renderCues(); renderProgrammer();
     flashBtn($('#recBtn'));
@@ -502,7 +567,7 @@
     if (i < 0) { toast('Yangilash uchun avval cue’ni ijro eting'); return; }
     Object.assign(show.cues[i], snapshot());
     prog.vals = {}; prog.fx = [];
-    play.to = cueLook(show.cues[i]); play.from = null; play.dur = 0; play.fx = show.cues[i].fx.map((x) => ({ ...x, fids: [...x.fids] }));
+    play.to = cueLook(show.cues[i]); play.from = null; play.dur = 0; play.fadeMs = 0; play.fx = show.cues[i].fx.map((x) => ({ ...x, fids: [...x.fids] }));
     save(); renderCues(); renderProgrammer(); flashBtn($('#updBtn'));
     toast(`Cue ${show.cues[i].num} yangilandi`);
   });
@@ -518,7 +583,7 @@
   $('#clrCueBtn').addEventListener('click', () => {
     if (!guardAction()) return;
     const now = performance.now();
-    play.from = baseLook(now); play.to = emptyLook(); play.dur = 2000; play.start = now; play.paused = false; play.fx = []; play.cur = -1;
+    play.from = baseLook(now); play.to = emptyLook(); play.dur = 2000; play.fadeMs = 2000; play.mib = false; play.start = now; play.paused = false; play.fx = []; play.cur = -1;
     renderCues(); renderProgrammer(); toast('Sahna 2 soniyada oʻchmoqda');
   });
   let confirmAt = 0, confirmMsg = '';
@@ -1277,7 +1342,7 @@
   });
 
   /* ================= Boshlash ================= */
-  function renderAllPult() { renderGroups(); renderFixtures(); renderSel(); renderCues(); renderFaders(); renderAutoBtn(); }
+  function renderAllPult() { renderGroups(); renderFixtures(); renderSel(); renderCues(); renderFaders(); renderAutoBtn(); renderMib(); }
   function renderAll() { $('#showTitle').value = show.title; document.title = show.title + ' — SAHNA NURI'; renderAllPult(); renderConn(); if (tab !== 'pult') setTab(tab); }
   renderAll();
   requestAnimationFrame(frame);

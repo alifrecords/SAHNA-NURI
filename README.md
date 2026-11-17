@@ -79,7 +79,21 @@ Cue roʻyxatidagi **AVTO (daq:son)** ustuniga vaqt yozing: `0:45`, `1:30`, `90` 
 - **AVTO YOQIQ / OʻCHIQ** — repetitsiyada barcha avtomatik oʻtishlarni bir tugma bilan oʻchiradi.
 - GO oʻz vaqtidan oldin bosilsa, darhol keyingi cue’ga oʻtadi.
 
-## 8. Toʻlov jarayoni
+## 8. Qorongʻida burilish (Move in Black)
+
+Cue roʻyxati ostidagi **QORONGʻIDA BURILISH YOQIQ** (standart holatda yoqilgan):
+
+| Bosqich | Vaqt | Nima boʻladi |
+| --- | --- | --- |
+| 1 | 0,4 s | Joyi oʻzgaradigan moving head oʻchadi |
+| 2 | „Burilish vaqti“ (standart 1,5 s) | Qorongʻida yangi pan/tilt, rang gʻildiragi, gobo’ga boradi |
+| 3 | Cue FADE | Yangi joyida fade bilan yonadi |
+
+- Cue’da oʻchiq turgan moving head keyingi cue’dagi joyiga **oldindan** qorongʻida burilib turadi — u cue’da darhol fade bilan yonadi, kutish boʻlmaydi.
+- Burilish vaqtini chiroqlaringiz tezligiga moslang: toʻliq aylanishga qancha vaqt ketsa, shuncha.
+- Nur ataylab yonib turgan holda sahna boʻylab yurishi kerak boʻlsa — tugmani **OʻCHIQ** qiling.
+
+## 9. Toʻlov jarayoni
 
 | Qadam | Kim | Nima boʻladi |
 | --- | --- | --- |

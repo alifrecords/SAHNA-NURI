@@ -248,3 +248,9 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .cue .st b { font-variant-numeric: tabular-nums; }
 .auto-bar { height: 4px; background: var(--soft); border-radius: 3px; overflow: hidden; margin-top: -4px; }
 .auto-bar i { display: block; height: 100%; width: 0; background: #2563eb; }
+
+.cue-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 12px; background: var(--soft); }
+.cue-opts .btn { min-height: 36px; font-size: 11px; }
+.mini { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #333; }
+.mini input { width: 64px; min-height: 34px; border: 1px solid #d4d4d8; border-radius: 8px; padding: 0 8px; font-weight: 700; }
+.cue-opts .muted { flex: 1 1 220px; }

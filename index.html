@@ -70,6 +70,11 @@ if (location.protocol === 'file:') {
         <div class="ph"><h2>CUE ROʻYXATI</h2><span class="ph-r"><span class="muted" id="cueInfo"></span><button class="btn sm on" id="autoBtn" type="button" aria-pressed="true">AVTO YOQIQ</button></span></div>
         <div class="cue-head"><span>№</span><span>NOMI</span><span>FADE (s)</span><span>AVTO (daq:son)</span><span>HOLAT</span></div>
         <div class="cue-list" id="cueList"></div>
+        <div class="cue-opts">
+          <button class="btn sm on" id="mibBtn" type="button" aria-pressed="true">QORONGʻIDA BURILISH YOQIQ</button>
+          <label class="mini" for="mibTime">Burilish vaqti <input id="mibTime" type="number" min="0" max="10" step="0.1" value="1.5"> s</label>
+          <span class="muted small">Moving head yangi joyiga qorongʻida boradi, keyin cue fade’i bilan yonadi</span>
+        </div>
         <div class="grid4 cue-tools">
           <button class="btn" id="recBtn" type="button">CUE YOZISH</button>
           <button class="btn" id="updBtn" type="button">YANGILASH</button>
