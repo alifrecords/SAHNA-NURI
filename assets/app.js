@@ -1360,7 +1360,7 @@
     if (cfg.botUsername) { tg.href = `https://t.me/${cfg.botUsername}?start=${encodeURIComponent(s.shortId || '')}`; tg.classList.remove('off'); }
     else { tg.removeAttribute('href'); tg.classList.add('off'); }
   }
-  function openPaywall() { pwOpen = true; $('#paywall').hidden = false; L().refreshConfig(); renderPaywall(); setTimeout(() => $('#codeInput').focus(), 50); }
+  function openPaywall() { pwOpen = true; $('#paywall').hidden = false; L().refreshConfig(); renderPaywall(); payStatus(); chatLoad(true); }
   function closePaywall() { if (locked()) return; pwOpen = false; $('#paywall').hidden = true; }
   $('#plans').addEventListener('click', (e) => { const b = e.target.closest('[data-plan]'); if (b) { selPlan = +b.dataset.plan; renderPaywall(); } });
   $('#pwClose').addEventListener('click', closePaywall);
@@ -1381,6 +1381,83 @@
       setTimeout(() => { closePaywall(); msg.textContent = ''; }, 1500);
     } catch (err) { msg.style.color = 'var(--red)'; msg.textContent = err.message; }
   });
+
+  /* ================= Chekni dasturdan yuborish (Sahna Ovozi bilan bir xil) ================= */
+  let pfImg = null;
+  const pfMsg = (t, c) => { const m = $('#pfMsg'); m.style.color = c || 'var(--muted)'; m.textContent = t; };
+  async function shrinkImg(file) {
+    // katta rasmni 1600 px gacha kichraytirib JPEG qilamiz — server chegarasi ~800 KB
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+      const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+      const cv = document.createElement('canvas'); cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      for (const q of [0.82, 0.7, 0.55]) { const d = cv.toDataURL('image/jpeg', q); if (d.length < 1000000) return d; }
+      throw new Error('big');
+    } finally { URL.revokeObjectURL(url); }
+  }
+  $('#pfImg').addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0]; const lab = $('#pfImg').parentElement;
+    pfImg = null; lab.classList.remove('has'); $('#pfImgName').textContent = 'Chek rasmini tanlash';
+    if (!f) return;
+    try { pfImg = await shrinkImg(f); lab.classList.add('has'); $('#pfImgName').textContent = '✓ ' + f.name.slice(0, 40); pfMsg(''); }
+    catch (_) { pfMsg('Rasm oʻqilmadi — boshqa rasm tanlang', 'var(--red)'); }
+  });
+  const PST = { pending: 'Chekingiz tekshirilmoqda — tasdiqlangach oʻzi faollashadi', approved: 'Oxirgi toʻlov tasdiqlangan', rejected: 'Oxirgi toʻlov rad etilgan — admin bilan yozishmada soʻrang' };
+  async function payStatus() {
+    try { const r = await fetch('/api/pay?deviceId=' + encodeURIComponent(L().deviceId)); const j = await r.json(); if (j.payment && PST[j.payment.status] && !L().state.license) pfMsg(PST[j.payment.status], j.payment.status === 'rejected' ? 'var(--red)' : 'var(--muted)'); } catch (_) {}
+  }
+  $('#payForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const t = ((L().state.config || {}).tariffs || [])[selPlan];
+    if (!t) return pfMsg('Avval tarifni tanlang', 'var(--red)');
+    const name = $('#pfName').value.trim(), phone = $('#pfPhone').value.trim();
+    if (!pfImg && !name && !phone) return pfMsg('Chek rasmini tanlang yoki ism va telefoningizni yozing', 'var(--red)');
+    const b = $('#pfSend'); b.disabled = true; pfMsg('Yuborilmoqda…');
+    try {
+      const r = await fetch('/api/pay', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ deviceId: L().deviceId, plan: t.id, name, phone, note: $('#pfNote').value.trim(), img: pfImg || '' }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Server xatosi');
+      pfMsg('Yuborildi ✓ Admin tasdiqlagach tarif shu yerda oʻzi faollashadi.', 'var(--on)');
+      pfImg = null; $('#pfImg').value = ''; $('#pfImg').parentElement.classList.remove('has'); $('#pfImgName').textContent = 'Chek rasmini tanlash'; $('#pfNote').value = '';
+      try { localStorage.setItem('sn_pf', JSON.stringify({ name, phone })); } catch (_) {}
+    } catch (err) { pfMsg(err.message, 'var(--red)'); }
+    b.disabled = false;
+  });
+  try { const v = JSON.parse(localStorage.getItem('sn_pf') || 'null'); if (v) { $('#pfName').value = v.name || ''; $('#pfPhone').value = v.phone || ''; } } catch (_) {}
+
+  /* ================= Admin bilan yozishma ================= */
+  let chatN = -1;
+  async function chatLoad(markRead) {
+    if (!L()) return;
+    try {
+      const r = await fetch('/api/msg?deviceId=' + encodeURIComponent(L().deviceId)); const j = await r.json();
+      const ms = j.msgs || [];
+      if (ms.length !== chatN) {
+        chatN = ms.length;
+        $('#chatLog').innerHTML = ms.length ? ms.map((m) => `<div class="m ${m.who === 'a' ? 'a' : 'u'}">${esc(m.text)}<small>${m.who === 'a' ? 'Admin · ' : ''}${new Date(m.created).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</small></div>`).join('') : '<span class="empty">Hozircha xabar yoʻq</span>';
+        $('#chatLog').scrollTop = 1e9;
+      }
+      let unread = j.unread || 0;
+      if (unread && markRead) { fetch('/api/msg', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ deviceId: L().deviceId, action: 'read' }) }).catch(() => {}); unread = 0; }
+      $('#msgCount').hidden = !unread; $('#msgCount').textContent = unread; $('#msgBadge').classList.toggle('new', !!unread);
+    } catch (_) {}
+  }
+  $('#chatForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const inp = $('#chatInput'), text = inp.value.trim(); if (!text) return;
+    inp.disabled = true;
+    try {
+      const r = await fetch('/api/msg', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ deviceId: L().deviceId, text, name: $('#pfName').value.trim() }) });
+      const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'Server xatosi');
+      inp.value = ''; await chatLoad(true);
+    } catch (err) { toast(err.message); }
+    inp.disabled = false; inp.focus();
+  });
+  $('#msgBadge').addEventListener('click', () => { openPaywall(); chatLoad(true); setTimeout(() => { $('#chatBox').scrollIntoView({ block: 'center', behavior: 'smooth' }); $('#chatInput').focus(); }, 80); });
+  setInterval(() => chatLoad(pwOpen), 45000);
+  setTimeout(() => chatLoad(false), 2500);
 
   /* ================= Boshlash ================= */
   function renderAllPult() { renderGroups(); renderFixtures(); renderSel(); renderCues(); renderFaders(); renderAutoBtn(); renderMib(); }

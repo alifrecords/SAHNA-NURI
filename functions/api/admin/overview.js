@@ -5,7 +5,7 @@ export const onRequestGet = adminOnly(async ({ env }) => {
   const db = env.DB, now = Date.now();
   const s = await getSettings(db);
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
-  const payments = (await db.prepare("SELECT id, short, plan_name, amount, tg_user, tg_username, tg_name, photo, status, created, decided, code FROM sn_payments ORDER BY created DESC LIMIT 200").all()).results || [];
+  const payments = (await db.prepare("SELECT id, short, plan_name, amount, tg_user, tg_username, tg_name, photo, photo_kind, status, created, decided, code FROM sn_payments ORDER BY created DESC LIMIT 200").all()).results || [];
   const codesRaw = (await db.prepare("SELECT c.*, d.short AS dshort FROM sn_codes c LEFT JOIN sn_devices d ON d.id = c.device ORDER BY c.created DESC LIMIT 300").all()).results || [];
   const codes = codesRaw.map((c) => ({ code: c.code, planName: c.plan_name, days: c.days, status: codeStatus(c), createdBy: c.created_by, tgUsername: c.tg_username, shortId: c.dshort, expiresAt: c.expires, activatedAt: c.activated, createdAt: c.created }));
   const devRaw = (await db.prepare("SELECT d.short, d.first, d.last, d.used, (SELECT COUNT(*) FROM sn_codes c WHERE c.device = d.id AND c.status = 'active' AND (c.expires = 0 OR c.expires > ?)) AS pro FROM sn_devices d ORDER BY d.last DESC LIMIT 300").bind(now).all()).results || [];
@@ -17,6 +17,7 @@ export const onRequestGet = adminOnly(async ({ env }) => {
     pro: (await one("SELECT COUNT(*) AS n FROM sn_codes WHERE status = 'active' AND (expires = 0 OR expires > ?)", now)).n || 0,
     trial: (await one("SELECT COUNT(*) AS n FROM sn_devices d WHERE used < ? AND NOT EXISTS (SELECT 1 FROM sn_codes c WHERE c.device = d.id AND c.status = 'active')", trialSec)).n || 0,
     online: (await one("SELECT COUNT(*) AS n FROM sn_devices WHERE last > ?", now - 90000)).n || 0,
+    msgs: (await one("SELECT COUNT(*) AS n FROM sn_msgs WHERE who = 'u' AND seen_admin = 0")).n || 0,
     monthRevenue: (await one("SELECT COALESCE(SUM(amount), 0) AS n FROM sn_payments WHERE status = 'approved' AND decided >= ?", monthStart.getTime())).n || 0,
   };
   const botUsername = await kvGet(db, "bot_username");

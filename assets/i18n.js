@@ -226,6 +226,28 @@ window.SNI18N = (() => {
     'FAOL': ['АКТИВЕН', 'ACTIVE'],
     'Yopish': ['Закрыть', 'Close'],
     'Qanday faollashtiriladi': ['Как активировать', 'How to activate'],
+    "Telegram'siz ham boʻladi. Chek rasmini tanlang (yoki chek boʻlmasa — ism va telefoningizni yozing). Admin tasdiqlagach tarif shu qurilmada": ['Можно и без Telegram. Выберите фото чека (или, если чека нет, укажите имя и телефон). После подтверждения админом тариф на этом устройстве', 'Works without Telegram too. Choose a receipt image (or, without a receipt, enter your name and phone). Once the admin confirms, the plan on this device'],
+    'oʻzi faollashadi': ['включится сам', 'activates by itself'],
+    ', kod kiritish shart emas.': [', вводить код не нужно.', ', no code needed.'],
+    'Chekni shu yerdan yuborish': ['Отправить чек отсюда', 'Send receipt from here'],
+    'Chek rasmini tanlash': ['Выбрать фото чека', 'Choose receipt image'],
+    'Ismingiz': ['Ваше имя', 'Your name'],
+    'Telefon': ['Телефон', 'Phone'],
+    'Izoh (ixtiyoriy)': ['Комментарий (необязательно)', 'Note (optional)'],
+    'ADMINGA YUBORISH ·': ['ОТПРАВИТЬ АДМИНУ ·', 'SEND TO ADMIN ·'],
+    'Admin bilan yozishma': ['Переписка с админом', 'Chat with admin'],
+    'Savol, fikr yoki taklif yozing — javob shu yerga keladi.': ['Напишите вопрос, отзыв или предложение — ответ придёт сюда.', 'Write a question, feedback or suggestion — the reply comes here.'],
+    'Xabar yozing…': ['Напишите сообщение…', 'Type a message…'],
+    'YUBORISH': ['ОТПРАВИТЬ', 'SEND'],
+    'Hozircha xabar yoʻq': ['Сообщений пока нет', 'No messages yet'],
+    'Yuborilmoqda…': ['Отправка…', 'Sending…'],
+    'Yuborildi ✓ Admin tasdiqlagach tarif shu yerda oʻzi faollashadi.': ['Отправлено ✓ После подтверждения тариф включится здесь сам.', 'Sent ✓ After confirmation the plan activates here by itself.'],
+    'Avval tarifni tanlang': ['Сначала выберите тариф', 'Choose a plan first'],
+    'Chek rasmini tanlang yoki ism va telefoningizni yozing': ['Выберите фото чека или укажите имя и телефон', 'Choose a receipt image or enter your name and phone'],
+    'Rasm oʻqilmadi — boshqa rasm tanlang': ['Не удалось прочитать фото — выберите другое', 'Could not read the image — choose another'],
+    'Chekingiz tekshirilmoqda — tasdiqlangach oʻzi faollashadi': ['Чек проверяется — после подтверждения включится сам', 'Receipt is being checked — activates by itself once confirmed'],
+    'Oxirgi toʻlov tasdiqlangan': ['Последний платёж подтверждён', 'Last payment confirmed'],
+    'Oxirgi toʻlov rad etilgan — admin bilan yozishmada soʻrang': ['Последний платёж отклонён — спросите в переписке с админом', 'Last payment rejected — ask in the chat with admin'],
     'TELEGRAM BOT ORQALI TOʻLASH': ['ОПЛАТИТЬ ЧЕРЕЗ TELEGRAM-БОТ', 'PAY VIA TELEGRAM BOT'],
     'TOʻLOV KARTASI': ['КАРТА ДЛЯ ОПЛАТЫ', 'PAYMENT CARD'],
     'NUSXA': ['КОПИЯ', 'COPY'], 'NUSXALANDI': ['СКОПИРОВАНО', 'COPIED'],
@@ -354,12 +376,12 @@ window.SNI18N = (() => {
     steps: [
       `<li><i>1</i><span>Выберите тариф выше.</span></li>
        <li><i>2</i><span>Переведите <b class="pw-amount"></b> на карту. В комментарии укажите свой ID.</span></li>
-       <li><i>3</i><span>Отправьте чек (скриншот) Telegram-боту.</span></li>
-       <li><i>4</i><span>После подтверждения бот пришлёт <b>код активации</b>. Введите его ниже.</span></li>`,
+       <li><i>3</i><span>Отправьте чек (скриншот) Telegram-боту или через <b>«Отправить чек отсюда»</b> ниже.</span></li>
+       <li><i>4</i><span>После подтверждения админом тариф <b>включится сам</b> на этом устройстве. Бот также пришлёт <b>код активации</b> — при необходимости введите его ниже.</span></li>`,
       `<li><i>1</i><span>Choose a plan above.</span></li>
        <li><i>2</i><span>Transfer <b class="pw-amount"></b> to the card. Put your ID in the comment.</span></li>
-       <li><i>3</i><span>Send the receipt (screenshot) to the Telegram bot.</span></li>
-       <li><i>4</i><span>Once confirmed, the bot sends an <b>activation code</b>. Enter it below.</span></li>`,
+       <li><i>3</i><span>Send the receipt (screenshot) to the Telegram bot or via <b>“Send receipt from here”</b> below.</span></li>
+       <li><i>4</i><span>Once the admin confirms, the plan <b>activates by itself</b> on this device. The bot also sends an <b>activation code</b> — enter it below if needed.</span></li>`,
     ],
   };
 

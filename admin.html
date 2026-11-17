@@ -40,6 +40,7 @@
     <div class="logo"><div class="az">AZ</div><div><b class="brand" style="font-size:12px">SAHNA <span>NURI</span></b><div class="muted small">Admin panel</div></div></div>
     <a href="#top" class="on">Boshqaruv paneli</a>
     <a href="#tolovlar">To'lovlar <span class="pill" id="navPending" style="background:var(--amber);color:#0B0C0F" hidden></span></a>
+    <a href="#xabarlar">💬 Xabarlar <span class="pill" id="navMsgs" style="background:var(--accent);color:#0B0C0F" hidden></span></a>
     <a href="#kodlar">Faollashtirish kodlari</a>
     <a href="#tariflar">Tariflar va sinov</a>
     <a href="#karta">To'lov kartasi</a>
@@ -63,11 +64,23 @@
 
     <section class="panel" id="tolovlar" style="overflow:hidden">
       <div class="sec-head pad">
-        <h2>To'lovlar</h2><span class="muted small">Cheklar Telegram botdan avtomatik keladi</span>
+        <h2>To'lovlar</h2><span class="muted small">Cheklar Telegram botdan va dasturning oʻzidan keladi · tasdiqlansa dastur oʻzi faollashadi</span>
         <div class="grow"></div>
         <select id="payFilter"><option value="pending">Kutilayotgan</option><option value="all">Hammasi</option></select>
       </div>
       <div class="scroll"><table style="min-width:860px"><thead><tr><th>ID</th><th>Xaridor</th><th>Dastur ID</th><th>Tarif</th><th>Summa</th><th>Chek</th><th>Vaqt</th><th>Amal</th></tr></thead><tbody id="payRows"></tbody></table></div>
+    </section>
+
+    <section class="panel" id="xabarlar" style="overflow:hidden">
+      <div class="sec-head pad"><h2>💬 Xabarlar</h2><span class="muted small">Foydalanuvchilar dasturdan yozgan savol va takliflar · javob dasturga boradi (Telegram'da «Reply» qilsangiz ham)</span></div>
+      <div class="chat-wrap">
+        <div class="chat-threads" id="thRows"></div>
+        <div class="chat-pane">
+          <div class="muted small" id="thHead">Suhbatni tanlang</div>
+          <div class="chat-log" id="thLog"></div>
+          <form class="chat-row" id="thForm"><textarea id="thText" rows="2" placeholder="Javob yozing… (Ctrl+Enter — yuborish)" disabled></textarea><button class="btn primary" id="thSend" disabled>Yuborish</button></form>
+        </div>
+      </div>
     </section>
 
     <div class="row2">

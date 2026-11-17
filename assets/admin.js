@@ -64,7 +64,7 @@
 
   async function load(full) {
     data = await api('/api/admin/overview');
-    renderStats(); renderPayments(); renderCodes(); renderDevices(); renderBot();
+    renderStats(); renderPayments(); renderCodes(); renderDevices(); renderBot(); loadThreads();
     $('#connInfo').textContent = data.adminRepo;
     if (full) fillForms();
   }
@@ -72,7 +72,7 @@
   function renderStats() {
     const s = data.stats;
     const items = [
-      ["Kutilayotgan to'lovlar", s.pending, 'Telegram botdan', 'color:var(--amber)'],
+      ["Kutilayotgan to'lovlar", s.pending, 'bot va dasturdan', 'color:var(--amber)'],
       ['Faol PRO', s.pro, 'faollashtirilgan kodlar', ''],
       ['Sinovdagilar', s.trial, `${data.settings.trialMinutes} daqiqalik sinov`, ''],
       ['Hozir onlayn', s.online, "so'nggi 90 soniya", ''],
@@ -80,6 +80,7 @@
     ];
     $('#stats').innerHTML = items.map(([l, v, sub, st]) => `<div class="panel stat"><span class="muted small">${l}</span><b style="${st}">${esc(v)}</b><span class="muted" style="font-size:11px">${sub}</span></div>`).join('');
     const np = $('#navPending'); np.hidden = !s.pending; np.textContent = s.pending;
+    const nm = $('#navMsgs'); nm.hidden = !s.msgs; nm.textContent = s.msgs;
   }
 
   function renderPayments() {
@@ -88,14 +89,46 @@
     if (!list.length) { $('#payRows').innerHTML = `<tr><td colspan="8" class="muted" style="padding:20px">To'lov yo'q</td></tr>`; return; }
     $('#payRows').innerHTML = list.map((p) => {
       let act;
-      if (p.status === 'pending') act = `<button class="btn primary" data-ok="${esc(p.id)}">Tasdiqlash va kod yuborish</button> <button class="btn danger" data-no="${esc(p.id)}">Rad etish</button>`;
+      if (p.status === 'pending') act = `<button class="btn primary" data-ok="${esc(p.id)}">Tasdiqlash</button> <button class="btn danger" data-no="${esc(p.id)}">Rad etish</button>`;
       else if (p.status === 'approved') act = `<span style="color:var(--accent);font-weight:600">Tasdiqlandi</span> <span class="mono muted">${esc(p.code)}</span>`;
       else if (p.status === 'approving') act = `<span class="muted">Tasdiqlanmoqda…</span>`;
       else act = `<span style="color:var(--red)">Rad etilgan</span>`;
-      const photo = p.hasPhoto ? `<button class="thumb-btn" data-photo="${esc(p.id)}">Chek</button>` : '—';
+      const photo = p.hasPhoto ? `<button class="thumb-btn" data-photo="${esc(p.id)}">Chek</button>${p.photo_kind === 'web' ? '<div class="muted" style="font-size:11px">dasturdan</div>' : ''}` : p.photo_kind === 'req' ? `<span title="Chek yuborilmagan — pul kelganini kartangizda tekshiring">📨 soʻrov</span>` : '—';
       return `<tr><td class="mono">${esc(p.id)}</td><td><b>${esc(p.tg_name)}</b><div class="muted" style="font-size:11px">${esc(p.tg_username)}</div></td><td class="mono">${esc(p.short || '—')}</td><td>${esc(p.plan_name)}</td><td><b>${sum(p.amount)}</b></td><td>${photo}</td><td class="muted">${dt(p.created)}</td><td style="white-space:nowrap">${act}</td></tr>`;
     }).join('');
   }
+
+
+  // ---------- 💬 Xabarlar ----------
+  let thCur = '';
+  const mdt = (t) => new Date(t).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  async function loadThreads() {
+    try {
+      const j = await api('/api/admin/msgs');
+      $('#thRows').innerHTML = j.threads.length ? j.threads.map((t) => `<button type="button" data-th="${esc(t.short)}" class="${t.short === thCur ? 'on' : ''}">${t.unread ? `<span class="u">${t.unread}</span>` : ''}<b class="mono">${esc(t.short)}</b> ${esc(t.name || '')}<span class="t">${t.who === 'a' ? '↩ ' : ''}${esc(t.text)}</span><span class="t">${mdt(t.created)}</span></button>`).join('') : '<div class="muted small" style="padding:14px">Hozircha xabar yoʻq</div>';
+      if (thCur) openThread(thCur, true);
+    } catch (_) {}
+  }
+  async function openThread(short, quiet) {
+    thCur = short;
+    try {
+      const j = await api('/api/admin/msgs?short=' + encodeURIComponent(short));
+      $('#thHead').innerHTML = `<b class="mono">${esc(short)}</b> · ${j.license ? 'Faol: ' + esc(j.license.plan_name) + (j.license.expires ? ' · ' + new Date(j.license.expires).toLocaleDateString('ru-RU') + ' gacha' : '') : 'Tarifsiz'} · oxirgi faollik ${j.last ? mdt(j.last) : '—'}`;
+      $('#thLog').innerHTML = j.msgs.map((m) => `<div class="m ${m.who === 'a' ? 'a' : 'u'}">${m.kind === 'fb' ? '💡 ' : ''}${esc(m.text)}<small>${m.who === 'a' ? 'Siz' : esc(m.name || 'Foydalanuvchi')} · ${mdt(m.created)}${m.who === 'a' && m.seen_user ? ' ✓✓' : ''}</small></div>`).join('');
+      $('#thLog').scrollTop = 1e9; $('#thText').disabled = false; $('#thSend').disabled = false;
+      if (!quiet) { $$th().forEach((b) => b.classList.toggle('on', b.dataset.th === short)); $('#thText').focus(); }
+    } catch (e) { toast(e.message); }
+  }
+  const $$th = () => document.querySelectorAll('#thRows [data-th]');
+  $('#thRows').addEventListener('click', (e) => { const b = e.target.closest('[data-th]'); if (b) openThread(b.dataset.th).then(loadThreads); });
+  async function sendReply(e) {
+    if (e) e.preventDefault();
+    const text = $('#thText').value.trim(); if (!text || !thCur) return;
+    try { await api('/api/admin/msgs', { method: 'POST', body: { short: thCur, text } }); $('#thText').value = ''; await openThread(thCur, true); loadThreads(); } catch (err) { toast(err.message); }
+  }
+  $('#thForm').addEventListener('submit', sendReply);
+  $('#thText').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) sendReply(e); });
+  setInterval(() => { if (!$('#app').hidden && CFG.token) loadThreads(); }, 20000);
 
   const codeStyle = { active: ['Faol', 'background:#1E2C14;color:#CFF59A'], unused: ['Ishlatilmagan', 'background:#33260F;color:#FFCB7A'], expired: ['Muddati tugagan', 'background:#23272F;color:#A8AEBA'], revoked: ['Bekor qilingan', 'background:#2A1316;color:#FF9A9A'] };
   function renderCodes() {

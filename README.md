@@ -102,16 +102,21 @@ Bitta sahnada har chiroq alohida pozitsiyada turishi mumkin — programmer har c
 - Har chiroq tugmasida yoʻnalish belgisi: ◀ chapda, ● markazda, ▶ oʻngda.
 - Keyin **CUE YOZISH** — hammasi bitta cue’ga yoziladi.
 
-## 10. Toʻlov jarayoni
+## 10. Toʻlov jarayoni (Sahna Ovozi bilan bir xil)
 
 | Qadam | Kim | Nima boʻladi |
 | --- | --- | --- |
-| 1 | Foydalanuvchi | Sinov tugaydi → **Telegram bot orqali toʻlash** (ID avtomatik oʻtadi) |
-| 2 | Bot | Tarif → karta raqami, summa |
-| 3 | Foydalanuvchi | Pul oʻtkazadi, chek rasmini botga yuboradi |
-| 4 | Bot → Siz | Chek **Tasdiqlash / Rad etish** tugmalari bilan keladi |
-| 5 | Bot | Tarifga mos kodni foydalanuvchiga yuboradi |
-| 6 | Foydalanuvchi | Kodni dasturga kiritadi → faol |
+| 1 | Foydalanuvchi | Sinov tugaydi → tarif tanlaydi, kartaga pul oʻtkazadi |
+| 2a | Foydalanuvchi | Chekni **Telegram bot**ga yuboradi (ID avtomatik oʻtadi) |
+| 2b | Foydalanuvchi | yoki **«Chekni shu yerdan yuborish»** — dasturning oʻzidan, Telegram'siz (chek boʻlmasa — ism va telefon bilan soʻrov) |
+| 3 | Bot → Siz | Chek / soʻrov **Tasdiqlash / Rad etish** tugmalari bilan keladi (admin sahifada ham) |
+| 4 | Server | Kod yaratiladi va **shu qurilmaga bogʻlanadi** — dastur ochiq boʻlsa 30 soniyada **oʻzi faollashadi** |
+| 5 | Bot | Kodni zaxira sifatida xaridorga ham yuboradi (kerak boʻlsa qoʻlda kiritiladi) |
+
+- **Uzaytirish:** faol tarif ustiga yangi kod faollashtirilsa, muddat joriy muddat ustiga qoʻshiladi.
+- **Eslatma:** muddat tugashidan 3 kun oldin bot eslatadi (har soatda, `.github/workflows/remind.yml`).
+- **💬 Admin bilan yozishma:** dasturdagi **✉ ADMIN** tugmasi (yangi javob kelsa yashil miltillaydi) → savol/taklif. Admin sahifada **💬 Xabarlar** boʻlimi; Telegram'da xabarga «Reply» qilsangiz ham javob dasturga boradi.
+- Xato kod urinishlari: bitta IP dan 15 daqiqada 10 tadan ortigʻi bloklanadi.
 
 Botdagi admin buyruqlari: `/kutilayotgan` · `/kod PR` · `/karta 8600123412341234 Ism Familiya`
 

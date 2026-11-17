@@ -29,6 +29,11 @@ export async function ensureSchema(db) {
     db.prepare("CREATE INDEX IF NOT EXISTS sn_payments_status ON sn_payments(status, created)"),
     db.prepare("CREATE TABLE IF NOT EXISTS sn_sessions (uid INTEGER PRIMARY KEY, short TEXT, plan_id TEXT, step TEXT, ts INTEGER)"),
     db.prepare("CREATE TABLE IF NOT EXISTS sn_fail (ip TEXT, ts INTEGER)"),
+    // pultning o'zidan yuborilgan chek rasmlari (Telegram botsiz)
+    db.prepare("CREATE TABLE IF NOT EXISTS sn_receipts (id TEXT PRIMARY KEY, mime TEXT, data TEXT, created INTEGER)"),
+    // foydalanuvchi ↔ admin yozishmasi (Sahna Ovozi bilan bir xil). device — qurilmaning maxfiy ID si, short — ko'rinadigan SN-1234
+    db.prepare("CREATE TABLE IF NOT EXISTS sn_msgs (id INTEGER PRIMARY KEY AUTOINCREMENT, device TEXT NOT NULL, who TEXT NOT NULL, name TEXT, text TEXT NOT NULL, kind TEXT, created INTEGER, seen_admin INTEGER DEFAULT 0, seen_user INTEGER DEFAULT 0)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS sn_msgs_dev ON sn_msgs(device, id)"),
   ]);
   ready = true;
 }
@@ -140,3 +145,4 @@ export async function signLicense(db, payload) {
 
 export const clientIp = (request) => request.headers.get("CF-Connecting-IP") || "0.0.0.0";
 export const DEVICE_RE = /^[a-f0-9-]{20,64}$/i;
+export const SHORT_RE = /SN-\d{4}/;

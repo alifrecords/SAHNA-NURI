@@ -189,6 +189,26 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .code-row input { flex: 1 1 200px; min-height: 50px; border: 2px solid var(--ink); border-radius: 12px; padding: 0 14px; font-size: 16px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 .code-row .btn { min-height: 50px; font-size: 14px; }
 .code-msg { font-size: 13px; font-weight: 600; min-height: 18px; }
+.pw-more { border-top: 1px solid var(--line); padding-top: 14px; }
+.pw-box { flex: 1 1 320px; display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.pw-box h2 { margin: 0; }
+.pw-box input:not([type=file]) { min-height: 44px; border: 2px solid var(--line); border-radius: 12px; padding: 0 12px; font-size: 15px; background: #fff; color: var(--ink); width: 100%; box-sizing: border-box; }
+.pw-box input:focus { border-color: var(--ink); }
+.pf-row { display: flex; gap: 8px; } .pf-row input { flex: 1 1 0; min-width: 0; }
+.pf-file { display: flex; align-items: center; justify-content: center; min-height: 54px; border: 2px dashed var(--ink); border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; padding: 0 12px; text-align: center; }
+.pf-file input { display: none; } .pf-file.has { border-style: solid; border-color: var(--on); background: var(--on-soft); color: #14532d; }
+.chat-log { min-height: 120px; max-height: 240px; overflow-y: auto; border: 2px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 6px; background: #fafafa; }
+.chat-log .m { max-width: 85%; padding: 8px 11px; border-radius: 12px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+.chat-log .m.u { align-self: flex-end; background: var(--ink); color: #fff; }
+.chat-log .m.a { align-self: flex-start; background: #fff; border: 1px solid var(--line); }
+.chat-log .m small { display: block; opacity: .6; font-size: 10px; margin-top: 2px; }
+.chat-log .empty { margin: auto; color: var(--muted); font-size: 13px; }
+.chat-row { display: flex; gap: 8px; } .chat-row input { flex: 1; }
+.pill.msgb { cursor: pointer; }
+.pill.msgb b { background: var(--on); color: #fff; border-radius: 999px; padding: 0 6px; margin-left: 4px; font-size: 11px; }
+.pill.msgb.new { background: var(--on); color: #fff; animation: msgblink 1.1s ease-in-out infinite; }
+.pill.msgb.new b { background: #fff; color: var(--on); }
+@keyframes msgblink { 50% { opacity: .45; } }
 
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 14px; font-weight: 600; opacity: 0; pointer-events: none; transition: .2s; z-index: 60; max-width: calc(100% - 32px); }
 .toast.show { opacity: 1; transform: translateX(-50%); }

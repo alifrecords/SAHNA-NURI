@@ -83,7 +83,7 @@ async function onDecision(env, cb, action, id) {
   const chat = await adminChat(env.DB);
   if (!chat || String(cb.message.chat.id) !== chat) return tg(env, "answerCallbackQuery", { callback_query_id: cb.id, text: "Faqat admin uchun" });
   const r = action === "ok" ? await approvePayment(env, id, "telegram") : await rejectPayment(env, id);
-  await tg(env, "answerCallbackQuery", { callback_query_id: cb.id, text: r.error || (action === "ok" ? "Tasdiqlandi, kod yuborildi" : "Rad etildi") });
+  await tg(env, "answerCallbackQuery", { callback_query_id: cb.id, text: r.error || (action === "ok" ? "Tasdiqlandi" : "Rad etildi") });
 }
 
 async function onAdminCommand(env, msg, cmd, arg) {
@@ -142,6 +142,16 @@ async function handle(env, u) {
         return send(env, msg.chat.id, "Bog'landi! Endi to'lov cheklari shu yerga Tasdiqlash / Rad etish tugmalari bilan keladi.\n\nBuyruqlar: /kutilayotgan, /kod PR, /karta");
       }
       return send(env, msg.chat.id, "Kod noto'g'ri yoki muddati o'tgan. Admin sahifada yangi kod oling.");
+    }
+    // admin Telegram'da foydalanuvchi xabariga «Reply» qilsa — javob o'sha dasturning yozishmasiga boradi
+    if (msg.reply_to_message && !cmd.startsWith("/") && String(msg.chat.id) === (await adminChat(db))) {
+      const rm = String(msg.reply_to_message.text || msg.reply_to_message.caption || "").match(/SN-\d{4}/);
+      const d = rm && (await db.prepare("SELECT id FROM sn_devices WHERE short = ?").bind(rm[0]).first());
+      if (d) {
+        await db.prepare("INSERT INTO sn_msgs (device, who, name, text, kind, created, seen_admin) VALUES (?, 'a', 'Admin', ?, 'chat', ?, 1)").bind(d.id, text.slice(0, 2000), Date.now()).run();
+        await db.prepare("UPDATE sn_msgs SET seen_admin = 1 WHERE device = ? AND who = 'u'").bind(d.id).run();
+        return send(env, msg.chat.id, `✓ Javob <code>${rm[0]}</code> dasturiga yuborildi.`);
+      }
     }
     if (cmd === "/start") return onStart(env, msg, arg);
     if (cmd.startsWith("/") && String(msg.chat.id) === (await adminChat(db))) return onAdminCommand(env, msg, cmd, arg);

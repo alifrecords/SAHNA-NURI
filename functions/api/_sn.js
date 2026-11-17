@@ -92,7 +92,10 @@ export async function activate(db, deviceId, raw) {
   if (c.device && c.device !== deviceId) return { error: "Bu kod boshqa kompyuterda faollashtirilgan." };
   if (!c.device) {
     const now = Date.now();
-    const exp = c.days > 0 ? now + c.days * 86400000 : 0;
+    // uzaytirish: qurilmada faol tarif bo'lsa, yangi muddat uning ustiga qo'shiladi (Sahna Ovozi bilan bir xil)
+    const cur = await db.prepare("SELECT MAX(expires) AS mx FROM sn_codes WHERE device = ? AND status = 'active' AND expires > ?").bind(deviceId, now).first();
+    const base = cur && cur.mx > now ? cur.mx : now;
+    const exp = c.days > 0 ? base + c.days * 86400000 : 0;
     await db.prepare("UPDATE sn_codes SET device = ?, activated = ?, expires = ?, status = 'active' WHERE code = ? AND device IS NULL").bind(deviceId, now, exp, code).run();
   }
   return { ok: true, license: await licenseFor(db, deviceId) };
@@ -140,18 +143,39 @@ export async function approvePayment(env, id, by) {
     throw e;
   }
   await db.prepare("UPDATE sn_payments SET status = 'approved', decided = ?, code = ? WHERE id = ?").bind(Date.now(), code.code, id).run();
+  // Dastur ID (SN-1234) ma'lum bo'lsa — kod darhol shu qurilmaga bog'lanadi: dastur ochiq bo'lsa 30 soniyada o'zi faollashadi
+  // (Sahna Ovozi bilan bir xil). Kod baribir xaridorga ham yuboriladi — zaxira sifatida.
+  let auto = false;
+  if (p.short) {
+    const d = await db.prepare("SELECT id FROM sn_devices WHERE short = ?").bind(p.short).first();
+    if (d) { const r = await activate(db, d.id, code.code); auto = !!(r && r.ok); }
+  }
   const days = code.days ? `${code.days} kun (faollashtirilgan kundan boshlab)` : "cheksiz";
   const warn = [];
-  try {
+  if (p.tg_user) try {
     await send(env, p.tg_user, [
-      `<b>To'lov tasdiqlandi</b>`, `Faollashtirish kodingiz:`, `<code>${code.code}</code>`, ``,
-      `Dasturdagi "Faollashtirish kodi" maydoniga kiriting. Amal qilish: ${days}.`,
+      `<b>To'lov tasdiqlandi</b> ✅`,
+      auto ? `SAHNA NURI ochiq bo'lsa, o'zi faollashadi (30 soniya ichida). Bo'lmasa, kodni dasturdagi "Aktivatsiya kodi" maydoniga kiriting:` : `Faollashtirish kodingiz — dasturdagi "Aktivatsiya kodi" maydoniga kiriting:`,
+      `<code>${code.code}</code>`, ``, `Amal qilish: ${days}.`,
     ].join("\n"));
   } catch (e) { warn.push("Xaridorga yuborilmadi: " + e.message); }
+  // pultdagi yozishmaga ham (bot ishlatmagan xaridor uchun)
+  if (p.short) {
+    const d = await db.prepare("SELECT id FROM sn_devices WHERE short = ?").bind(p.short).first();
+    if (d) await db.prepare("INSERT INTO sn_msgs (device, who, name, text, kind, created, seen_admin) VALUES (?, 'a', 'Admin', ?, 'chat', ?, 1)")
+      .bind(d.id, `✅ To'lov tasdiqlandi: ${p.plan_name}. ${auto ? "Tarif shu qurilmada o'zi faollashdi." : "Kod:"} ${code.code}`, Date.now()).run();
+  }
+  await editAdminMsg(env, p, `\n\n<b>Tasdiqlandi.</b> Kod: <code>${code.code}</code>${auto ? " · qurilmada o'zi faollashdi" : ""}`);
+  return { ok: true, code, auto, warn };
+}
+
+// Telegram'dagi admin xabarini yangilash: rasmli xabar — caption, matnli (pultdan kelgan) — text
+export async function editAdminMsg(env, p, tail) {
   try {
-    if (p.admin_msg) await tg(env, "editMessageCaption", { chat_id: p.admin_chat, message_id: p.admin_msg, parse_mode: "HTML", caption: p.admin_caption + `\n\n<b>Tasdiqlandi.</b> Kod: <code>${code.code}</code>` });
+    if (!p.admin_msg) return;
+    const text = /^(web|req)$/.test(p.photo_kind || "");
+    await tg(env, text ? "editMessageText" : "editMessageCaption", { chat_id: p.admin_chat, message_id: p.admin_msg, parse_mode: "HTML", [text ? "text" : "caption"]: p.admin_caption + tail });
   } catch (_) {}
-  return { ok: true, code, warn };
 }
 
 export async function rejectPayment(env, id) {
@@ -159,8 +183,8 @@ export async function rejectPayment(env, id) {
   const r = await db.prepare("UPDATE sn_payments SET status = 'rejected', decided = ? WHERE id = ? AND status = 'pending'").bind(Date.now(), id).run();
   if (!r.meta || !r.meta.changes) return { error: "Bu to'lov allaqachon ko'rib chiqilgan yoki topilmadi" };
   const p = await db.prepare("SELECT * FROM sn_payments WHERE id = ?").bind(id).first();
-  try { await send(env, p.tg_user, "Afsuski, to'lovingiz tasdiqlanmadi. Chekni tekshirib qayta yuboring yoki admin bilan bog'laning."); } catch (_) {}
-  try { if (p.admin_msg) await tg(env, "editMessageCaption", { chat_id: p.admin_chat, message_id: p.admin_msg, parse_mode: "HTML", caption: p.admin_caption + `\n\n<b>Rad etildi.</b>` }); } catch (_) {}
+  if (p.tg_user) try { await send(env, p.tg_user, "Afsuski, to'lovingiz tasdiqlanmadi. Chekni tekshirib qayta yuboring yoki admin bilan bog'laning."); } catch (_) {}
+  await editAdminMsg(env, p, `\n\n<b>Rad etildi.</b>`);
   return { ok: true };
 }
 

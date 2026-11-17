@@ -38,6 +38,7 @@ if (location.protocol === 'file:') {
       <label class="pill title-pill"><span class="sr">Spektakl nomi</span><span>Spektakl:</span><input id="showTitle" value="Yangi spektakl"></label>
       <button class="pill conn" id="connPill" type="button"><i class="dot"></i><span id="connText">DMX ulanmagan</span></button>
       <button class="pill lic" id="licBadge" type="button">Tekshirilmoqda…</button>
+      <button class="pill msgb" id="msgBadge" type="button" title="Admin bilan yozishma">✉ ADMIN <b id="msgCount" hidden></b></button>
       <div class="langsw" role="group" aria-label="Til · Язык · Language"><button data-lang="uz" type="button">UZ</button><button data-lang="ru" type="button">RU</button><button data-lang="en" type="button">EN</button></div>
     </div>
     <div class="top-act">
@@ -348,8 +349,8 @@ if (location.protocol === 'file:') {
         <ol class="steps" data-i18n-html="steps">
           <li><i>1</i><span>Yuqoridan tarifni tanlang.</span></li>
           <li><i>2</i><span>Kartaga <b class="pw-amount"></b> oʻtkazing. Izohga ID raqamingizni yozing.</span></li>
-          <li><i>3</i><span>Chek (skrinshot)ni Telegram botga yuboring.</span></li>
-          <li><i>4</i><span>Tasdiqlangach bot <b>aktivatsiya kodini</b> yuboradi. Uni pastga kiriting.</span></li>
+          <li><i>3</i><span>Chek (skrinshot)ni Telegram botga yoki pastdagi <b>«Chekni shu yerdan yuborish»</b> orqali yuboring.</span></li>
+          <li><i>4</i><span>Admin tasdiqlagach tarif shu qurilmada <b>oʻzi faollashadi</b>. Bot <b>aktivatsiya kodini</b> ham yuboradi — kerak boʻlsa pastga kiriting.</span></li>
         </ol>
         <a class="btn tg" id="tgBtn" target="_blank" rel="noopener">TELEGRAM BOT ORQALI TOʻLASH</a>
       </div>
@@ -369,6 +370,23 @@ if (location.protocol === 'file:') {
           <span class="code-msg" id="codeMsg"></span>
         </form>
         <span class="muted small">Kod faqat shu qurilmada ishlaydi va tarif muddati tugaguncha amal qiladi.</span>
+      </div>
+    </div>
+    <div class="pw-cols pw-more">
+      <form class="pw-box" id="payForm">
+        <h2>Chekni shu yerdan yuborish</h2>
+        <p class="muted small">Telegram'siz ham boʻladi. Chek rasmini tanlang (yoki chek boʻlmasa — ism va telefoningizni yozing). Admin tasdiqlagach tarif shu qurilmada <b>oʻzi faollashadi</b>, kod kiritish shart emas.</p>
+        <label class="pf-file"><input type="file" id="pfImg" accept="image/*"><span id="pfImgName">Chek rasmini tanlash</span></label>
+        <div class="pf-row"><input id="pfName" placeholder="Ismingiz" maxlength="60" autocomplete="name"><input id="pfPhone" placeholder="Telefon" maxlength="30" autocomplete="tel" inputmode="tel"></div>
+        <input id="pfNote" placeholder="Izoh (ixtiyoriy)" maxlength="200">
+        <button class="btn wide" id="pfSend" type="submit">ADMINGA YUBORISH · <span class="pw-amount"></span></button>
+        <span class="code-msg" id="pfMsg"></span>
+      </form>
+      <div class="pw-box" id="chatBox">
+        <h2>Admin bilan yozishma</h2>
+        <p class="muted small">Savol, fikr yoki taklif yozing — javob shu yerga keladi.</p>
+        <div class="chat-log" id="chatLog" aria-live="polite"></div>
+        <form class="chat-row" id="chatForm"><input id="chatInput" placeholder="Xabar yozing…" maxlength="1000" autocomplete="off"><button class="btn" type="submit">YUBORISH</button></form>
       </div>
     </div>
   </section>
