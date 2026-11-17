@@ -10,6 +10,7 @@ Teatr va sahna uchun DMX yorugʻlik boshqaruvi. Tuzilishi **AZ-ARENA** bilan bir
 | `assets/license.js` | 20 daqiqalik sinov, aktivatsiya kodi (Ed25519 imzo, oflayn tekshiriladi) |
 | `admin.html` | Faqat siz uchun: toʻlovlar, karta, tariflar, kodlar, Telegram bot |
 | `functions/api/` | Server qismi (Cloudflare Pages Functions + D1) |
+| `assets/i18n.js` | Uch til: oʻzbek, rus, ingliz (yuqoridagi UZ · RU · EN tugmalari) |
 | `sw.js` | Oflayn ishlash: internet uzilsa ham pult ochiladi |
 
 Xarajat: **0 soʻm**. GitHub, Cloudflare Pages, D1 va Telegram bepul.

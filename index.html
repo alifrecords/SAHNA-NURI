@@ -38,6 +38,7 @@ if (location.protocol === 'file:') {
       <label class="pill title-pill"><span class="sr">Spektakl nomi</span><span>Spektakl:</span><input id="showTitle" value="Yangi spektakl"></label>
       <button class="pill conn" id="connPill" type="button"><i class="dot"></i><span id="connText">DMX ulanmagan</span></button>
       <button class="pill lic" id="licBadge" type="button">Tekshirilmoqda…</button>
+      <div class="langsw" role="group" aria-label="Til · Язык · Language"><button data-lang="uz" type="button">UZ</button><button data-lang="ru" type="button">RU</button><button data-lang="en" type="button">EN</button></div>
     </div>
     <div class="top-act">
       <button class="btn" id="saveBtn" type="button">SAQLASH</button>
@@ -270,6 +271,7 @@ if (location.protocol === 'file:') {
       </section>
       <section class="panel grow1 help">
         <div class="ph"><h2>BIRINCHI MARTA ULASH (WINDOWS · uDMX)</h2></div>
+        <div data-i18n-html="help" class="help-body">
         <ol>
           <li><b>FreeStyler’ni yoping.</b> Bir vaqtda faqat bitta dastur kabeldan foydalana oladi.</li>
           <li>Dasturni <b>Chrome</b> yoki <b>Edge</b>’da oching.</li>
@@ -286,6 +288,7 @@ if (location.protocol === 'file:') {
         <p class="muted small">FreeStyler’ga qaytish kerak boʻlsa, Zadig’da drayverni yana <b>libusbK</b>’ga almashtirasiz.</p>
         <p class="muted small">Bir marta ruxsat bergach, keyingi safar kabel ulanishi bilan dastur oʻzi ulanadi.</p>
         <p class="muted small"><b>iPad va iPhone:</b> Safari USB’ga ruxsat bermaydi. Ularda dastur simulyatsiya va mashq rejimida ishlaydi; sahnaga signal kompyuter orqali chiqadi.</p>
+        </div>
       </section>
     </div>
   </section>
@@ -313,6 +316,7 @@ if (location.protocol === 'file:') {
       <div class="logo sm" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l-1 5h-4z"/><path d="M10 8l-5 13"/><path d="M14 8l5 13"/><path d="M12 8v13"/></svg></div>
       <div class="brand-text"><span class="brand-name">SAHNA NURI</span><span class="brand-az">Azimxodjayev Music</span></div>
       <span class="grow"></span>
+      <div class="langsw" role="group" aria-label="Til · Язык · Language"><button data-lang="uz" type="button">UZ</button><button data-lang="ru" type="button">RU</button><button data-lang="en" type="button">EN</button></div>
       <span class="pill" id="pwTimer"></span>
       <button class="btn sm" id="pwClose" type="button" aria-label="Yopish">✕</button>
     </div>
@@ -322,7 +326,7 @@ if (location.protocol === 'file:') {
     <div class="pw-cols">
       <div>
         <h2>Qanday faollashtiriladi</h2>
-        <ol class="steps">
+        <ol class="steps" data-i18n-html="steps">
           <li><i>1</i><span>Yuqoridan tarifni tanlang.</span></li>
           <li><i>2</i><span>Kartaga <b class="pw-amount"></b> oʻtkazing. Izohga ID raqamingizni yozing.</span></li>
           <li><i>3</i><span>Chek (skrinshot)ni Telegram botga yuboring.</span></li>
@@ -354,6 +358,7 @@ if (location.protocol === 'file:') {
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="/api/env"></script>
+<script src="/assets/i18n.js"></script>
 <script src="/assets/dmx.js"></script>
 <script src="/assets/license.js"></script>
 <script src="/assets/app.js"></script>

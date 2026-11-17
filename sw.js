@@ -1,6 +1,6 @@
 // SAHNA NURI — oflayn ishlash: dastur fayllari keshda saqlanadi, internet uzilsa ham pult ochiladi.
-const CACHE = 'sahna-nuri-v2';
-const CORE = ['/', '/index.html', '/assets/app.css', '/assets/app.js', '/assets/dmx.js', '/assets/license.js', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE = 'sahna-nuri-v3';
+const CORE = ['/', '/index.html', '/assets/app.css', '/assets/app.js', '/assets/i18n.js', '/assets/dmx.js', '/assets/license.js', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));

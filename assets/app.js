@@ -342,7 +342,7 @@
   function renderCues() {
     const list = $('#cueList');
     if (!show.cues.length) {
-      list.innerHTML = '<div class="empty">Hali cue yoʻq. Chiroqlarni tanlab, rang va intensivlik bering, keyin <b>CUE YOZISH</b> ni bosing.</div>';
+      list.innerHTML = '<div class="empty">Hali cue yoʻq. Chiroqlarni tanlab, rang va intensivlik bering, keyin „CUE YOZISH“ ni bosing.</div>';
     } else {
       list.innerHTML = show.cues.map((q, i) => {
         const cls = i === play.cur ? 'cur' : i === play.next ? 'next' : '';
@@ -420,7 +420,8 @@
     if (isStart() && show.cues.length >= LIMITS.cues) { toast(`Start tarifida ${LIMITS.cues} tagacha cue. PRO’ga oʻting.`); openPaywall(); return; }
     const s = snapshot();
     const at = play.cur >= 0 ? play.cur + 1 : show.cues.length;
-    const q = { id: uid(), num: nextNum(), name: 'Sahna ' + (show.cues.length + 1), fade: 2, ...s };
+    const sceneWord = { uz: 'Sahna', ru: 'Сцена', en: 'Scene' }[(window.SNI18N && SNI18N.lang()) || 'uz'];
+    const q = { id: uid(), num: nextNum(), name: sceneWord + ' ' + (show.cues.length + 1), fade: 2, ...s };
     show.cues.splice(at, 0, q);
     prog.vals = {}; prog.fx = [];
     play.cur = at; play.to = cueLook(q); play.from = null; play.dur = 0; play.fx = q.fx.map((x) => ({ ...x, fids: [...x.fids] }));
@@ -1218,4 +1219,9 @@
   SNDmx.autoConnect();
   if (L()) { L().onChange(updateLicenseUI); L().start(); }
   window.addEventListener('beforeunload', () => save(true));
+  // Til almashganda hamma narsani qayta chizish (matnlar i18n.js orqali o'giriladi)
+  if (window.SNI18N) {
+    SNI18N.onChange(() => { renderAll(); if (L()) updateLicenseUI(); if (pwOpen) renderPaywall(); });
+    SNI18N.applyHtml(); SNI18N.refresh();
+  }
 })();

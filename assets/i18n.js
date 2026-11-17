@@ -1,0 +1,442 @@
+// SAHNA NURI — uch til: o'zbek (asosiy), rus, ingliz.
+// Dastur matnlari o'zbekcha yoziladi; bu modul ekrandagi matnni tanlangan tilga o'giradi
+// (aniq moslik + qoliplar). Murakkab HTML bloklar data-i18n-html bilan to'liq almashtiriladi.
+window.SNI18N = (() => {
+  const LS = 'sn_lang';
+  let lang = 'uz';
+  try { lang = localStorage.getItem(LS) || 'uz'; } catch (_) {}
+  if (!['uz', 'ru', 'en'].includes(lang)) lang = 'uz';
+
+  // ---------- aniq moslik: o'zbekcha → [ruscha, inglizcha] ----------
+  const D = {
+    // yuqori panel va bo'limlar
+    'DMX yorugʻlik boshqaruvi': ['DMX-управление светом', 'DMX lighting control'],
+    'Spektakl:': ['Спектакль:', 'Show:'],
+    'Spektakl nomi': ['Название спектакля', 'Show name'],
+    'DMX ulanmagan': ['DMX не подключён', 'DMX not connected'],
+    'DMX: xato': ['DMX: ошибка', 'DMX: error'],
+    'Tekshirilmoqda…': ['Проверка…', 'Checking…'],
+    'SAQLASH': ['СОХРАНИТЬ', 'SAVE'],
+    'SAQLANDI': ['СОХРАНЕНО', 'SAVED'],
+    'BLACKOUT FAOL': ['BLACKOUT ВКЛ', 'BLACKOUT ON'],
+    'Boʻlimlar': ['Разделы', 'Sections'],
+    'Pult': ['Пульт', 'Console'],
+    'Sahna': ['Сцена', 'Stage'],
+    'Patch (chiroqlar)': ['Патч (приборы)', 'Patch (fixtures)'],
+    'Profillar': ['Профили', 'Profiles'],
+    'Ulanish': ['Подключение', 'Connection'],
+    'Monitor': ['Монитор', 'Monitor'],
+    'Probel — GO · B — Blackout · Esc — Release': ['Пробел — GO · B — Blackout · Esc — Release', 'Space — GO · B — Blackout · Esc — Release'],
+    'Probel': ['Пробел', 'Space'],
+    'Server ulangan': ['Сервер подключён', 'Server connected'],
+    'Server bilan aloqa yoʻq': ['Нет связи с сервером', 'No server connection'],
+    // pult
+    'CHIROQLAR': ['ПРИБОРЫ', 'FIXTURES'],
+    'Hammasi': ['Все', 'All'],
+    'Tozalash': ['Сброс', 'Clear'],
+    'Beamlar': ['Бимы', 'Beams'],
+    'Panellar': ['Панели', 'Panels'],
+    'PARlar': ['PAR-ы', 'PARs'],
+    'Barlar': ['Бары', 'Bars'],
+    'Front': ['Фронт', 'Front'],
+    'Dimmer': ['Диммер', 'Dimmer'],
+    'Boshqa': ['Другие', 'Other'],
+    'Chiroqlar yoʻq. Patch boʻlimida qoʻshing.': ['Приборов нет. Добавьте в разделе «Патч».', 'No fixtures. Add them in the Patch section.'],
+    'Chiroqlar yoʻq': ['Приборов нет', 'No fixtures'],
+    'CUE ROʻYXATI': ['СПИСОК CUE', 'CUE LIST'],
+    'NOMI': ['НАЗВАНИЕ', 'NAME'],
+    'FADE (s)': ['FADE (с)', 'FADE (s)'],
+    'HOLAT': ['СТАТУС', 'STATUS'],
+    'IJRODA': ['ИДЁТ', 'LIVE'],
+    'KEYINGI': ['СЛЕДУЮЩИЙ', 'NEXT'],
+    'PAUZA': ['ПАУЗА', 'PAUSE'],
+    'Hali cue yoʻq. Chiroqlarni tanlab, rang va intensivlik bering, keyin „CUE YOZISH“ ni bosing.': ['Cue пока нет. Выберите приборы, задайте цвет и яркость и нажмите «ЗАПИСАТЬ CUE».', 'No cues yet. Select fixtures, set colour and intensity, then press “RECORD CUE”.'],
+    'CUE YOZISH': ['ЗАПИСАТЬ CUE', 'RECORD CUE'],
+    'YANGILASH': ['ОБНОВИТЬ', 'UPDATE'],
+    'OʻCHIRISH': ['УДАЛИТЬ', 'DELETE'],
+    'SAHNANI OʻCHIRISH': ['ПОГАСИТЬ СЦЕНУ', 'FADE OUT STAGE'],
+    'ORQAGA': ['НАЗАД', 'BACK'],
+    'Cue nomi': ['Название cue', 'Cue name'],
+    'Fade soniya': ['Fade, секунды', 'Fade seconds'],
+    'PROGRAMMER': ['ПРОГРАММЕР', 'PROGRAMMER'],
+    'Intensivlik': ['Яркость', 'Intensity'],
+    'Rang': ['Цвет', 'Colour'],
+    'Pozitsiya': ['Позиция', 'Position'],
+    'Effekt': ['Эффект', 'Effect'],
+    'PROGRAMMERNI TOZALASH': ['ОЧИСТИТЬ ПРОГРАММЕР', 'CLEAR PROGRAMMER'],
+    'Qizil': ['Красный', 'Red'], 'Toʻq sariq': ['Оранжевый', 'Orange'], 'Sariq': ['Жёлтый', 'Yellow'],
+    'Yashil': ['Зелёный', 'Green'], 'Koʻk': ['Синий', 'Blue'], 'Binafsha': ['Фиолетовый', 'Purple'],
+    'Pushti': ['Розовый', 'Pink'], 'Oq': ['Белый', 'White'], 'Iliq oq': ['Тёплый белый', 'Warm white'],
+    'Markaz': ['Центр', 'Centre'], 'Chap': ['Слева', 'Left'], 'Oʻng': ['Справа', 'Right'],
+    'Tomoshabin': ['Зритель', 'Audience'], 'Shift': ['Потолок', 'Ceiling'], 'Pol': ['Пол', 'Floor'],
+    'Chase': ['Чейз', 'Chase'], 'Strob': ['Строб', 'Strobe'], 'Puls': ['Пульс', 'Pulse'],
+    'Kamalak': ['Радуга', 'Rainbow'], 'Doira': ['Круг', 'Circle'], 'Toʻlqin': ['Волна', 'Wave'],
+    'PLAYBACK FADERLAR': ['PLAYBACK ФЕЙДЕРЫ', 'PLAYBACK FADERS'],
+    'Faderni suring · FLASH bosib turilganda guruh toʻliq yonadi': ['Двигайте фейдер · пока FLASH нажат, группа горит на 100%', 'Move the fader · hold FLASH to bring the group to full'],
+    'FX tezlik': ['Скорость FX', 'FX speed'],
+    'Programmer tozalandi': ['Программер очищен', 'Programmer cleared'],
+    'Avval chiroq tanlang': ['Сначала выберите прибор', 'Select a fixture first'],
+    'Effekt uchun avval chiroq tanlang': ['Для эффекта сначала выберите приборы', 'Select fixtures for the effect first'],
+    'Roʻyxat oxiri': ['Конец списка', 'End of list'],
+    'Avval cue yozing': ['Сначала запишите cue', 'Record a cue first'],
+    'Yangilash uchun avval cue’ni ijro eting': ['Чтобы обновить, сначала запустите cue', 'Run a cue before updating it'],
+    'Sahna 2 soniyada oʻchmoqda': ['Сцена гаснет за 2 секунды', 'Stage fading out over 2 seconds'],
+    // patch
+    'PATCH · CHIROQLAR VA DMX MANZILLAR': ['ПАТЧ · ПРИБОРЫ И DMX-АДРЕСА', 'PATCH · FIXTURES AND DMX ADDRESSES'],
+    'Nomi': ['Название', 'Name'], 'Profil': ['Профиль', 'Profile'], 'Manzil': ['Адрес', 'Address'],
+    'Kanal': ['Каналы', 'Channels'], 'Oraliq': ['Диапазон', 'Range'],
+    'DMX manzil': ['DMX-адрес', 'DMX address'], 'Oʻchirish': ['Удалить', 'Delete'],
+    'CHIROQ QOʻSHISH': ['ДОБАВИТЬ ПРИБОР', 'ADD FIXTURE'],
+    'Soni': ['Количество', 'Quantity'],
+    'masalan: Beam': ['например: Beam', 'e.g. Beam'],
+    'Boshlangʻich manzil': ['Начальный адрес', 'Start address'],
+    'QOʻSHISH': ['ДОБАВИТЬ', 'ADD'],
+    'MANZILLARNI KETMA-KET QOʻYISH': ['РАССТАВИТЬ АДРЕСА ПОДРЯД', 'AUTO-ADDRESS IN ORDER'],
+    'STANDART 32 TA CHIROQ': ['СТАНДАРТНЫЕ 32 ПРИБОРА', 'DEFAULT 32 FIXTURES'],
+    'LOYIHA FAYLI': ['ФАЙЛ ПРОЕКТА', 'PROJECT FILE'],
+    'KOMPYUTERGA YUKLAB OLISH (.json)': ['СКАЧАТЬ НА КОМПЬЮТЕР (.json)', 'DOWNLOAD TO COMPUTER (.json)'],
+    'FAYLDAN OCHISH': ['ОТКРЫТЬ ИЗ ФАЙЛА', 'OPEN FROM FILE'],
+    'Manzillar ketma-ket qoʻyildi': ['Адреса расставлены подряд', 'Addresses assigned in order'],
+    'Diqqat: kanallar 512 dan oshdi': ['Внимание: каналов больше 512', 'Warning: more than 512 channels'],
+    'Bu SAHNA NURI fayli emas': ['Это не файл SAHNA NURI', 'This is not a SAHNA NURI file'],
+    // profillar
+    'PROFILLAR': ['ПРОФИЛИ', 'PROFILES'],
+    '+ YANGI PROFIL': ['+ НОВЫЙ ПРОФИЛЬ', '+ NEW PROFILE'],
+    'Profil — chiroqning „lugʻati“: qaysi kanal intensivlik, qaysi biri rang yoki pan ekanini bildiradi. Chiroq qoʻllanmasidagi DMX jadvalga moslang.': ['Профиль — «словарь» прибора: какой канал отвечает за яркость, цвет или pan. Сверьте с DMX-таблицей из инструкции прибора.', 'A profile is the fixture’s “dictionary”: which channel is intensity, colour or pan. Match it to the DMX chart in the fixture manual.'],
+    'PROFILNI TAHRIRLASH': ['РЕДАКТИРОВАНИЕ ПРОФИЛЯ', 'EDIT PROFILE'],
+    'Guruh (fader)': ['Группа (фейдер)', 'Group (fader)'],
+    'Vazifasi': ['Функция', 'Function'],
+    'Standart qiymat': ['Значение по умолчанию', 'Default value'],
+    '+ KANAL': ['+ КАНАЛ', '+ CHANNEL'],
+    'NUSXA OLISH': ['КОПИРОВАТЬ', 'DUPLICATE'],
+    'PROFILNI OʻCHIRISH': ['УДАЛИТЬ ПРОФИЛЬ', 'DELETE PROFILE'],
+    'RANG GʻILDIRAGI QIYMATLARI (0–255)': ['ЗНАЧЕНИЯ ЦВЕТОВОГО КОЛЕСА (0–255)', 'COLOUR WHEEL VALUES (0–255)'],
+    '„Shutter / Strob“ uchun standart qiymat — chiroq yorugʻlik chiqaradigan „ochiq“ holat. Chiroq yonmasa, qoʻllanmadan shu qiymatni tekshiring.': ['Значение по умолчанию для «Shutter / Строб» — «открытое» состояние, когда прибор светит. Если прибор не светит, проверьте это значение по инструкции.', 'The default for “Shutter / Strobe” is the “open” state where the fixture emits light. If it stays dark, check this value in the manual.'],
+    'Pan diapazoni (°)': ['Диапазон pan (°)', 'Pan range (°)'],
+    'Tilt diapazoni (°)': ['Диапазон tilt (°)', 'Tilt range (°)'],
+    'Qoʻllanmada yozilgan toʻliq burilish burchagi. Sahna boʻlimida nurni aniq yoʻnaltirish shunga bogʻliq.': ['Полный угол поворота из инструкции. От него зависит точное наведение луча в разделе «Сцена».', 'Full rotation angle from the manual. Accurate aiming in the Stage section depends on it.'],
+    'Kanalni oʻchirish': ['Удалить канал', 'Delete channel'],
+    'Bu profilda chiroqlar bor. Avval ularni boshqa profilga oʻtkazing.': ['В этом профиле есть приборы. Сначала переведите их на другой профиль.', 'Fixtures use this profile. Move them to another profile first.'],
+    'Yangi profil': ['Новый профиль', 'New profile'],
+    'Intensivlik (dimmer)': ['Яркость (диммер)', 'Intensity (dimmer)'], 'Qizil (R)': ['Красный (R)', 'Red (R)'],
+    'Yashil (G)': ['Зелёный (G)', 'Green (G)'], 'Koʻk (B)': ['Синий (B)', 'Blue (B)'], 'Oq (W)': ['Белый (W)', 'White (W)'],
+    'Shutter / Strob': ['Shutter / Строб', 'Shutter / Strobe'], 'Rang gʻildiragi': ['Цветовое колесо', 'Colour wheel'],
+    'Doimiy qiymat': ['Постоянное значение', 'Fixed value'],
+    'Dimmer blok': ['Диммерный блок', 'Dimmer pack'],
+    // ulanish
+    'DMX ULANISH': ['DMX-ПОДКЛЮЧЕНИЕ', 'DMX CONNECTION'],
+    'Anyma uDMX va klonlari (kumush USB → XLR kabel). Teatrdagi kabelingiz shu turda.': ['Anyma uDMX и клоны (серебристый кабель USB → XLR). Ваш театральный кабель этого типа.', 'Anyma uDMX and clones (silver USB → XLR cable). Your theatre cable is this type.'],
+    'uDMX ULASH': ['ПОДКЛЮЧИТЬ uDMX', 'CONNECT uDMX'],
+    'Enttec Pro, DMXKing ultraDMX, Eurolite USB-DMX512 PRO va mos klonlar.': ['Enttec Pro, DMXKing ultraDMX, Eurolite USB-DMX512 PRO и совместимые клоны.', 'Enttec Pro, DMXKing ultraDMX, Eurolite USB-DMX512 PRO and compatible clones.'],
+    'PRO ULASH': ['ПОДКЛЮЧИТЬ PRO', 'CONNECT PRO'],
+    'Enttec Open DMX va FTDI chipli arzon kabellar.': ['Enttec Open DMX и недорогие кабели на чипе FTDI.', 'Enttec Open DMX and low-cost FTDI-chip cables.'],
+    'OPEN DMX ULASH': ['ПОДКЛЮЧИТЬ OPEN DMX', 'CONNECT OPEN DMX'],
+    'Simulyatsiya': ['Симуляция', 'Simulation'],
+    'Qurilmasiz ishlash: cue yozish va mashq qilish uchun. Signal faqat Monitor’da koʻrinadi.': ['Работа без устройства: для записи cue и репетиций. Сигнал виден только в Мониторе.', 'Work without hardware: for recording cues and practice. The signal is shown only in Monitor.'],
+    'SIMULYATSIYA': ['СИМУЛЯЦИЯ', 'SIMULATION'],
+    'Simulyatsiya (qurilmasiz)': ['Симуляция (без устройства)', 'Simulation (no hardware)'],
+    'SINOV SIGNALI (2 s)': ['ТЕСТОВЫЙ СИГНАЛ (2 с)', 'TEST SIGNAL (2 s)'],
+    'UZISH': ['ОТКЛЮЧИТЬ', 'DISCONNECT'],
+    'MONITORNI OCHISH': ['ОТКРЫТЬ МОНИТОР', 'OPEN MONITOR'],
+    'BIRINCHI MARTA ULASH (WINDOWS · uDMX)': ['ПЕРВОЕ ПОДКЛЮЧЕНИЕ (WINDOWS · uDMX)', 'FIRST-TIME SETUP (WINDOWS · uDMX)'],
+    'Ulanmagan': ['Не подключено', 'Not connected'],
+    'Uzildi': ['Отключено', 'Disconnected'],
+    'Avval qurilmani ulang': ['Сначала подключите устройство', 'Connect a device first'],
+    'Sinov: barcha chiroqlar 2 soniya toʻliq yonadi': ['Тест: все приборы горят на 100% 2 секунды', 'Test: all fixtures at full for 2 seconds'],
+    "uDMX ochilmadi. Windows'da qurilma drayveri WinUSB bo'lishi kerak (Zadig dasturi bilan almashtiriladi). FreeStyler ochiq bo'lsa, uni yoping.": ['uDMX не открылся. В Windows драйвер устройства должен быть WinUSB (меняется программой Zadig). Если открыт FreeStyler, закройте его.', 'uDMX could not be opened. On Windows the device driver must be WinUSB (switch it with Zadig). If FreeStyler is open, close it.'],
+    'Port band: boshqa dastur (FreeStyler) ishlatyapti. Uni yopib qayta urining.': ['Порт занят другой программой (FreeStyler). Закройте её и попробуйте снова.', 'Port is busy: another program (FreeStyler) is using it. Close it and try again.'],
+    'Qurilma tanlanmadi.': ['Устройство не выбрано.', 'No device selected.'],
+    "Bu brauzer USB'ni qo'llamaydi. Kompyuterda Chrome yoki Edge'dan oching.": ['Этот браузер не поддерживает USB. Откройте в Chrome или Edge на компьютере.', 'This browser does not support USB. Open it in Chrome or Edge on a computer.'],
+    "Bu brauzer Serial portni qo'llamaydi. Kompyuterda Chrome yoki Edge'dan oching.": ['Этот браузер не поддерживает Serial-порт. Откройте в Chrome или Edge на компьютере.', 'This browser does not support Serial ports. Open it in Chrome or Edge on a computer.'],
+    'uDMX kabeli chiqarib olindi.': ['Кабель uDMX отключён.', 'The uDMX cable was unplugged.'],
+    // monitor
+    'DMX MONITOR · UNIVERSE 1': ['DMX-МОНИТОР · UNIVERSE 1', 'DMX MONITOR · UNIVERSE 1'],
+    'Chiqayotgan 512 kanal qiymati (0–255)': ['Значения 512 выходных каналов (0–255)', 'Output values of 512 channels (0–255)'],
+    // sahna
+    'NUR YOʻNALTIRISH': ['НАВЕДЕНИЕ ЛУЧА', 'AIM BEAMS'],
+    'CHIROQLARNI JOYLASH': ['РАССТАНОВКА ПРИБОРОВ', 'PLACE FIXTURES'],
+    '4 BURCHAK': ['4 УГЛА', '4 CORNERS'],
+    'KALIBRLASH': ['КАЛИБРОВКА', 'CALIBRATION'],
+    'Sahna rasmi': ['Изображение сцены', 'Stage image'],
+    'Moving head (Pan/Tilt)': ['Moving head (Pan/Tilt)', 'Moving head (Pan/Tilt)'],
+    'Boshqa chiroqlar': ['Другие приборы', 'Other fixtures'],
+    'Tanlangan': ['Выбран', 'Selected'],
+    'Sahna burchagi': ['Угол сцены', 'Stage corner'],
+    'Kalibrlash nuqtasi': ['Точка калибровки', 'Calibration point'],
+    'SAHNA RASMI YOKI CHIZMASI': ['ФОТО ИЛИ ПЛАН СЦЕНЫ', 'STAGE PHOTO OR PLAN'],
+    'RASM YUKLASH': ['ЗАГРУЗИТЬ ИЗОБРАЖЕНИЕ', 'UPLOAD IMAGE'],
+    'RASMNI OLIB TASHLASH': ['УБРАТЬ ИЗОБРАЖЕНИЕ', 'REMOVE IMAGE'],
+    'Eng aniq: yuqoridan chizilgan plan. Zaldan olingan foto ham boʻladi — keyin „4 BURCHAK“ bilan sahna burchaklarini belgilaysiz.': ['Точнее всего — план сцены сверху. Подойдёт и фото из зала — затем отметьте углы сцены через «4 УГЛА».', 'Most accurate: a top-down plan. A photo from the house also works — then mark the stage corners with “4 CORNERS”.'],
+    'Eni (m)': ['Ширина (м)', 'Width (m)'], 'Chuqurligi (m)': ['Глубина (м)', 'Depth (m)'], 'Ferma (m)': ['Ферма (м)', 'Truss (m)'],
+    'FERMA BALANDLIGINI BARCHA BEAM’LARGA': ['ВЫСОТУ ФЕРМЫ — ВСЕМ BEAM', 'APPLY TRUSS HEIGHT TO ALL BEAMS'],
+    'TANLANGAN CHIROQ': ['ВЫБРАННЫЙ ПРИБОР', 'SELECTED FIXTURE'],
+    'Balandlik (m)': ['Высота (м)', 'Height (m)'],
+    'Pan (qoʻlda)': ['Pan (вручную)', 'Pan (manual)'], 'Tilt (qoʻlda)': ['Tilt (вручную)', 'Tilt (manual)'],
+    'HAMMA BEAM’LAR': ['ВСЕ BEAM', 'ALL BEAMS'],
+    'NURNI YOQISH (FULL)': ['ВКЛЮЧИТЬ ЛУЧ (FULL)', 'BEAM ON (FULL)'],
+    'SHU CHIROQ NUQTALARINI TOZALASH': ['ОЧИСТИТЬ ТОЧКИ ЭТОГО ПРИБОРА', 'CLEAR THIS FIXTURE’S POINTS'],
+    'SAHNA NUQTALARI': ['ТОЧКИ СЦЕНЫ', 'STAGE POINTS'],
+    'masalan: Solo chap': ['например: Соло слева', 'e.g. Solo left'],
+    'Nuqta nomi': ['Название точки', 'Point name'],
+    'Hali nuqta yoʻq. Planda joyni bosing, nom yozib SAQLASH.': ['Точек пока нет. Нажмите место на плане, введите название и СОХРАНИТЬ.', 'No points yet. Click a spot on the plan, type a name and SAVE.'],
+    'SAHNA · YUKLANGAN RASM': ['СЦЕНА · ЗАГРУЖЕННОЕ ИЗОБРАЖЕНИЕ', 'STAGE · UPLOADED IMAGE'],
+    'TOMOSHABINLAR ZALI': ['ЗРИТЕЛЬНЫЙ ЗАЛ', 'AUDITORIUM'],
+    'ORQA PARDA': ['ЗАДНИК', 'BACKDROP'],
+    'Planni bosing — tanlangan moving head’lar oʻsha nuqtaga buriladi. Chiroqni tanlash: belgisini bosing.': ['Нажмите на план — выбранные moving head повернутся в эту точку. Выбор прибора — нажмите на его значок.', 'Click the plan — selected moving heads turn to that spot. To select a fixture, click its icon.'],
+    'Chiroq belgilarini sudrab, sahnadagi haqiqiy joyiga qoʻying. Aniq raqam uchun oʻngda X, Y, balandlikni yozing.': ['Перетащите значки приборов на их реальные места на сцене. Для точности введите справа X, Y и высоту.', 'Drag fixture icons to their real places on stage. For exact values, type X, Y and height on the right.'],
+    '1) Bitta moving head tanlang. 2) Oʻngdagi Pan/Tilt slayderlari bilan nurni poldagi belgiga aniq tushiring. 3) Planda oʻsha belgini bosing. 3–4 nuqta yetarli.': ['1) Выберите один moving head. 2) Слайдерами Pan/Tilt справа точно наведите луч на метку на полу. 3) Нажмите эту метку на плане. Достаточно 3–4 точек.', '1) Select one moving head. 2) Use the Pan/Tilt sliders on the right to land the beam exactly on the floor mark. 3) Click that mark on the plan. 3–4 points are enough.'],
+    'Kalibrlash uchun bitta moving head tanlang.': ['Для калибровки выберите один moving head.', 'Select one moving head to calibrate.'],
+    'Kalibrlash uchun aynan bitta moving head tanlang': ['Для калибровки выберите ровно один moving head', 'Select exactly one moving head to calibrate'],
+    'Avval moving head (Beam) tanlang': ['Сначала выберите moving head (Beam)', 'Select a moving head (Beam) first'],
+    'Avval moving head tanlang': ['Сначала выберите moving head', 'Select a moving head first'],
+    'Avval planda nuqtani bosing': ['Сначала нажмите точку на плане', 'Click a point on the plan first'],
+    'Avval sahna rasmini yuklang': ['Сначала загрузите изображение сцены', 'Upload a stage image first'],
+    '4 burchak faqat yuklangan rasm uchun kerak': ['4 угла нужны только для загруженного изображения', '4 corners are needed only for an uploaded image'],
+    'Sahna burchaklari saqlandi': ['Углы сцены сохранены', 'Stage corners saved'],
+    'Rasm yuklandi. Endi sahnaning 4 burchagini belgilang.': ['Изображение загружено. Теперь отметьте 4 угла сцены.', 'Image uploaded. Now mark the 4 stage corners.'],
+    'Rasm ochilmadi': ['Изображение не открылось', 'Image could not be opened'],
+    'Sahna maydoni: nur yoʻnaltirish nuqtasini tanlash': ['Поле сцены: выбор точки наведения', 'Stage area: choose aiming point'],
+    // to'lov oynasi
+    'Tarifni tanlang': ['Выберите тариф', 'Choose a plan'],
+    'Tarif faol': ['Тариф активен', 'Plan active'],
+    'FAOL': ['АКТИВЕН', 'ACTIVE'],
+    'Yopish': ['Закрыть', 'Close'],
+    'Qanday faollashtiriladi': ['Как активировать', 'How to activate'],
+    'TELEGRAM BOT ORQALI TOʻLASH': ['ОПЛАТИТЬ ЧЕРЕЗ TELEGRAM-БОТ', 'PAY VIA TELEGRAM BOT'],
+    'TOʻLOV KARTASI': ['КАРТА ДЛЯ ОПЛАТЫ', 'PAYMENT CARD'],
+    'NUSXA': ['КОПИЯ', 'COPY'], 'NUSXALANDI': ['СКОПИРОВАНО', 'COPIED'],
+    'Karta egasi': ['Владелец карты', 'Cardholder'], 'Summa': ['Сумма', 'Amount'], 'Izohga yozing': ['Укажите в комментарии', 'Write in the comment'],
+    'Karta hali sozlanmagan': ['Карта ещё не настроена', 'Card not set up yet'],
+    'Aktivatsiya kodi': ['Код активации', 'Activation code'],
+    'FAOLLASHTIRISH': ['АКТИВИРОВАТЬ', 'ACTIVATE'],
+    'Kod faqat shu qurilmada ishlaydi va tarif muddati tugaguncha amal qiladi.': ['Код работает только на этом устройстве и действует до конца срока тарифа.', 'The code works only on this device and is valid until the plan expires.'],
+    'Kodni kiriting': ['Введите код', 'Enter the code'],
+    'Tariflar yuklanmadi. Internet aloqasini tekshiring.': ['Тарифы не загрузились. Проверьте подключение к интернету.', 'Plans failed to load. Check your internet connection.'],
+    'Cheksiz muddat': ['Бессрочно', 'Unlimited time'],
+    'Sinov tugadi · Tarif tanlash': ['Пробный период окончен · Выбрать тариф', 'Trial ended · Choose a plan'],
+    'Davom etish uchun tarif tanlang. Chiroqlar oxirgi holatda qoladi, cue’laringiz saqlangan: faollashtirgach shu joydan davom etasiz.': ['Чтобы продолжить, выберите тариф. Приборы остаются в последнем состоянии, ваши cue сохранены — после активации продолжите с этого места.', 'Choose a plan to continue. Fixtures stay in their last state and your cues are saved — after activation you continue from here.'],
+    'soʻm': ['сум', 'UZS'],
+    'Server xatosi': ['Ошибка сервера', 'Server error'],
+    "Litsenziya tekshiruvidan o'tmadi": ['Лицензия не прошла проверку', 'License check failed'],
+    'Kod topilmadi. Harflarni tekshirib qayta kiriting.': ['Код не найден. Проверьте символы и введите снова.', 'Code not found. Check the characters and try again.'],
+    'Bu kod boshqa kompyuterda faollashtirilgan.': ['Этот код уже активирован на другом компьютере.', 'This code is already activated on another computer.'],
+    'Bu kodning muddati tugagan.': ['Срок действия этого кода истёк.', 'This code has expired.'],
+    'Bu kod bekor qilingan.': ['Этот код отменён.', 'This code has been revoked.'],
+    "Juda ko'p urinish. 15 daqiqadan so'ng qayta urining.": ['Слишком много попыток. Повторите через 15 минут.', 'Too many attempts. Try again in 15 minutes.'],
+    // tasdiqlash
+    'Profil oʻchirilsinmi?': ['Удалить профиль?', 'Delete profile?'],
+    'Patch standart 32 ta chiroqqa qaytarilsinmi? Cue’lar oʻchmaydi, lekin chiroqlar almashadi.': ['Вернуть патч к стандартным 32 приборам? Cue не удалятся, но приборы заменятся.', 'Reset the patch to the default 32 fixtures? Cues are kept, but fixtures are replaced.'],
+    'Sahna rasmi olib tashlansinmi? Chiroqlar joyi saqlanadi.': ['Убрать изображение сцены? Расстановка приборов сохранится.', 'Remove the stage image? Fixture positions are kept.'],
+  };
+
+  // ---------- qoliplar (dinamik matn) ----------
+  const CORNERS = { 'chap orqa': ['левый задний', 'back left'], 'oʻng orqa': ['правый задний', 'back right'], 'oʻng old': ['правый передний', 'front right'], 'chap old': ['левый передний', 'front left'] };
+  const UNIT = (u, i) => (/yil/i.test(u) ? ['год', 'year'] : ['мес.', 'month'])[i];
+  const P = [
+    [/^(.*) Tasdiqlash uchun yana bir marta bosing\.$/, (m, i) => tr(m[1]) + [' Нажмите ещё раз для подтверждения.', ' Press again to confirm.'][i]],
+    [/^(.+) kalibrlash nuqtalari oʻchirilsinmi\?$/, (m, i) => [`Удалить точки калибровки ${m[1]}?`, `Delete calibration points of ${m[1]}?`][i]],
+    [/^„(.+)“ nuqtasi oʻchirilsinmi\?$/, (m, i) => [`Удалить точку «${m[1]}»?`, `Delete point “${m[1]}”?`][i]],
+    [/^(.+) oʻchirilsinmi\?$/, (m, i) => [`Удалить ${m[1]}?`, `Delete ${m[1]}?`][i]],
+    [/^(\d+) ta chiroq · (\d+) ta tanlangan$/, (m, i) => [`Приборов: ${m[1]} · выбрано: ${m[2]}`, `${m[1]} fixtures · ${m[2]} selected`][i]],
+    [/^(\d+) ta chiroq · (\d+) \/ 512 kanal band$/, (m, i) => [`Приборов: ${m[1]} · занято ${m[2]} / 512 каналов`, `${m[1]} fixtures · ${m[2]} / 512 channels used`][i]],
+    [/^(\d+) ta chiroqning manzili ustma-ust tushgan yoki 512 dan oshgan \(qizil qatorlar\)\. „Manzillarni ketma-ket qoʻyish“ tugmasi tuzatadi\.$/, (m, i) => [`У ${m[1]} приборов адреса пересекаются или выходят за 512 (красные строки). Исправит кнопка «Расставить адреса подряд».`, `${m[1]} fixtures overlap or exceed 512 (red rows). The “Auto-address in order” button fixes it.`][i]],
+    [/^(\d+) ta cue$/, (m, i) => [`Cue: ${m[1]}`, `${m[1]} cues`][i]],
+    [/^Joriy: (.+)$/, (m, i) => [`Текущий: ${m[1]}`, `Current: ${m[1]}`][i]],
+    [/^(\d+) ta chiroq oʻzgartirilgan$/, (m, i) => [`Изменено приборов: ${m[1]}`, `${m[1]} fixtures changed`][i]],
+    [/^(\d+) ta chiroq qoʻshildi$/, (m, i) => [`Добавлено приборов: ${m[1]}`, `${m[1]} fixtures added`][i]],
+    [/^(\d+) ta chiroq bu nuqtaga yeta olmaydi \(burilish chegarasi\)$/, (m, i) => [`${m[1]} приб. не достают до этой точки (предел поворота)`, `${m[1]} fixtures cannot reach this point (rotation limit)`][i]],
+    [/^(\d+) ta moving head balandligi (.+) m$/, (m, i) => [`Высота ${m[1]} moving head: ${m[2]} м`, `${m[1]} moving heads set to ${m[2]} m`][i]],
+    [/^Cue (.+) yozildi$/, (m, i) => [`Cue ${m[1]} записан`, `Cue ${m[1]} recorded`][i]],
+    [/^Cue (.+) yangilandi$/, (m, i) => [`Cue ${m[1]} обновлён`, `Cue ${m[1]} updated`][i]],
+    [/^Start tarifida (\d+) tagacha cue\. PRO’ga oʻting\.$/, (m, i) => [`В тарифе Start до ${m[1]} cue. Перейдите на PRO.`, `The Start plan allows up to ${m[1]} cues. Upgrade to PRO.`][i]],
+    [/^Start tarifida (\d+) tagacha chiroq\. PRO’ga oʻting\.$/, (m, i) => [`В тарифе Start до ${m[1]} приборов. Перейдите на PRO.`, `The Start plan allows up to ${m[1]} fixtures. Upgrade to PRO.`][i]],
+    [/^(.+): (\d+)-nuqta saqlandi$/, (m, i) => [`${m[1]}: точка ${m[2]} сохранена`, `${m[1]}: point ${m[2]} saved`][i]],
+    [/^(.+): (\d+) ta nuqta saqlangan · aniqlik ±(.+) DMX\.$/, (m, i) => [`${m[1]}: сохранено точек: ${m[2]} · точность ±${m[3]} DMX.`, `${m[1]}: ${m[2]} points saved · accuracy ±${m[3]} DMX.`][i]],
+    [/^(.+): (\d+) ta nuqta saqlangan · yana kamida 1 ta nuqta qoʻshing\.$/, (m, i) => [`${m[1]}: сохранено точек: ${m[2]} · добавьте ещё минимум одну.`, `${m[1]}: ${m[2]} point saved · add at least one more.`][i]],
+    [/^(.+): hali nuqta yoʻq\. Kalibrlanmagan chiroq taxminiy yoʻnaltiriladi\.$/, (m, i) => [`${m[1]}: точек пока нет. Без калибровки прибор наводится приблизительно.`, `${m[1]}: no points yet. Uncalibrated fixtures are aimed approximately.`][i]],
+    [/^(\d+)-burchak: rasmda sahnaning (.+) burchagini bosing \(tomoshabin tomondan qaraganda\)\.$/, (m, i) => [`Угол ${m[1]}: нажмите на изображении ${(CORNERS[m[2]] || [m[2]])[0]} угол сцены (если смотреть из зала).`, `Corner ${m[1]}: click the ${(CORNERS[m[2]] || [, m[2]])[1]} corner of the stage in the image (as seen from the audience).`][i]],
+    [/^SAHNA PLANI · YUQORIDAN · (.+) m$/, (m, i) => [`ПЛАН СЦЕНЫ · ВИД СВЕРХУ · ${m[1]} м`, `STAGE PLAN · TOP VIEW · ${m[1]} m`][i]],
+    [/^TANLANGAN: (\d+) TA CHIROQ$/, (m, i) => [`ВЫБРАНО: ${m[1]} ПРИБ.`, `SELECTED: ${m[1]} FIXTURES`][i]],
+    [/^TANLANGAN: (.+)$/, (m, i) => [`ВЫБРАН: ${m[1]}`, `SELECTED: ${m[1]}`][i]],
+    [/^„(.+)“ saqlandi$/, (m, i) => [`«${m[1]}» сохранено`, `“${m[1]}” saved`][i]],
+    [/^(-?\d+) m$/, (m, i) => [`${m[1]} м`, `${m[1]} m`][i]],
+    [/^(.+) \((\d+) kanal\)$/, (m, i) => [`${tr(m[1])} (${m[2]} кан.)`, `${tr(m[1])} (${m[2]} ch)`][i]],
+    [/^(\d+) kanal · (\d+) ta$/, (m, i) => [`${m[1]} кан. · ${m[2]} шт.`, `${m[1]} ch · ${m[2]} units`][i]],
+    [/^(\d+) ta chiroq shu profilda$/, (m, i) => [`Приборов с этим профилем: ${m[1]}`, `${m[1]} fixtures use this profile`][i]],
+    [/^(.+) darajasi$/, (m, i) => [`Уровень: ${tr(m[1])}`, `${tr(m[1])} level`][i]],
+    [/^(.+), tanlangan$/, (m, i) => [`${m[1]}, выбран`, `${m[1]}, selected`][i]],
+    [/^DMX ulangan · (.+) · Universe 1$/, (m, i) => [`DMX подключён · ${tr(m[1])} · Universe 1`, `DMX connected · ${tr(m[1])} · Universe 1`][i]],
+    [/^● Ulangan: (.+)$/, (m, i) => [`● Подключено: ${tr(m[1])}`, `● Connected: ${tr(m[1])}`][i]],
+    [/^([●○]) (.+)$/, (m) => `${m[1]} ${tr(m[2])}`],
+    [/^Ulandi: (.+)$/, (m, i) => [`Подключено: ${tr(m[1])}`, `Connected: ${tr(m[1])}`][i]],
+    [/^Brauzer: USB (.) · Serial (.)$/, (m, i) => [`Браузер: USB ${m[1]} · Serial ${m[2]}`, `Browser: USB ${m[1]} · Serial ${m[2]}`][i]],
+    [/^Qurilma bilan aloqa uzildi: (.+)$/, (m, i) => [`Связь с устройством потеряна: ${tr(m[1])}`, `Lost connection to the device: ${tr(m[1])}`][i]],
+    [/^(Ochib boʻlmadi|Rasmni yuklab boʻlmadi|Saqlab boʻlmadi): (.+)$/, (m, i) => ({ 'Ochib boʻlmadi': ['Не удалось открыть', 'Could not open'], 'Rasmni yuklab boʻlmadi': ['Не удалось загрузить изображение', 'Could not upload image'], 'Saqlab boʻlmadi': ['Не удалось сохранить', 'Could not save'] }[m[1]][i] + ': ' + tr(m[2]))],
+    [/^Ochildi: (.+)$/, (m, i) => [`Открыто: ${m[1]}`, `Opened: ${m[1]}`][i]],
+    [/^Bepul sinov: (.+)$/, (m, i) => [`Пробный период: ${m[1]}`, `Free trial: ${m[1]}`][i]],
+    [/^Sinov: (.+)$/, (m, i) => [`Пробный: ${m[1]}`, `Trial: ${m[1]}`][i]],
+    [/^(START|PRO) · (\d+) kun qoldi$/, (m, i) => [`${m[1]} · осталось ${m[2]} дн.`, `${m[1]} · ${m[2]} days left`][i]],
+    [/^(START|PRO) · cheksiz$/, (m, i) => [`${m[1]} · бессрочно`, `${m[1]} · unlimited`][i]],
+    [/^(\d+) daqiqalik bepul sinov tugadi$/, (m, i) => [`${m[1]}-минутный пробный период окончен`, `The ${m[1]}-minute free trial has ended`][i]],
+    [/^Bepul sinovda (.+) qoldi\. Hoziroq tarif olib, cheklovsiz ishlashingiz mumkin\.$/, (m, i) => [`Пробного времени осталось: ${m[1]}. Оформите тариф сейчас и работайте без ограничений.`, `${m[1]} of free trial left. Get a plan now to work without limits.`][i]],
+    [/^Tarif: (.+?)(?:, (.+) gacha)?\. Uzaytirish uchun yangi kod olib, pastga kiriting\.$/, (m, i) => [`Тариф: ${tr(m[1])}${m[2] ? ', до ' + m[2] : ''}. Чтобы продлить, получите новый код и введите его ниже.`, `Plan: ${tr(m[1])}${m[2] ? ', until ' + m[2] : ''}. To extend, get a new code and enter it below.`][i]],
+    [/^Faollashtirildi: (.+)\. Rahmat!$/, (m, i) => [`Активировано: ${tr(m[1])}. Спасибо!`, `Activated: ${tr(m[1])}. Thank you!`][i]],
+    [/^(Start|PRO) · (\d+) (oy|yil)$/i, (m, i) => `${m[1]} · ${m[2]} ${UNIT(m[3], i)}`],
+    [/^(\d+) tagacha chiroq · (\d+) cue$/, (m, i) => [`до ${m[1]} приборов · ${m[2]} cue`, `up to ${m[1]} fixtures · ${m[2]} cues`][i]],
+    [/^(\d+) kun · cheksiz chiroq va cue$/, (m, i) => [`${m[1]} дн. · без ограничений приборов и cue`, `${m[1]} days · unlimited fixtures and cues`][i]],
+    [/^(\d+) kun · oyiga ~(.+)$/, (m, i) => [`${m[1]} дн. · ~${tr(m[2])} в месяц`, `${m[1]} days · ~${tr(m[2])} per month`][i]],
+    [/^([\d\s]+) so['ʻ]m$/, (m, i) => `${m[1]} ${['сум', 'UZS'][i]}`],
+    [/^Kanal (\d+)$/, (m, i) => [`Канал ${m[1]}`, `Channel ${m[1]}`][i]],
+  ];
+
+  // ---------- murakkab HTML bloklar ----------
+  const H = {
+    help: [
+      `<ol>
+        <li><b>Закройте FreeStyler.</b> Кабелем одновременно может пользоваться только одна программа.</li>
+        <li>Откройте программу в <b>Chrome</b> или <b>Edge</b>.</li>
+        <li><b>ПОДКЛЮЧИТЬ uDMX</b> → в списке «uDMX» → <b>Подключить</b>.</li>
+        <li>Если список пуст или появилась ошибка — замените драйвер на <b>WinUSB</b>:
+          <ol type="a">
+            <li>Скачайте и откройте Zadig с сайта <b>zadig.akeo.ie</b>.</li>
+            <li><b>Options → List All Devices</b> → в списке <b>uDMX</b>.</li>
+            <li>Справа <b>WinUSB</b> → <b>Replace Driver</b>.</li>
+            <li>Перезапустите браузер и повторите шаг 3.</li>
+          </ol>
+        </li>
+      </ol>
+      <p class="muted small">Если нужно вернуться к FreeStyler — в Zadig снова поставьте драйвер <b>libusbK</b>.</p>
+      <p class="muted small">После первого разрешения программа будет подключаться сама, как только вставлен кабель.</p>
+      <p class="muted small"><b>iPad и iPhone:</b> Safari не даёт доступ к USB. На них программа работает в режиме симуляции и репетиций; сигнал на сцену идёт через компьютер.</p>`,
+      `<ol>
+        <li><b>Close FreeStyler.</b> Only one program can use the cable at a time.</li>
+        <li>Open the program in <b>Chrome</b> or <b>Edge</b>.</li>
+        <li><b>CONNECT uDMX</b> → “uDMX” in the list → <b>Connect</b>.</li>
+        <li>If the list is empty or an error appears, switch the driver to <b>WinUSB</b>:
+          <ol type="a">
+            <li>Download and open Zadig from <b>zadig.akeo.ie</b>.</li>
+            <li><b>Options → List All Devices</b> → <b>uDMX</b> in the list.</li>
+            <li>On the right choose <b>WinUSB</b> → <b>Replace Driver</b>.</li>
+            <li>Restart the browser and repeat step 3.</li>
+          </ol>
+        </li>
+      </ol>
+      <p class="muted small">To go back to FreeStyler, switch the driver back to <b>libusbK</b> in Zadig.</p>
+      <p class="muted small">After the first permission, the program connects by itself whenever the cable is plugged in.</p>
+      <p class="muted small"><b>iPad and iPhone:</b> Safari does not allow USB. On them the program runs in simulation and rehearsal mode; the stage signal goes through a computer.</p>`,
+    ],
+    steps: [
+      `<li><i>1</i><span>Выберите тариф выше.</span></li>
+       <li><i>2</i><span>Переведите <b class="pw-amount"></b> на карту. В комментарии укажите свой ID.</span></li>
+       <li><i>3</i><span>Отправьте чек (скриншот) Telegram-боту.</span></li>
+       <li><i>4</i><span>После подтверждения бот пришлёт <b>код активации</b>. Введите его ниже.</span></li>`,
+      `<li><i>1</i><span>Choose a plan above.</span></li>
+       <li><i>2</i><span>Transfer <b class="pw-amount"></b> to the card. Put your ID in the comment.</span></li>
+       <li><i>3</i><span>Send the receipt (screenshot) to the Telegram bot.</span></li>
+       <li><i>4</i><span>Once confirmed, the bot sends an <b>activation code</b>. Enter it below.</span></li>`,
+    ],
+  };
+
+  const idx = () => (lang === 'ru' ? 0 : 1);
+  const SKIP = /^[\d\s.,:;%°×—–\-+/()±~|·✓✗✕→←↑↓…]*$/;
+  function tr(s) {
+    if (lang === 'uz' || s == null) return s;
+    const t = String(s).trim();
+    if (!t || SKIP.test(t)) return s;
+    let out = null;
+    if (D[t]) out = D[t][idx()];
+    else for (const [re, fn] of P) { const m = t.match(re); if (m) { out = fn(m, idx()); break; } }
+    if (out == null) return s;
+    const lead = String(s).match(/^\s*/)[0], trail = String(s).match(/\s*$/)[0];
+    return lead + out + trail;
+  }
+
+  // ---------- DOM ----------
+  const ATTRS = ['placeholder', 'aria-label', 'title', 'alt'];
+  let busy = false;
+  function doText(n) {
+    const v = n.data;
+    if (v === n.__snTr) return;
+    if (!v || !v.trim()) return;
+    n.__snUz = v;
+    const t = tr(v);
+    n.__snTr = t;
+    if (t !== v) n.data = t;
+  }
+  function doAttrs(el) {
+    if (!el.getAttribute) return;
+    el.__snA = el.__snA || {};
+    for (const a of ATTRS) {
+      if (!el.hasAttribute(a)) continue;
+      const v = el.getAttribute(a), rec = el.__snA[a];
+      if (rec && v === rec.tr) continue;
+      const t = tr(v);
+      el.__snA[a] = { uz: v, tr: t };
+      if (t !== v) el.setAttribute(a, t);
+    }
+  }
+  function walk(root) {
+    if (root.nodeType === 3) { if (!inSkip(root.parentNode)) doText(root); return; }
+    if (root.nodeType !== 1 || root.closest && root.closest('script,style,textarea')) return;
+    doAttrs(root);
+    const it = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = it.nextNode())) {
+      if (n.nodeType === 3) { if (!inSkip(n.parentNode)) doText(n); }
+      else doAttrs(n);
+    }
+  }
+  const inSkip = (el) => !el || /^(SCRIPT|STYLE|TEXTAREA)$/.test(el.nodeName) || (el.closest && el.closest('#mon'));
+  // til almashganda: asl o'zbekcha matnga qaytib, qayta tarjima
+  function resetAll(root) {
+    const it = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = it.nextNode())) {
+      if (n.nodeType === 3) { if (n.__snUz != null && n.data === n.__snTr) n.data = n.__snUz; n.__snTr = undefined; }
+      else if (n.__snA) { for (const a in n.__snA) { const r = n.__snA[a]; if (n.getAttribute(a) === r.tr) n.setAttribute(a, r.uz); } n.__snA = {}; }
+    }
+  }
+  function applyHtml() {
+    document.querySelectorAll('[data-i18n-html]').forEach((el) => {
+      if (el.__snHtml == null) el.__snHtml = el.innerHTML;
+      const k = el.getAttribute('data-i18n-html');
+      el.innerHTML = lang === 'uz' || !H[k] ? el.__snHtml : H[k][idx()];
+    });
+  }
+
+  const obs = new MutationObserver((list) => {
+    if (busy || lang === 'uz') return;
+    busy = true;
+    try {
+      for (const m of list) {
+        if (m.type === 'characterData') { if (!inSkip(m.target.parentNode)) doText(m.target); }
+        else if (m.type === 'attributes') doAttrs(m.target);
+        else m.addedNodes.forEach((n) => { if (n.nodeType === 3) { if (!inSkip(n.parentNode)) doText(n); } else if (n.nodeType === 1 && !inSkip(n)) walk(n); });
+      }
+    } finally { busy = false; }
+  });
+  obs.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS });
+
+  const listeners = [];
+  function setLang(l) {
+    if (!['uz', 'ru', 'en'].includes(l)) return;
+    busy = true;
+    try { resetAll(document.body); } finally { busy = false; }
+    lang = l;
+    try { localStorage.setItem(LS, l); } catch (_) {}
+    document.documentElement.lang = l;
+    applyHtml();
+    listeners.forEach((f) => { try { f(l); } catch (_) {} });
+    refresh();
+  }
+  function refresh() {
+    document.querySelectorAll('[data-lang]').forEach((b) => { const on = b.dataset.lang === lang; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    if (lang === 'uz') return;
+    busy = true;
+    try { walk(document.body); } finally { busy = false; }
+  }
+  document.documentElement.lang = lang;
+  document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); });
+
+  return { t: tr, lang: () => lang, setLang, refresh, applyHtml, onChange: (f) => listeners.push(f) };
+})();
