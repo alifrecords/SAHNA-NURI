@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<script>
+if (location.protocol === 'file:') {
+  document.addEventListener('DOMContentLoaded', function () {
+    document.body.innerHTML = '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:620px;margin:60px auto;padding:28px;border-radius:16px;border:1px solid #e5e5e5;color:#111;line-height:1.6">' +
+      '<h2 style="margin:0 0 12px">Sahifa noto\'g\'ri ochildi</h2>' +
+      '<p>Bu faylni papkadan ochib bo\'lmaydi — dastur sayt orqali ishlaydi.</p>' +
+      '<p>Brauzerda oching: <b>https://sahna-nuri.pages.dev</b></p></div>';
+  });
+}
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111111">
+<meta name="description" content="SAHNA NURI — teatr va sahna uchun DMX yorug'lik boshqaruvi. Azimxodjayev Music">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<title>SAHNA NURI — DMX yorug'lik boshqaruvi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+<div id="root">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l-1 5h-4z"/><path d="M10 8l-5 13"/><path d="M14 8l5 13"/><path d="M12 8v13"/></svg></div>
+      <div class="brand-text">
+        <span class="brand-name">SAHNA NURI</span>
+        <span class="brand-sub">DMX yorugʻlik boshqaruvi</span>
+        <span class="brand-az">Azimxodjayev Music</span>
+      </div>
+    </div>
+    <div class="top-mid">
+      <label class="pill title-pill"><span class="sr">Spektakl nomi</span><span>Spektakl:</span><input id="showTitle" value="Yangi spektakl"></label>
+      <button class="pill conn" id="connPill" type="button"><i class="dot"></i><span id="connText">DMX ulanmagan</span></button>
+      <button class="pill lic" id="licBadge" type="button">Tekshirilmoqda…</button>
+    </div>
+    <div class="top-act">
+      <button class="btn" id="saveBtn" type="button">SAQLASH</button>
+      <button class="btn" id="boBtn" type="button" title="B">BLACKOUT</button>
+      <button class="btn go" id="goBtn" type="button" title="Probel">GO</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Boʻlimlar">
+    <button data-tab="pult" class="on" type="button">Pult</button>
+    <button data-tab="patch" type="button">Patch (chiroqlar)</button>
+    <button data-tab="profil" type="button">Profillar</button>
+    <button data-tab="ulanish" type="button">Ulanish</button>
+    <button data-tab="monitor" type="button">Monitor</button>
+  </nav>
+
+  <!-- ================= PULT ================= -->
+  <section class="tab" id="tab-pult">
+    <div class="row3">
+      <section class="panel fx-panel">
+        <div class="ph"><h2>CHIROQLAR</h2><span class="muted" id="selInfo"></span></div>
+        <div class="grid4" id="groupBtns"></div>
+        <div class="sep"></div>
+        <div class="grid4 fixtures" id="fixtureBtns"></div>
+      </section>
+
+      <section class="panel cue-panel">
+        <div class="ph"><h2>CUE ROʻYXATI</h2><span class="muted" id="cueInfo"></span></div>
+        <div class="cue-head"><span>№</span><span>NOMI</span><span>FADE (s)</span><span>HOLAT</span></div>
+        <div class="cue-list" id="cueList"></div>
+        <div class="grid4 cue-tools">
+          <button class="btn" id="recBtn" type="button">CUE YOZISH</button>
+          <button class="btn" id="updBtn" type="button">YANGILASH</button>
+          <button class="btn" id="delBtn" type="button">OʻCHIRISH</button>
+          <button class="btn" id="clrCueBtn" type="button">SAHNANI OʻCHIRISH</button>
+        </div>
+        <div class="grid4 transport">
+          <button class="btn" id="backBtn" type="button">ORQAGA</button>
+          <button class="btn" id="pauseBtn" type="button">PAUZA</button>
+          <button class="btn" id="relBtn" type="button">RELEASE</button>
+          <button class="btn go" id="go2Btn" type="button">GO →</button>
+        </div>
+        <div class="fade-bar" aria-hidden="true"><i id="fadeBar"></i></div>
+      </section>
+
+      <section class="panel prog-panel">
+        <div class="ph"><h2>PROGRAMMER</h2><span class="muted" id="progInfo"></span></div>
+        <label class="lab" for="dimR"><span>Intensivlik</span><b id="dimV">0%</b></label>
+        <input id="dimR" type="range" min="0" max="100" value="0">
+        <div class="grid4 quick">
+          <button class="btn sm" data-dim="0" type="button">0%</button>
+          <button class="btn sm" data-dim="50" type="button">50%</button>
+          <button class="btn sm" data-dim="75" type="button">75%</button>
+          <button class="btn sm" data-dim="100" type="button">FULL</button>
+        </div>
+        <span class="lab">Rang</span>
+        <div class="grid3" id="colorBtns"></div>
+        <span class="lab">Pozitsiya</span>
+        <div class="grid3" id="posBtns"></div>
+        <div class="pt">
+          <label class="lab" for="panR"><span>Pan</span><b id="panV">50%</b></label>
+          <input id="panR" type="range" min="0" max="255" value="128">
+          <label class="lab" for="tiltR"><span>Tilt</span><b id="tiltV">50%</b></label>
+          <input id="tiltR" type="range" min="0" max="255" value="128">
+        </div>
+        <span class="lab">Effekt</span>
+        <div class="grid3" id="fxBtns"></div>
+        <button class="btn wide" id="progClr" type="button">PROGRAMMERNI TOZALASH</button>
+      </section>
+    </div>
+
+    <section class="panel faders-panel">
+      <div class="ph"><h2>PLAYBACK FADERLAR</h2><span class="muted">Faderni suring · FLASH bosib turilganda guruh toʻliq yonadi</span></div>
+      <div class="faders" id="faders"></div>
+    </section>
+  </section>
+
+  <!-- ================= PATCH ================= -->
+  <section class="tab" id="tab-patch" hidden>
+    <div class="row2">
+      <section class="panel grow2">
+        <div class="ph"><h2>PATCH · CHIROQLAR VA DMX MANZILLAR</h2><span class="muted" id="patchInfo"></span></div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>№</th><th>Nomi</th><th>Profil</th><th>Manzil</th><th>Kanal</th><th>Oraliq</th><th></th></tr></thead>
+            <tbody id="patchRows"></tbody>
+          </table>
+        </div>
+        <p class="warn" id="patchWarn" hidden></p>
+      </section>
+      <section class="panel grow1">
+        <div class="ph"><h2>CHIROQ QOʻSHISH</h2></div>
+        <label class="f">Profil<select id="addProf"></select></label>
+        <label class="f">Soni<input id="addCount" type="number" min="1" max="64" value="1"></label>
+        <label class="f">Nomi<input id="addName" placeholder="masalan: Beam"></label>
+        <label class="f">Boshlangʻich manzil<input id="addAddr" type="number" min="1" max="512" value="1"></label>
+        <button class="btn wide" id="addFix" type="button">QOʻSHISH</button>
+        <div class="sep"></div>
+        <button class="btn wide" id="autoAddr" type="button">MANZILLARNI KETMA-KET QOʻYISH</button>
+        <button class="btn wide" id="defPatch" type="button">STANDART 32 TA CHIROQ</button>
+        <div class="sep"></div>
+        <h2>LOYIHA FAYLI</h2>
+        <button class="btn wide" id="exportBtn" type="button">KOMPYUTERGA YUKLAB OLISH (.json)</button>
+        <button class="btn wide" id="importBtn" type="button">FAYLDAN OCHISH</button>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </section>
+    </div>
+  </section>
+
+  <!-- ================= PROFILLAR ================= -->
+  <section class="tab" id="tab-profil" hidden>
+    <div class="row2">
+      <section class="panel grow1">
+        <div class="ph"><h2>PROFILLAR</h2></div>
+        <div class="plist" id="profList"></div>
+        <button class="btn wide" id="newProf" type="button">+ YANGI PROFIL</button>
+        <p class="muted small">Profil — chiroqning „lugʻati“: qaysi kanal intensivlik, qaysi biri rang yoki pan ekanini bildiradi. Chiroq qoʻllanmasidagi DMX jadvalga moslang.</p>
+      </section>
+      <section class="panel grow2" id="profEdit"></section>
+    </div>
+  </section>
+
+  <!-- ================= ULANISH ================= -->
+  <section class="tab" id="tab-ulanish" hidden>
+    <div class="row2">
+      <section class="panel grow2">
+        <div class="ph"><h2>DMX ULANISH</h2></div>
+        <div class="conn-status" id="connStatus"></div>
+        <div class="conn-grid">
+          <div class="ccard">
+            <b>uDMX</b><span>Anyma uDMX va klonlari (kumush USB → XLR kabel). Teatrdagi kabelingiz shu turda.</span>
+            <button class="btn" id="cUdmx" type="button">uDMX ULASH</button>
+          </div>
+          <div class="ccard">
+            <b>Enttec DMX USB Pro</b><span>Enttec Pro, DMXKing ultraDMX, Eurolite USB-DMX512 PRO va mos klonlar.</span>
+            <button class="btn" id="cPro" type="button">PRO ULASH</button>
+          </div>
+          <div class="ccard">
+            <b>Open DMX (FTDI)</b><span>Enttec Open DMX va FTDI chipli arzon kabellar.</span>
+            <button class="btn" id="cOpen" type="button">OPEN DMX ULASH</button>
+          </div>
+          <div class="ccard">
+            <b>Simulyatsiya</b><span>Qurilmasiz ishlash: cue yozish va mashq qilish uchun. Signal faqat Monitor’da koʻrinadi.</span>
+            <button class="btn" id="cSim" type="button">SIMULYATSIYA</button>
+          </div>
+        </div>
+        <div class="grid3 conn-tools">
+          <button class="btn" id="cTest" type="button">SINOV SIGNALI (2 s)</button>
+          <button class="btn" id="cOff" type="button">UZISH</button>
+          <button class="btn" data-tab-go="monitor" type="button">MONITORNI OCHISH</button>
+        </div>
+      </section>
+      <section class="panel grow1 help">
+        <div class="ph"><h2>BIRINCHI MARTA ULASH (WINDOWS · uDMX)</h2></div>
+        <ol>
+          <li><b>FreeStyler’ni yoping.</b> Bir vaqtda faqat bitta dastur kabeldan foydalana oladi.</li>
+          <li>Dasturni <b>Chrome</b> yoki <b>Edge</b>’da oching.</li>
+          <li><b>uDMX ULASH</b> → roʻyxatda „uDMX“ → <b>Подключить / Ulash</b>.</li>
+          <li>Roʻyxat boʻsh boʻlsa yoki xato chiqsa: drayverni <b>WinUSB</b>’ga almashtiring.
+            <ol type="a">
+              <li><b>zadig.akeo.ie</b> dan Zadig’ni yuklab oling va oching.</li>
+              <li><b>Options → List All Devices</b> → roʻyxatdan <b>uDMX</b>.</li>
+              <li>Oʻng tomonda <b>WinUSB</b> → <b>Replace Driver</b>.</li>
+              <li>Brauzerni qayta oching va 3-qadamni takrorlang.</li>
+            </ol>
+          </li>
+        </ol>
+        <p class="muted small">FreeStyler’ga qaytish kerak boʻlsa, Zadig’da drayverni yana <b>libusbK</b>’ga almashtirasiz.</p>
+        <p class="muted small">Bir marta ruxsat bergach, keyingi safar kabel ulanishi bilan dastur oʻzi ulanadi.</p>
+        <p class="muted small"><b>iPad va iPhone:</b> Safari USB’ga ruxsat bermaydi. Ularda dastur simulyatsiya va mashq rejimida ishlaydi; sahnaga signal kompyuter orqali chiqadi.</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ================= MONITOR ================= -->
+  <section class="tab" id="tab-monitor" hidden>
+    <section class="panel">
+      <div class="ph"><h2>DMX MONITOR · UNIVERSE 1</h2><span class="muted">Chiqayotgan 512 kanal qiymati (0–255)</span></div>
+      <div class="mon" id="mon"></div>
+    </section>
+  </section>
+
+  <footer class="foot">
+    <span id="footConn"></span>
+    <span class="grow"></span>
+    <span class="muted">Probel — GO · B — Blackout · Esc — Release</span>
+    <span id="stServer"></span>
+  </footer>
+</div>
+
+<!-- ================= TO'LOV OYNASI ================= -->
+<div class="paywall" id="paywall" hidden>
+  <section class="pw-card" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
+    <div class="pw-head">
+      <div class="logo sm" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6l-1 5h-4z"/><path d="M10 8l-5 13"/><path d="M14 8l5 13"/><path d="M12 8v13"/></svg></div>
+      <div class="brand-text"><span class="brand-name">SAHNA NURI</span><span class="brand-az">Azimxodjayev Music</span></div>
+      <span class="grow"></span>
+      <span class="pill" id="pwTimer"></span>
+      <button class="btn sm" id="pwClose" type="button" aria-label="Yopish">✕</button>
+    </div>
+    <h1 id="pwTitle">Tarifni tanlang</h1>
+    <p class="muted" id="pwSub"></p>
+    <div class="plans" id="plans"></div>
+    <div class="pw-cols">
+      <div>
+        <h2>Qanday faollashtiriladi</h2>
+        <ol class="steps">
+          <li><i>1</i><span>Yuqoridan tarifni tanlang.</span></li>
+          <li><i>2</i><span>Kartaga <b class="pw-amount"></b> oʻtkazing. Izohga ID raqamingizni yozing.</span></li>
+          <li><i>3</i><span>Chek (skrinshot)ni Telegram botga yuboring.</span></li>
+          <li><i>4</i><span>Tasdiqlangach bot <b>aktivatsiya kodini</b> yuboradi. Uni pastga kiriting.</span></li>
+        </ol>
+        <a class="btn tg" id="tgBtn" target="_blank" rel="noopener">TELEGRAM BOT ORQALI TOʻLASH</a>
+      </div>
+      <div>
+        <div class="paycard">
+          <div class="pc-row"><span class="lbl">TOʻLOV KARTASI</span><b id="pcSys"></b></div>
+          <div class="pc-row"><b class="pc-num" id="pcNum"></b><button class="btn sm" id="copyCard" type="button">NUSXA</button></div>
+          <div class="pc-info">
+            <div><span class="lbl">Karta egasi</span><b id="pcHolder"></b></div>
+            <div><span class="lbl">Summa</span><b class="pw-amount"></b></div>
+            <div><span class="lbl">Izohga yozing</span><b id="pcId"></b></div>
+          </div>
+        </div>
+        <form id="codeForm" class="code-form">
+          <label for="codeInput" class="lbl">Aktivatsiya kodi</label>
+          <div class="code-row"><input id="codeInput" placeholder="SN-PR-XXXX-XXXX" autocomplete="off" spellcheck="false"><button class="btn go">FAOLLASHTIRISH</button></div>
+          <span class="code-msg" id="codeMsg"></span>
+        </form>
+        <span class="muted small">Kod faqat shu qurilmada ishlaydi va tarif muddati tugaguncha amal qiladi.</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/api/env"></script>
+<script src="/assets/dmx.js"></script>
+<script src="/assets/license.js"></script>
+<script src="/assets/app.js"></script>
+<script>
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(function () {});
+</script>
+</body>
+</html>
