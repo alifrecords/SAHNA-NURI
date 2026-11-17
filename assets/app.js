@@ -71,7 +71,7 @@
   function newStage() { return { w: 12, d: 7, h: 6, img: null, corners: null, pos: {}, cal: {}, points: [] }; }
   function newShow() {
     const profiles = DEFAULT_PROFILES();
-    return { v: 1, title: 'Yangi spektakl', profiles, fixtures: defaultPatch(profiles), cues: [], levels: {}, fxDepth: 100, fxSpeed: 40, master: 100, stage: newStage() };
+    return { v: 1, title: 'Yangi spektakl', profiles, fixtures: defaultPatch(profiles), cues: [], levels: {}, fxDepth: 100, fxSpeed: 40, master: 100, autoOn: true, stage: newStage() };
   }
 
   const SHOW_KEY = 'sn_show_v1';
@@ -346,12 +346,13 @@
     } else {
       list.innerHTML = show.cues.map((q, i) => {
         const cls = i === play.cur ? 'cur' : i === play.next ? 'next' : '';
-        const st = i === play.cur ? (play.paused ? 'PAUZA' : 'IJRODA') : i === play.next ? 'KEYINGI' : '';
+        const st = cueStatus(i);
         return `<div class="cue ${cls}" data-i="${i}" role="button" tabindex="0" aria-label="Cue ${esc(q.num)} ${esc(q.name)}">
           <b>${esc(q.num)}</b>
           <input data-name="${i}" value="${esc(q.name)}" aria-label="Cue nomi">
           <input data-fade="${i}" type="number" min="0" max="600" step="0.5" value="${q.fade}" aria-label="Fade soniya">
-          <span class="st">${st}</span></div>`;
+          <input class="auto" data-auto="${i}" inputmode="numeric" placeholder="qoʻlda" value="${q.auto ? fmtTime(q.auto) : ''}" aria-label="Avtomatik oʻtish vaqti (daqiqa:soniya)">
+          <span class="st" id="cst${i}">${st}</span></div>`;
       }).join('');
     }
     const cur = show.cues[play.cur];
@@ -374,6 +375,14 @@
     const n = e.target.dataset.name, f = e.target.dataset.fade;
     if (n != null) { show.cues[+n].name = e.target.value.slice(0, 60); save(); }
     if (f != null) { show.cues[+f].fade = clamp(+e.target.value || 0, 0, 600); save(); }
+    const a = e.target.dataset.auto;
+    if (a != null) {
+      const sec = parseTime(e.target.value);
+      if (sec == null) { toast('Vaqtni daq:son koʻrinishida yozing, masalan 1:30'); e.target.value = show.cues[+a].auto ? fmtTime(show.cues[+a].auto) : ''; return; }
+      show.cues[+a].auto = sec; e.target.value = sec ? fmtTime(sec) : '';
+      if (+a === play.cur) play.autoFired = false;
+      save(); updateAuto();
+    }
   });
 
   function goTo(i) {
@@ -386,6 +395,7 @@
     play.start = now; play.paused = false;
     play.fx = (show.cues[i].fx || []).map((x) => ({ type: x.type, fids: x.fids.filter((id) => show.fixtures.some((f) => f.id === id)) }));
     play.cur = i; play.next = i + 1 < show.cues.length ? i + 1 : i;
+    play.autoFired = false;
     renderCues(); renderProgrammer();
     flashBtn($('#goBtn')); flashBtn($('#go2Btn'));
   }
@@ -404,6 +414,61 @@
   $('#go2Btn').addEventListener('click', go);
   $('#backBtn').addEventListener('click', back);
   $('#pauseBtn').addEventListener('click', togglePause);
+
+  /* ---- Avtomatik o'tish (auto-follow): cue boshlanganidan N daqiqa:soniya keyin keyingi cue ---- */
+  function parseTime(v) {
+    v = String(v || '').trim().replace(',', '.');
+    if (!v) return 0;
+    if (!/^\d+(\.\d+)?(:\d{1,2}(\.\d+)?){0,2}$/.test(v)) return null;
+    const parts = v.split(':').map(Number);
+    let s = 0; for (const p of parts) s = s * 60 + p;
+    return Math.min(Math.round(s * 10) / 10, 24 * 3600);
+  }
+  function fmtTime(sec) {
+    sec = Math.max(0, Math.ceil(sec));
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+  }
+  if (show.autoOn === undefined) show.autoOn = true;
+  // joriy cue uchun: avtomatik o'tishgacha qolgan soniya (yo'q bo'lsa null)
+  function autoRemain(now) {
+    const q = show.cues[play.cur];
+    if (!show.autoOn || !q || !q.auto || play.autoFired || play.cur + 1 >= show.cues.length) return null;
+    const t = (play.paused ? play.pausedAt : now) - play.start;
+    return Math.max(0, q.auto - t / 1000);
+  }
+  function cueStatus(i) {
+    if (i === play.cur) {
+      const r = autoRemain(performance.now());
+      const base = play.paused ? 'PAUZA' : 'IJRODA';
+      return r == null ? base : base + ' · → ' + fmtTime(r);
+    }
+    return i === play.next ? 'KEYINGI' : '';
+  }
+  let lastAutoTxt = '';
+  function updateAuto() {
+    const now = performance.now();
+    const r = autoRemain(now);
+    const q = show.cues[play.cur];
+    $('#autoBar').style.width = r == null ? '0%' : ((1 - r / q.auto) * 100).toFixed(1) + '%';
+    if (r != null && r <= 0 && !play.paused) {
+      play.autoFired = true;
+      if (!locked()) { goTo(play.cur + 1); return; }
+    }
+    const el = document.getElementById('cst' + play.cur);
+    if (el) { const t = cueStatus(play.cur); if (t !== lastAutoTxt || el.textContent === '') { el.textContent = t; lastAutoTxt = t; } }
+  }
+  setInterval(updateAuto, 100);
+  function renderAutoBtn() {
+    const b = $('#autoBtn');
+    b.classList.toggle('on', !!show.autoOn); b.setAttribute('aria-pressed', !!show.autoOn);
+    b.textContent = show.autoOn ? 'AVTO YOQIQ' : 'AVTO OʻCHIQ';
+  }
+  $('#autoBtn').addEventListener('click', () => {
+    show.autoOn = !show.autoOn; save(); renderAutoBtn();
+    toast(show.autoOn ? 'Avtomatik oʻtish yoqildi' : 'Avtomatik oʻtish oʻchirildi — faqat GO bilan');
+    renderCues(); updateAuto();
+  });
 
   function nextNum() {
     const last = show.cues[show.cues.length - 1];
@@ -1212,7 +1277,7 @@
   });
 
   /* ================= Boshlash ================= */
-  function renderAllPult() { renderGroups(); renderFixtures(); renderSel(); renderCues(); renderFaders(); }
+  function renderAllPult() { renderGroups(); renderFixtures(); renderSel(); renderCues(); renderFaders(); renderAutoBtn(); }
   function renderAll() { $('#showTitle').value = show.title; document.title = show.title + ' — SAHNA NURI'; renderAllPult(); renderConn(); if (tab !== 'pult') setTab(tab); }
   renderAll();
   requestAnimationFrame(frame);

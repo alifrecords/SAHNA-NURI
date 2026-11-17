@@ -90,7 +90,7 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .sw { width: 13px; height: 13px; border-radius: 50%; border: 1px solid #fff; flex-shrink: 0; }
 
 /* ---------- cue ro'yxati ---------- */
-.cue-head, .cue { display: grid; grid-template-columns: 52px minmax(0, 1fr) 76px 84px; gap: 8px; align-items: center; }
+.cue-head, .cue { display: grid; grid-template-columns: 48px minmax(0, 1fr) 70px 92px 104px; gap: 8px; align-items: center; }
 .cue-head { padding: 0 12px; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
 .cue-list { display: flex; flex-direction: column; gap: 6px; max-height: 470px; overflow-y: auto; padding-right: 2px; flex: 1; min-height: 120px; }
 .cue { border: 1px solid var(--line); border-radius: 10px; min-height: 46px; padding: 0 12px; background: #fff; cursor: pointer; font-size: 14px; }
@@ -198,7 +198,7 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
   .top-act { flex-basis: 100%; }
   .top-act .btn { flex: 1; }
   .title-pill input { width: 140px; }
-  .cue-head, .cue { grid-template-columns: 40px minmax(0, 1fr) 56px 64px; }
+  .cue-head, .cue { grid-template-columns: 34px minmax(0, 1fr) 48px 62px 72px; gap: 5px; }
   .pc-info { grid-template-columns: 1fr 1fr; }
   .fader input[type=range] { height: 120px; }
 }
@@ -238,3 +238,13 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .langsw button { border: none; border-radius: 999px; min-height: 30px; min-width: 38px; padding: 0 10px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 800; cursor: pointer; }
 .langsw button.on { background: var(--on); }
 .help-body { display: flex; flex-direction: column; gap: 8px; }
+
+.ph-r { display: inline-flex; align-items: center; gap: 10px; }
+#autoBtn { min-height: 32px; font-size: 11px; }
+.cue input.auto { font-variant-numeric: tabular-nums; }
+.cue input.auto:placeholder-shown { color: #a1a1aa; }
+.cue.cur input.auto::placeholder { color: rgba(255,255,255,.65); }
+.cue .auto-mark { display: none; }
+.cue .st b { font-variant-numeric: tabular-nums; }
+.auto-bar { height: 4px; background: var(--soft); border-radius: 3px; overflow: hidden; margin-top: -4px; }
+.auto-bar i { display: block; height: 100%; width: 0; background: #2563eb; }

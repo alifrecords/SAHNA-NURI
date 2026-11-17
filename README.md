@@ -70,7 +70,16 @@ Tarif kodi `ST` bilan boshlansa — **Start** (32 tagacha chiroq, 100 tagacha cu
 
 Pan/Tilt diapazoni (odatda 540° / 270°) **Profillar**da sozlanadi. Nuqtani oʻchirish: tugmasini oʻng tugma bilan ikki marta bosing.
 
-## 7. Toʻlov jarayoni
+## 7. Avtomatik oʻtish (cue → keyingi cue)
+
+Cue roʻyxatidagi **AVTO (daq:son)** ustuniga vaqt yozing: `0:45`, `1:30`, `90` yoki `1:02:00`. Bu cue boshlanganidan shuncha vaqt oʻtgach keyingi cue oʻzi GO boʻladi. Boʻsh qoldirilsa — faqat qoʻlda GO.
+
+- HOLAT ustunida qolgan vaqt sanaladi: `IJRODA · → 0:42`, pastdagi koʻk chiziq toʻladi.
+- **PAUZA** sanashni toʻxtatadi, qayta bosilganda davom etadi.
+- **AVTO YOQIQ / OʻCHIQ** — repetitsiyada barcha avtomatik oʻtishlarni bir tugma bilan oʻchiradi.
+- GO oʻz vaqtidan oldin bosilsa, darhol keyingi cue’ga oʻtadi.
+
+## 8. Toʻlov jarayoni
 
 | Qadam | Kim | Nima boʻladi |
 | --- | --- | --- |

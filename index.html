@@ -67,8 +67,8 @@ if (location.protocol === 'file:') {
       </section>
 
       <section class="panel cue-panel">
-        <div class="ph"><h2>CUE ROʻYXATI</h2><span class="muted" id="cueInfo"></span></div>
-        <div class="cue-head"><span>№</span><span>NOMI</span><span>FADE (s)</span><span>HOLAT</span></div>
+        <div class="ph"><h2>CUE ROʻYXATI</h2><span class="ph-r"><span class="muted" id="cueInfo"></span><button class="btn sm on" id="autoBtn" type="button" aria-pressed="true">AVTO YOQIQ</button></span></div>
+        <div class="cue-head"><span>№</span><span>NOMI</span><span>FADE (s)</span><span>AVTO (daq:son)</span><span>HOLAT</span></div>
         <div class="cue-list" id="cueList"></div>
         <div class="grid4 cue-tools">
           <button class="btn" id="recBtn" type="button">CUE YOZISH</button>
@@ -83,6 +83,7 @@ if (location.protocol === 'file:') {
           <button class="btn go" id="go2Btn" type="button">GO →</button>
         </div>
         <div class="fade-bar" aria-hidden="true"><i id="fadeBar"></i></div>
+        <div class="auto-bar" aria-hidden="true" title="Avtomatik oʻtishgacha"><i id="autoBar"></i></div>
       </section>
 
       <section class="panel prog-panel">
