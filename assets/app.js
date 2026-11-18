@@ -39,28 +39,29 @@
   const c = (n, r, d = 0) => ({ n, r, d });
 
   // Andijon teatri — FreeStyler X2 (Andijan2026.2.flf) dagi haqiqiy chiroqlar.
-  // Kanal SONI FreeStyler'dagi manzillardan aniq olingan; kanal TARTIBI (qaysi kanal nima)
-  // taxminiy — chiroq fayli kelgach Profillar bo'limida aniqlashtiriladi.
-  const fx0 = (n) => c(n, 'fixed', 0);
+  // Kanal nomlari va tartibi FreeStyler'ning o'z .fxt fayllaridan (Fixtures papkasi) olingan.
+  // "Ochiq" qiymatlar FreeStyler'dagi highlight qiymatlariga mos (strob 0, shutter 255).
+  const fx0 = (n, d = 0) => c(n, 'fixed', d);
+  const PROF_REV = 2;
   const DEFAULT_PROFILES = () => ({
     fs_propar8: { name: 'ProPar8 (8 kanal)', group: 'ProPar8',
-      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Oq', 'w'), c('Strob', 'strobe', 0), fx0('Rejim'), fx0('Tezlik')] },
+      ch: [c('Lamp', 'dim'), c('Red', 'r'), c('Green', 'g'), c('Blue', 'b'), c('WW (iliq oq)', 'w'), c('Strobe', 'strobe', 0), fx0('Func Macro'), fx0('Func')] },
     fs_warning8: { name: 'Warning8 (8 kanal)', group: 'Warning8',
-      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Oq', 'w'), c('Strob', 'strobe', 0), fx0('Rejim'), fx0('Tezlik')] },
+      ch: [c('Lamp', 'dim'), c('Strobe', 'strobe', 0), fx0('Func1'), fx0('Func2'), c('Red', 'r'), c('Green', 'g'), c('Blue', 'b'), c('WW (iliq oq)', 'w')] },
     fs_5rc: { name: 'Evro Led 5RC (5 kanal)', group: 'Evro Led 5RC',
-      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Strob', 'strobe', 0)] },
+      ch: [c('Lamp', 'dim'), fx0('W (iliq oq)', 255), fx0('C (sovuq oq)', 255), c('Strobe', 'strobe', 0), fx0('Func')] },
     fs_led2lin5: { name: 'Evro Led2Lin5 (5 kanal)', group: 'Led2Lin5',
-      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Strob', 'strobe', 0)] },
+      ch: [fx0('Focus'), c('Dimmer', 'dim'), c('Strobe', 'strobe', 0), fx0('W (iliq oq)', 255), fx0('C (sovuq oq)', 255)] },
     fs_propar2: { name: 'Propar2 4 (4 kanal)', group: 'Propar2',
-      ch: [c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Oq', 'w')] },
+      ch: [c('Lamp', 'dim'), fx0('W (iliq oq)', 255), fx0('C (sovuq oq)', 255), c('Strobe', 'strobe', 0)] },
     fs_beam18: { name: 'Led Beam 300W (18 kanal)', group: 'Led Beam', wheel: { ...DEF_WHEEL }, panRange: 540, tiltRange: 270,
-      ch: [c('Pan', 'pan', 128), c('Pan fine', 'panF'), c('Tilt', 'tilt', 128), c('Tilt fine', 'tiltF'), fx0('Pan/Tilt tezligi'),
-        c('Dimmer', 'dim'), c('Shutter / Strob', 'strobe', 255), c('Rang gʻildiragi', 'cwheel'), c('Gobo', 'gobo'), fx0('Gobo aylanishi'),
-        fx0('Prizma'), fx0('Prizma aylanishi'), c('Fokus', 'fixed', 128), fx0('Frost'), fx0('Zoom'), fx0('Makro'), fx0('Reset / funksiya'), fx0('Zaxira')] },
-    fs_front12: { name: 'Front Light 800W (12 kanal)', group: 'Front Light', wheel: { ...DEF_WHEEL }, panRange: 540, tiltRange: 270,
-      ch: [c('Pan', 'pan', 128), c('Pan fine', 'panF'), c('Tilt', 'tilt', 128), c('Tilt fine', 'tiltF'), fx0('Pan/Tilt tezligi'),
-        c('Dimmer', 'dim'), c('Shutter / Strob', 'strobe', 255), c('Rang gʻildiragi', 'cwheel'), c('Gobo', 'gobo'), fx0('Prizma'), c('Fokus', 'fixed', 128), fx0('Reset / funksiya')] },
-    fs_dim24: { name: '24 channel dimmerpack (24 kanal)', group: 'Dimmer', ch: Array.from({ length: 24 }, (_, i) => c('Kanal ' + (i + 1), 'dim')) },
+      ch: [c('Pan', 'pan', 128), c('Pan 16bit', 'panF'), c('Tilt', 'tilt', 128), c('Tilt 16bit', 'tiltF'), c('Strobe', 'strobe', 0),
+        c('Dimmer', 'dim'), c('Color1', 'cwheel'), c('Gobo1', 'gobo'), fx0('Gobo2'), fx0('Gobo3'), fx0('Prism'), fx0('PrismRot.'),
+        fx0('Frost'), fx0('Zoom'), fx0('Focus'), fx0('Reset'), fx0('Effect'), fx0('EffectSpeed')] },
+    fs_front12: { name: 'Front Light 800W (12 kanal)', group: 'Front Light', panRange: 540, tiltRange: 270,
+      ch: [c('Pan', 'pan', 128), c('Pan 16bit', 'panF'), c('Tilt', 'tilt', 128), c('Tilt 16bit', 'tiltF'), fx0('PanTilt Speed'),
+        fx0('Dimmer'), c('Lamp', 'dim'), c('Shutter', 'strobe', 255), fx0('Color'), fx0('CTO'), fx0('Zoom'), fx0('Func')] },
+    fs_dim24: { name: '24 channel dimmerpack (24 kanal)', group: 'Dimmer', ch: Array.from({ length: 24 }, (_, i) => c('Dimmer ' + (i + 1), 'dim')) },
   });
   // Eski (taxminiy) standart profillar — avtomatik yangilash uchun
   const OLD_DEF_KEYS = ['beam16', 'panel8', 'par7', 'bar6', 'front1', 'dim12'];
@@ -88,13 +89,20 @@
   function newStage() { return { w: 12, d: 7, h: 6, img: null, corners: null, pos: {}, cal: {}, points: [] }; }
   function newShow() {
     const profiles = DEFAULT_PROFILES();
-    return { v: 1, title: 'Yangi spektakl', profiles, fixtures: defaultPatch(), cues: [], levels: {}, fxDepth: 100, fxSpeed: 40, master: 100, autoOn: true, mib: true, mibMove: 1.5, stage: newStage() };
+    return { v: 1, profRev: PROF_REV, title: 'Yangi spektakl', profiles, fixtures: defaultPatch(), cues: [], levels: {}, fxDepth: 100, fxSpeed: 40, master: 100, autoOn: true, mib: true, mibMove: 1.5, stage: newStage() };
   }
 
   const SHOW_KEY = 'sn_show_v1';
   let show;
   try { show = JSON.parse(localStorage.getItem(SHOW_KEY)); } catch (_) { show = null; }
   if (!show || !Array.isArray(show.fixtures) || !show.profiles) show = newShow();
+  // FreeStyler profillari yangilangan bo'lsa — saqlangan eski fs_* profillar yangisiga almashtiriladi
+  if ((show.profRev || 0) < PROF_REV) {
+    const D = DEFAULT_PROFILES();
+    for (const k in D) if (show.profiles[k]) show.profiles[k] = D[k];
+    show.profRev = PROF_REV;
+    try { localStorage.setItem(SHOW_KEY, JSON.stringify(show)); } catch (_) {}
+  }
   // Eski taxminiy 32 talik patch o'zgartirilmagan bo'lsa — Andijon teatri chiroqlariga avtomatik almashtiriladi
   let patchMigrated = false;
   if (show.fixtures.length && show.fixtures.every((f) => OLD_DEF_KEYS.includes(f.prof))) {
