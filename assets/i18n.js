@@ -9,6 +9,10 @@ window.SNI18N = (() => {
 
   // ---------- aniq moslik: o'zbekcha → [ruscha, inglizcha] ----------
   const D = {
+    '⬇ ILOVA': ['⬇ ПРИЛОЖЕНИЕ', '⬇ APP'],
+    'Kompyuter yoki telefonga ilova sifatida oʻrnatish': ['Установить как приложение на компьютер или телефон', 'Install as an app on a computer or phone'],
+    'Ilova sifatida oʻrnatish': ['Установка как приложения', 'Install as an app'],
+    'HOZIR OʻRNATISH': ['УСТАНОВИТЬ СЕЙЧАС', 'INSTALL NOW'],
     // yuqori panel va bo'limlar
     'DMX yorugʻlik boshqaruvi': ['DMX-управление светом', 'DMX lighting control'],
     'Spektakl:': ['Спектакль:', 'Show:'],
@@ -350,6 +354,38 @@ window.SNI18N = (() => {
 
   // ---------- murakkab HTML bloklar ----------
   const H = {
+    install: [`<p class="muted">SAHNA NURI открывается на компьютере или телефоне как отдельное приложение: свой значок, отдельное окно, работает даже без интернета. Тариф и сохранённые спектакли не меняются.</p>
+    <div class="inst-grid">
+      <section class="inst-card" data-os="pc">
+        <h2>💻 Компьютер <small>Windows · Chrome или Edge</small></h2>
+        <ol><li>Нажмите значок <b>⊕ Установить</b> справа в адресной строке (или меню <b>⋮</b> → <b>Установить приложение</b>).</li><li>Подтвердите <b>Установить</b>.</li><li>Значок <b>SAHNA NURI</b> появится на рабочем столе и в меню Пуск.</li></ol>
+      </section>
+      <section class="inst-card" data-os="android">
+        <h2>📱 Android <small>Chrome</small></h2>
+        <ol><li>Откройте меню <b>⋮</b> справа вверху.</li><li>Нажмите <b>Установить приложение</b> или <b>Добавить на главный экран</b>.</li><li>Значок <b>SAHNA NURI</b> появится на главном экране.</li></ol>
+      </section>
+      <section class="inst-card" data-os="ios">
+        <h2>📱 iPhone / iPad <small>Safari</small></h2>
+        <ol><li>Нажмите кнопку <b>Поделиться ⬆</b> внизу.</li><li>Выберите <b>На экран «Домой»</b>.</li><li>Нажмите <b>Добавить</b> справа вверху.</li></ol>
+      </section>
+    </div>
+    <p class="muted small">Сценой через USB-DMX кабель управляет только компьютер. На телефоне и планшете можно готовить cue, работать в симуляции и репетировать.</p>`,
+      `<p class="muted">SAHNA NURI opens on a computer or phone as a separate app: its own icon, its own window, and it works even offline. Your plan and saved shows stay the same.</p>
+    <div class="inst-grid">
+      <section class="inst-card" data-os="pc">
+        <h2>💻 Computer <small>Windows · Chrome or Edge</small></h2>
+        <ol><li>Click the <b>⊕ Install</b> icon at the right of the address bar (or the <b>⋮</b> menu → <b>Install app</b>).</li><li>Confirm <b>Install</b>.</li><li>A <b>SAHNA NURI</b> icon appears on the desktop and in the Start menu.</li></ol>
+      </section>
+      <section class="inst-card" data-os="android">
+        <h2>📱 Android <small>Chrome</small></h2>
+        <ol><li>Open the <b>⋮</b> menu at the top right.</li><li>Tap <b>Install app</b> or <b>Add to Home screen</b>.</li><li>A <b>SAHNA NURI</b> icon appears on the home screen.</li></ol>
+      </section>
+      <section class="inst-card" data-os="ios">
+        <h2>📱 iPhone / iPad <small>Safari</small></h2>
+        <ol><li>Tap the <b>Share ⬆</b> button at the bottom.</li><li>Choose <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b> at the top right.</li></ol>
+      </section>
+    </div>
+    <p class="muted small">Only a computer drives the stage through the USB-DMX cable. On a phone or tablet you can prepare cues, use simulation and rehearse.</p>`],
     help: [
       `<p class="bridge-tip"><b>Самый простой путь — SAHNA NURI Bridge:</b> слева <b>СКАЧАТЬ (.exe)</b> → запустите файл один раз (если Windows пишет «Неизвестный издатель»: <b>Подробнее → Выполнить в любом случае</b>) → <b>ПОДКЛЮЧИТЬ BRIDGE</b>. Zadig не нужен, шаги ниже — только для подключения без Bridge.</p>
       <ol>

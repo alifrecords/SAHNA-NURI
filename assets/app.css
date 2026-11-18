@@ -302,3 +302,21 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .bridge-card .bc-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .bridge-card .tag { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--on); color: #fff; font-size: 10px; letter-spacing: .06em; vertical-align: middle; }
 .bridge-tip { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--on-soft); color: #14532d; font-size: 13px; line-height: 1.5; }
+
+/* Ilova o'rnatish */
+.pill.inst { background: var(--ink); color: #fff; }
+.pill.inst.ready { background: var(--on); color: #fff; }
+.inst-modal { max-width: 860px; }
+.inst-modal h1 { margin: 0; font-size: 24px; }
+.inst-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 6px 0; }
+.inst-card { border: 1.5px solid #e4e4e7; border-radius: 16px; padding: 14px 16px; }
+#installModal[data-os="pc"] .inst-card[data-os="pc"],
+#installModal[data-os="android"] .inst-card[data-os="android"],
+#installModal[data-os="ios"] .inst-card[data-os="ios"] { border-color: var(--on); background: var(--on-soft); }
+.inst-card h2 { margin: 0 0 8px; font-size: 16px; }
+.inst-card h2 small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-top: 2px; }
+.inst-card ol { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.4; }
+@media (max-width: 720px) {
+  .inst-grid { grid-template-columns: 1fr; }
+  #installModal[data-os="android"] .inst-card[data-os="android"], #installModal[data-os="ios"] .inst-card[data-os="ios"] { order: -1; }
+}
