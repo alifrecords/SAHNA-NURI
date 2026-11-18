@@ -84,11 +84,13 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 
 .fixtures .btn { min-height: 54px; flex-direction: column; gap: 2px; line-height: 1.15; }
 .fixtures .btn small { font-size: 10.5px; font-weight: 500; opacity: .9; }
+.fixtures .btn > span:first-child { padding: 0 3px; font-size: 11px; text-align: center; letter-spacing: 0; }
+#groupBtns .btn { padding: 0 4px; font-size: 11.5px; line-height: 1.15; }
 .fixtures .btn .lvl { height: 3px; width: 70%; border-radius: 2px; background: rgba(255,255,255,.25); overflow: hidden; margin-top: 3px; }
 .fixtures .btn .lvl i { display: block; height: 100%; background: #fff; }
 /* Yoniq chiroq ko'rsatkichi: yashil chiroqcha + yashil hoshiya */
 .fixtures .btn { position: relative; }
-.fixtures .btn .led { position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: #3f3f46; border: 1.5px solid #52525b; }
+.fixtures .btn .led { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: #3f3f46; border: 1.5px solid #52525b; }
 .fixtures .btn.lit { box-shadow: 0 0 0 2.5px #22c55e; }
 .fixtures .btn.lit .led { background: #4ade80; border-color: #fff; box-shadow: 0 0 6px 2px rgba(74,222,128,.85); }
 .fixtures .btn.lit .lvl i { background: #4ade80; }

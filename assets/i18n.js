@@ -116,7 +116,7 @@ window.SNI18N = (() => {
     'Boshlangʻich manzil': ['Начальный адрес', 'Start address'],
     'QOʻSHISH': ['ДОБАВИТЬ', 'ADD'],
     'MANZILLARNI KETMA-KET QOʻYISH': ['РАССТАВИТЬ АДРЕСА ПОДРЯД', 'AUTO-ADDRESS IN ORDER'],
-    'STANDART 32 TA CHIROQ': ['СТАНДАРТНЫЕ 32 ПРИБОРА', 'DEFAULT 32 FIXTURES'],
+    'ANDIJON TEATRI · 35 TA CHIROQ': ['АНДИЖАНСКИЙ ТЕАТР · 35 ПРИБОРОВ', 'ANDIJAN THEATER · 35 FIXTURES'],
     'LOYIHA FAYLI': ['ФАЙЛ ПРОЕКТА', 'PROJECT FILE'],
     'KOMPYUTERGA YUKLAB OLISH (.json)': ['СКАЧАТЬ НА КОМПЬЮТЕР (.json)', 'DOWNLOAD TO COMPUTER (.json)'],
     'FAYLDAN OCHISH': ['ОТКРЫТЬ ИЗ ФАЙЛА', 'OPEN FROM FILE'],
@@ -280,7 +280,7 @@ window.SNI18N = (() => {
     "Juda ko'p urinish. 15 daqiqadan so'ng qayta urining.": ['Слишком много попыток. Повторите через 15 минут.', 'Too many attempts. Try again in 15 minutes.'],
     // tasdiqlash
     'Profil oʻchirilsinmi?': ['Удалить профиль?', 'Delete profile?'],
-    'Patch standart 32 ta chiroqqa qaytarilsinmi? Cue’lar oʻchmaydi, lekin chiroqlar almashadi.': ['Вернуть патч к стандартным 32 приборам? Cue не удалятся, но приборы заменятся.', 'Reset the patch to the default 32 fixtures? Cues are kept, but fixtures are replaced.'],
+    'Patch Andijon teatrining 35 ta chirogʻiga (FreeStyler) qaytarilsinmi? Cue’lar oʻchmaydi, lekin chiroqlar almashadi.': ['Вернуть патч к 35 приборам Андижанского театра (FreeStyler)? Cue не удалятся, но приборы заменятся.', 'Reset the patch to the 35 Andijan theater fixtures (FreeStyler)? Cues are kept, but fixtures are replaced.'],
     'Sahna rasmi olib tashlansinmi? Chiroqlar joyi saqlanadi.': ['Убрать изображение сцены? Расстановка приборов сохранится.', 'Remove the stage image? Fixture positions are kept.'],
   };
 

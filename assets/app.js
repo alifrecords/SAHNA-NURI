@@ -38,46 +38,73 @@
   const DEF_WHEEL = { Oq: 0, Qizil: 9, 'Toʻq sariq': 18, Sariq: 27, Yashil: 36, 'Koʻk': 54, Binafsha: 63, Pushti: 72, 'Iliq oq': 90 };
   const c = (n, r, d = 0) => ({ n, r, d });
 
+  // Andijon teatri — FreeStyler X2 (Andijan2026.2.flf) dagi haqiqiy chiroqlar.
+  // Kanal SONI FreeStyler'dagi manzillardan aniq olingan; kanal TARTIBI (qaysi kanal nima)
+  // taxminiy — chiroq fayli kelgach Profillar bo'limida aniqlashtiriladi.
+  const fx0 = (n) => c(n, 'fixed', 0);
   const DEFAULT_PROFILES = () => ({
-    beam16: {
-      name: 'Led Beam 300W (16 kanal)', group: 'Beamlar', wheel: { ...DEF_WHEEL }, panRange: 540, tiltRange: 270,
-      ch: [c('Pan', 'pan', 128), c('Pan fine', 'panF'), c('Tilt', 'tilt', 128), c('Tilt fine', 'tiltF'), c('Pan/Tilt tezligi', 'fixed', 0),
-        c('Dimmer', 'dim'), c('Shutter / Strob', 'strobe', 255), c('Rang gʻildiragi', 'cwheel'), c('Gobo', 'gobo'), c('Prizma', 'fixed', 0),
-        c('Prizma aylanishi', 'fixed', 0), c('Fokus', 'fixed', 128), c('Frost', 'fixed', 0), c('Reset / funksiya', 'fixed', 0), c('Zaxira', 'fixed', 0), c('Zaxira', 'fixed', 0)],
-    },
-    panel8: {
-      name: 'Evro Led 5RC (8 kanal)', group: 'Panellar',
-      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Oq', 'w'), c('Strob', 'strobe', 0), c('Rejim', 'fixed', 0), c('Tezlik', 'fixed', 0)],
-    },
-    par7: {
-      name: 'ProPar (7 kanal)', group: 'PARlar',
-      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Strob', 'strobe', 0), c('Rejim', 'fixed', 0), c('Tezlik', 'fixed', 0)],
-    },
-    bar6: {
-      name: 'Led2Lin bar (6 kanal)', group: 'Barlar',
-      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Strob', 'strobe', 0), c('Rejim', 'fixed', 0)],
-    },
-    front1: { name: 'Front Light (1 kanal)', group: 'Front', ch: [c('Dimmer', 'dim')] },
-    dim12: { name: 'Dimmer blok (12 kanal)', group: 'Dimmer', ch: Array.from({ length: 12 }, (_, i) => c('Kanal ' + (i + 1), 'dim')) },
+    fs_propar8: { name: 'ProPar8 (8 kanal)', group: 'ProPar8',
+      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Oq', 'w'), c('Strob', 'strobe', 0), fx0('Rejim'), fx0('Tezlik')] },
+    fs_warning8: { name: 'Warning8 (8 kanal)', group: 'Warning8',
+      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Oq', 'w'), c('Strob', 'strobe', 0), fx0('Rejim'), fx0('Tezlik')] },
+    fs_5rc: { name: 'Evro Led 5RC (5 kanal)', group: 'Evro Led 5RC',
+      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Strob', 'strobe', 0)] },
+    fs_led2lin5: { name: 'Evro Led2Lin5 (5 kanal)', group: 'Led2Lin5',
+      ch: [c('Dimmer', 'dim'), c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Strob', 'strobe', 0)] },
+    fs_propar2: { name: 'Propar2 4 (4 kanal)', group: 'Propar2',
+      ch: [c('Qizil', 'r'), c('Yashil', 'g'), c('Koʻk', 'b'), c('Oq', 'w')] },
+    fs_beam18: { name: 'Led Beam 300W (18 kanal)', group: 'Led Beam', wheel: { ...DEF_WHEEL }, panRange: 540, tiltRange: 270,
+      ch: [c('Pan', 'pan', 128), c('Pan fine', 'panF'), c('Tilt', 'tilt', 128), c('Tilt fine', 'tiltF'), fx0('Pan/Tilt tezligi'),
+        c('Dimmer', 'dim'), c('Shutter / Strob', 'strobe', 255), c('Rang gʻildiragi', 'cwheel'), c('Gobo', 'gobo'), fx0('Gobo aylanishi'),
+        fx0('Prizma'), fx0('Prizma aylanishi'), c('Fokus', 'fixed', 128), fx0('Frost'), fx0('Zoom'), fx0('Makro'), fx0('Reset / funksiya'), fx0('Zaxira')] },
+    fs_front12: { name: 'Front Light 800W (12 kanal)', group: 'Front Light', wheel: { ...DEF_WHEEL }, panRange: 540, tiltRange: 270,
+      ch: [c('Pan', 'pan', 128), c('Pan fine', 'panF'), c('Tilt', 'tilt', 128), c('Tilt fine', 'tiltF'), fx0('Pan/Tilt tezligi'),
+        c('Dimmer', 'dim'), c('Shutter / Strob', 'strobe', 255), c('Rang gʻildiragi', 'cwheel'), c('Gobo', 'gobo'), fx0('Prizma'), c('Fokus', 'fixed', 128), fx0('Reset / funksiya')] },
+    fs_dim24: { name: '24 channel dimmerpack (24 kanal)', group: 'Dimmer', ch: Array.from({ length: 24 }, (_, i) => c('Kanal ' + (i + 1), 'dim')) },
   });
+  // Eski (taxminiy) standart profillar — avtomatik yangilash uchun
+  const OLD_DEF_KEYS = ['beam16', 'panel8', 'par7', 'bar6', 'front1', 'dim12'];
 
-  function defaultPatch(profiles) {
-    const plan = [['beam16', 'Beam', 12], ['panel8', 'Panel', 6], ['par7', 'PAR', 6], ['bar6', 'Bar', 4], ['front1', 'Front', 2], ['dim12', 'Dimmer', 2]];
-    const out = []; let addr = 1;
-    for (const [p, name, n] of plan) for (let i = 1; i <= n; i++) { out.push({ id: uid(), name: name + ' ' + i, prof: p, addr }); addr += profiles[p].ch.length; }
-    return out;
+  // [FreeStyler nomi, profil, boshlang'ich DMX manzil] — FreeStyler "Add/Remove fixtures" ro'yxatidan
+  const ANDIJAN_PATCH = [
+    ['ProPar8-1', 'fs_propar8', 1], ['ProPar8-2', 'fs_propar8', 9], ['ProPar8-3', 'fs_propar8', 17], ['ProPar8-4', 'fs_propar8', 25],
+    ['Warning8-5', 'fs_warning8', 33], ['Warning8-6', 'fs_warning8', 41],
+    ['Evro Led 5RC-7', 'fs_5rc', 49], ['Evro Led 5RC-8', 'fs_5rc', 54],
+    ['Evro Led2Lin5-9', 'fs_led2lin5', 59], ['Evro Led2Lin5-10', 'fs_led2lin5', 64], ['Evro Led2Lin5-11', 'fs_led2lin5', 69],
+    ['Evro Led2Lin5-12', 'fs_led2lin5', 74], ['Evro Led2Lin5-13', 'fs_led2lin5', 79], ['Evro Led2Lin5-14', 'fs_led2lin5', 84],
+    ['Evro Led2Lin5-15', 'fs_led2lin5', 89], ['Evro Led2Lin5-16', 'fs_led2lin5', 94], ['Evro Led2Lin5-17', 'fs_led2lin5', 99],
+    ['Propar2 4-18', 'fs_propar2', 104], ['Propar2 4-19', 'fs_propar2', 108], ['Propar2 4-20', 'fs_propar2', 112], ['Propar2 4-21', 'fs_propar2', 116],
+    ['Led Beam 300W-22', 'fs_beam18', 120], ['Led Beam 300W-23', 'fs_beam18', 138],
+    ['Front Light 800W-24', 'fs_front12', 156], ['Front Light 800W-25', 'fs_front12', 168],
+    ['24 channel dimmerpack-26', 'fs_dim24', 180],
+    ['Led Beam 300W-27', 'fs_beam18', 204], ['Led Beam 300W-28', 'fs_beam18', 222], ['Led Beam 300W-29', 'fs_beam18', 240],
+    ['Warning8-30', 'fs_warning8', 258], ['Warning8-31', 'fs_warning8', 266], ['Warning8-32', 'fs_warning8', 274], ['Warning8-33', 'fs_warning8', 282],
+    ['Led Beam 300W-34', 'fs_beam18', 290], ['Led Beam 300W-35', 'fs_beam18', 308],
+  ];
+  function defaultPatch() {
+    return ANDIJAN_PATCH.map(([name, prof, addr]) => ({ id: uid(), name, prof, addr }));
   }
 
   function newStage() { return { w: 12, d: 7, h: 6, img: null, corners: null, pos: {}, cal: {}, points: [] }; }
   function newShow() {
     const profiles = DEFAULT_PROFILES();
-    return { v: 1, title: 'Yangi spektakl', profiles, fixtures: defaultPatch(profiles), cues: [], levels: {}, fxDepth: 100, fxSpeed: 40, master: 100, autoOn: true, mib: true, mibMove: 1.5, stage: newStage() };
+    return { v: 1, title: 'Yangi spektakl', profiles, fixtures: defaultPatch(), cues: [], levels: {}, fxDepth: 100, fxSpeed: 40, master: 100, autoOn: true, mib: true, mibMove: 1.5, stage: newStage() };
   }
 
   const SHOW_KEY = 'sn_show_v1';
   let show;
   try { show = JSON.parse(localStorage.getItem(SHOW_KEY)); } catch (_) { show = null; }
   if (!show || !Array.isArray(show.fixtures) || !show.profiles) show = newShow();
+  // Eski taxminiy 32 talik patch o'zgartirilmagan bo'lsa — Andijon teatri chiroqlariga avtomatik almashtiriladi
+  let patchMigrated = false;
+  if (show.fixtures.length && show.fixtures.every((f) => OLD_DEF_KEYS.includes(f.prof))) {
+    show.profiles = { ...DEFAULT_PROFILES(), ...show.profiles };
+    OLD_DEF_KEYS.forEach((k) => delete show.profiles[k]);
+    show.fixtures = defaultPatch();
+    if (show.stage) show.stage.pos = {};
+    patchMigrated = true;
+    try { localStorage.setItem(SHOW_KEY, JSON.stringify(show)); } catch (_) {}
+  }
   show.stage = { ...newStage(), ...(show.stage || {}) };
   let saveT;
   function save(now) {
@@ -722,7 +749,7 @@
     const w = $('#patchWarn');
     if (bad.size) { w.hidden = false; w.textContent = `${bad.size} ta chiroqning manzili ustma-ust tushgan yoki 512 dan oshgan (qizil qatorlar). „Manzillarni ketma-ket qoʻyish“ tugmasi tuzatadi.`; }
     else w.hidden = true;
-    $('#addProf').innerHTML = opts($('#addProf').value || 'beam16');
+    $('#addProf').innerHTML = opts($('#addProf').value || 'fs_beam18');
     $('#addAddr').value = nextFree();
   }
   function nextFree() { let m = 0; for (const f of show.fixtures) m = Math.max(m, f.addr + prof(f).ch.length - 1); return Math.min(512, m + 1); }
@@ -755,9 +782,11 @@
     save(); renderPatch(); renderAllPult(); toast(a - 1 > 512 ? 'Diqqat: kanallar 512 dan oshdi' : 'Manzillar ketma-ket qoʻyildi');
   });
   $('#defPatch').addEventListener('click', () => {
-    if (!confirmSoft('Patch standart 32 ta chiroqqa qaytarilsinmi? Cue’lar oʻchmaydi, lekin chiroqlar almashadi.')) return;
-    show.profiles = { ...DEFAULT_PROFILES(), ...show.profiles };
-    show.fixtures = defaultPatch(show.profiles); sel.clear(); prog.vals = {};
+    if (!confirmSoft('Patch Andijon teatrining 35 ta chirogʻiga (FreeStyler) qaytarilsinmi? Cue’lar oʻchmaydi, lekin chiroqlar almashadi.')) return;
+    show.profiles = { ...show.profiles, ...DEFAULT_PROFILES() };
+    const usedK = new Set(show.fixtures.map((f) => f.prof));
+    OLD_DEF_KEYS.forEach((k) => { if (!usedK.has(k)) delete show.profiles[k]; });
+    show.fixtures = defaultPatch(); sel.clear(); prog.vals = {};
     save(); renderPatch(); renderAllPult();
   });
   $('#exportBtn').addEventListener('click', () => {
@@ -1492,6 +1521,7 @@
     setTimeout(() => toast(`Oxirgi sahna tiklandi: Cue ${q.num} · ${q.name}`), 600);
   })();
   requestAnimationFrame(frame);
+  if (patchMigrated) setTimeout(() => toast('Patch FreeStyler’dagi 35 ta chiroqqa yangilandi'), 800);
   SNDmx.autoConnect();
   if (L()) { L().onChange(updateLicenseUI); L().start(); }
   window.addEventListener('beforeunload', () => save(true));
