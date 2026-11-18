@@ -86,6 +86,17 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .fixtures .btn small { font-size: 10.5px; font-weight: 500; opacity: .9; }
 .fixtures .btn .lvl { height: 3px; width: 70%; border-radius: 2px; background: rgba(255,255,255,.25); overflow: hidden; margin-top: 3px; }
 .fixtures .btn .lvl i { display: block; height: 100%; background: #fff; }
+/* Yoniq chiroq ko'rsatkichi: yashil chiroqcha + yashil hoshiya */
+.fixtures .btn { position: relative; }
+.fixtures .btn .led { position: absolute; top: 6px; right: 6px; width: 9px; height: 9px; border-radius: 50%; background: #3f3f46; border: 1.5px solid #52525b; }
+.fixtures .btn.lit { box-shadow: 0 0 0 2.5px #22c55e; }
+.fixtures .btn.lit .led { background: #4ade80; border-color: #fff; box-shadow: 0 0 6px 2px rgba(74,222,128,.85); }
+.fixtures .btn.lit .lvl i { background: #4ade80; }
+.fixtures .btn.lit.on .lvl i { background: #fff; }
+.lit-info { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--muted); margin-right: 10px; }
+.lit-info .led { width: 8px; height: 8px; border-radius: 50%; background: #a1a1aa; }
+.lit-info.any { color: #14532d; }
+.lit-info.any .led { background: #22c55e; box-shadow: 0 0 5px 1px rgba(34,197,94,.7); }
 .colors .btn, #colorBtns .btn { justify-content: flex-start; gap: 7px; }
 .sw { width: 13px; height: 13px; border-radius: 50%; border: 1px solid #fff; flex-shrink: 0; }
 

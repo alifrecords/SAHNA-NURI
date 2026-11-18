@@ -295,7 +295,7 @@
     };
   }
   function renderFixtures() {
-    $('#fixtureBtns').innerHTML = show.fixtures.map((f) => `<button class="btn ${sel.has(f.id) ? 'on' : ''}" data-f="${f.id}" type="button" aria-pressed="${sel.has(f.id)}"><span>${esc(f.name)}</span><small>DMX ${String(f.addr).padStart(3, '0')}${hasRole(prof(f), 'pan') ? ` <b class="dir" data-dir="${f.id}"></b>` : ''}</small><span class="lvl"><i data-lv="${f.id}"></i></span></button>`).join('')
+    $('#fixtureBtns').innerHTML = show.fixtures.map((f) => `<button class="btn ${sel.has(f.id) ? 'on' : ''}" data-f="${f.id}" type="button" aria-pressed="${sel.has(f.id)}"><span>${esc(f.name)}</span><small>DMX ${String(f.addr).padStart(3, '0')}${hasRole(prof(f), 'pan') ? ` <b class="dir" data-dir="${f.id}"></b>` : ''}</small><span class="lvl"><i data-lv="${f.id}"></i></span><i class="led" aria-hidden="true"></i></button>`).join('')
       || '<div class="empty" style="grid-column:1/-1">Chiroqlar yoʻq. Patch boʻlimida qoʻshing.</div>';
   }
   $('#fixtureBtns').addEventListener('click', (e) => {
@@ -304,7 +304,10 @@
     sel.has(id) ? sel.delete(id) : sel.add(id);
     renderSel();
   });
+  // Chiroq yoniq deb hisoblanadigan eng kichik chiqish qiymati (0–255)
+  const LIT_MIN = 3;
   function updateFixtureLevels() {
+    let litN = 0;
     for (const f of show.fixtures) {
       const el = document.querySelector(`[data-lv="${f.id}"]`); if (!el) continue;
       const pr = prof(f); const k = pr.ch.findIndex((x) => x.r === 'dim');
@@ -312,6 +315,14 @@
       if (k >= 0) v = buf[f.addr - 1 + k] || 0;
       else { const ks = ['r', 'g', 'b', 'w'].map((r) => pr.ch.findIndex((x) => x.r === r)).filter((x) => x >= 0); v = Math.max(0, ...ks.map((x) => buf[f.addr - 1 + x] || 0)); }
       el.style.width = (v / 2.55).toFixed(0) + '%';
+      // Yoniq chiroq: tugmada yashil chiroqcha + yashil hoshiya
+      const lit = v >= LIT_MIN;
+      if (lit) litN++;
+      const btn = el.closest('[data-f]');
+      if (btn && btn.classList.contains('lit') !== lit) {
+        btn.classList.toggle('lit', lit);
+        btn.title = lit ? `${f.name}: yoniq (${Math.round(v / 2.55)}%)` : `${f.name}: o'chiq`;
+      }
       const d = document.querySelector(`[data-dir="${f.id}"]`);
       if (d) {
         const kp = pr.ch.findIndex((x) => x.r === 'pan');
@@ -320,6 +331,8 @@
         if (d.textContent !== t) d.textContent = t;
       }
     }
+    const lc = $('#litCount'), lt = `${litN} ta yoniq`;
+    if (lc && lc.dataset.n !== String(litN)) { lc.dataset.n = litN; lc.textContent = lt; $('#litInfo').classList.toggle('any', litN > 0); }
   }
   // Tanlovni ajratish: tanlanganlar ichidan toq / juft / 1-yarmi / 2-yarmi
   const selOrdered = () => show.fixtures.filter((f) => sel.has(f.id));

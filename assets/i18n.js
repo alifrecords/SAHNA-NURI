@@ -292,6 +292,7 @@ window.SNI18N = (() => {
     [/^(.+) kalibrlash nuqtalari oʻchirilsinmi\?$/, (m, i) => [`Удалить точки калибровки ${m[1]}?`, `Delete calibration points of ${m[1]}?`][i]],
     [/^„(.+)“ nuqtasi oʻchirilsinmi\?$/, (m, i) => [`Удалить точку «${m[1]}»?`, `Delete point “${m[1]}”?`][i]],
     [/^(.+) oʻchirilsinmi\?$/, (m, i) => [`Удалить ${m[1]}?`, `Delete ${m[1]}?`][i]],
+    [/^(\d+) ta yoniq$/, (m, i) => [`Горят: ${m[1]}`, `${m[1]} lit`][i]],
     [/^(\d+) ta chiroq · (\d+) ta tanlangan$/, (m, i) => [`Приборов: ${m[1]} · выбрано: ${m[2]}`, `${m[1]} fixtures · ${m[2]} selected`][i]],
     [/^(\d+) ta chiroq · (\d+) \/ 512 kanal band$/, (m, i) => [`Приборов: ${m[1]} · занято ${m[2]} / 512 каналов`, `${m[1]} fixtures · ${m[2]} / 512 channels used`][i]],
     [/^(\d+) ta chiroqning manzili ustma-ust tushgan yoki 512 dan oshgan \(qizil qatorlar\)\. „Manzillarni ketma-ket qoʻyish“ tugmasi tuzatadi\.$/, (m, i) => [`У ${m[1]} приборов адреса пересекаются или выходят за 512 (красные строки). Исправит кнопка «Расставить адреса подряд».`, `${m[1]} fixtures overlap or exceed 512 (red rows). The “Auto-address in order” button fixes it.`][i]],
