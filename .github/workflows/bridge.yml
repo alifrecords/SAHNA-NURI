@@ -35,11 +35,19 @@ jobs:
         shell: pwsh
         run: |
           $env:SN_FAKE_USB = "1"
-          $p = Start-Process dist\SahnaNuriBridge.exe -PassThru
-          Start-Sleep -Seconds 6
-          $r = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:47800/
-          if ($r.Content -notmatch 'SAHNA NURI Bridge') { throw 'Holat sahifasi ochilmadi' }
-          Stop-Process -Id $p.Id -Force
+          Start-Process dist\SahnaNuriBridge.exe
+          $ok = $false
+          for ($i = 0; $i -lt 20; $i++) {
+            Start-Sleep -Seconds 2
+            try {
+              $r = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:47800/ -TimeoutSec 3
+              if ($r.Content -match 'SAHNA NURI Bridge') { $ok = $true; break }
+            } catch { }
+          }
+          $log = Join-Path $env:LOCALAPPDATA 'SahnaNuriBridge\bridge.log'
+          if (Test-Path $log) { Get-Content $log }
+          Get-Process SahnaNuriBridge -ErrorAction SilentlyContinue | Stop-Process -Force
+          if (-not $ok) { throw 'Holat sahifasi ochilmadi' }
           Get-Item dist\SahnaNuriBridge.exe | Select-Object Name, Length
 
       - name: Release'ga yuklash

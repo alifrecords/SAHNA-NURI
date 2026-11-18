@@ -51,8 +51,11 @@ def log(msg):
             f.write(line + "\n")
     except OSError:
         pass
-    if not getattr(sys, "frozen", False) or FAKE:
-        print(line, flush=True)
+    if sys.stdout is not None and (not getattr(sys, "frozen", False) or FAKE):
+        try:
+            print(line, flush=True)
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def message_box(text, title="SAHNA NURI Bridge", icon=0x40):
@@ -384,4 +387,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:  # noqa: BLE001
+        import traceback
+        log("XATO: " + traceback.format_exc())
+        message_box("SAHNA NURI Bridge ishga tushmadi.\nTafsilot: " + LOG_PATH, icon=0x10)
+        time.sleep(5)
+        raise
