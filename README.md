@@ -47,7 +47,29 @@ Jadvallar birinchi soʻrovda oʻzi yaratiladi.
 
 Tarif kodi `ST` bilan boshlansa — **Start** (32 tagacha chiroq, 100 tagacha cue). Boshqa kodlar — cheklovsiz.
 
-## 5. uDMX kabelni ulash (Windows)
+## 5. SAHNA NURI Bridge (tavsiya etiladi)
+
+Kompyuterga bir marta oʻrnatiladigan kichik dastur — Zadig va drayver almashtirish kerak emas.
+
+1. Pult → **Ulanish** → **YUKLAB OLISH (.exe)** (yoki [SahnaNuriBridge.exe](https://github.com/alifrecords/SAHNA-NURI/releases/latest/download/SahnaNuriBridge.exe)).
+2. Faylni ishga tushiring. Windows „Неизвестный издатель“ desa: **Подробнее → Выполнить в любом случае**.
+3. „Oʻrnatildi va ishga tushdi“ xabari chiqadi — endi u har safar Windows bilan birga yonadi.
+4. Pult sahifasi ochilganda Bridge’ga **oʻzi ulanadi** (yoki Ulanish → **BRIDGE ULASH**).
+
+| Holat | Bridge nima qiladi |
+| --- | --- |
+| Kabel chiqib qoldi | Har soniya qidiradi, qayta tiqilganda oʻzi ulanadi va oxirgi holatni yuboradi |
+| Brauzer yopildi / qotib qoldi | Chiroqlar oxirgi holatda qoladi |
+| Kompyuter qayta yondi | Bridge oʻzi ishga tushadi va chiroqlarni oxirgi holatiga qaytaradi |
+| Pult sahifasi qayta ochildi | Oxirgi ijro etilgan cue fade’siz tiklanadi |
+
+- Holat sahifasi: http://127.0.0.1:47800
+- Faqat `sahna-nuri.pages.dev` boshqara oladi (boshqa saytlar rad etiladi).
+- Avtomatik ishga tushishni olib tashlash: `SahnaNuriBridge.exe --uninstall`.
+- FreeStyler bilan bir vaqtda ishlamaydi — kabelni bitta dastur ishlatadi.
+- Kod: `bridge/`, yigʻish: `.github/workflows/bridge.yml` (Python 3.11, Windows 8.1 / 10 / 11).
+
+## 5b. uDMX kabelni Bridge’siz ulash (Windows)
 
 1. **FreeStyler'ni yoping** — kabelni bir vaqtda faqat bitta dastur ishlatadi.
 2. Saytni **Chrome** yoki **Edge**'da oching → **Ulanish** → **uDMX ULASH** → `uDMX` → **Ulash**.

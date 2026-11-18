@@ -279,3 +279,9 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .selhelp .btn { min-height: 34px; font-size: 11px; }
 .fixtures .btn small .dir { font-size: 10px; margin-left: 2px; }
 #splitBtns .btn { min-height: 38px; }
+
+.bridge-card { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 14px; border: 2px solid var(--ink); }
+.bridge-card .bc-text { flex: 1 1 360px; display: flex; flex-direction: column; gap: 6px; }
+.bridge-card .bc-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.bridge-card .tag { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--on); color: #fff; font-size: 10px; letter-spacing: .06em; vertical-align: middle; }
+.bridge-tip { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--on-soft); color: #14532d; font-size: 13px; line-height: 1.5; }

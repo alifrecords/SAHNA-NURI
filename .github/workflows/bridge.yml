@@ -1,0 +1,54 @@
+name: SAHNA NURI Bridge (.exe)
+
+on:
+  push:
+    branches: [main]
+    paths: ['bridge/**', '.github/workflows/bridge.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Python 3.11 — Windows 8.1 va 10/11 da ishlaydi
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Kutubxonalar
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r bridge/requirements.txt pyinstaller==6.10.0
+
+      - name: .exe yig'ish
+        run: >
+          pyinstaller --onefile --noconsole --name SahnaNuriBridge
+          --icon bridge/icon.ico --collect-all libusb_package
+          bridge/sahna_nuri_bridge.py
+
+      - name: Tekshiruv (ishga tushib, holat sahifasi javob beradimi)
+        shell: pwsh
+        run: |
+          $env:SN_FAKE_USB = "1"
+          $p = Start-Process dist\SahnaNuriBridge.exe -PassThru
+          Start-Sleep -Seconds 6
+          $r = Invoke-WebRequest -UseBasicParsing http://127.0.0.1:47800/
+          if ($r.Content -notmatch 'SAHNA NURI Bridge') { throw 'Holat sahifasi ochilmadi' }
+          Stop-Process -Id $p.Id -Force
+          Get-Item dist\SahnaNuriBridge.exe | Select-Object Name, Length
+
+      - name: Release'ga yuklash
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VER=$(python -c "import re;print(re.search(r'VERSION = \"([^\"]+)\"', open('bridge/sahna_nuri_bridge.py', encoding='utf-8').read()).group(1))")
+          TAG="bridge-v$VER"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "SAHNA NURI Bridge v$VER" --notes "Windows uchun SAHNA NURI Bridge. Yuklab oling va bir marta ishga tushiring: o'zi o'rnatiladi va Windows bilan birga ishga tushadi."
+          gh release upload "$TAG" dist/SahnaNuriBridge.exe --clobber
+          gh release edit "$TAG" --latest

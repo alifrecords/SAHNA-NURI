@@ -265,6 +265,16 @@ if (location.protocol === 'file:') {
       <section class="panel grow2">
         <div class="ph"><h2>DMX ULANISH</h2></div>
         <div class="conn-status" id="connStatus"></div>
+        <div class="ccard bridge-card">
+          <div class="bc-text">
+            <b>SAHNA NURI Bridge <span class="tag">TAVSIYA</span></b>
+            <span>Kompyuterga bir marta oʻrnatiladigan kichik dastur. Drayver almashtirish (Zadig) shart emas — FreeStyler drayveri bilan ishlaydi. Windows bilan birga oʻzi yonadi, kabel chiqib qolsa oʻzi qayta ulanadi va chiroqlarni oxirgi holatiga qaytaradi.</span>
+          </div>
+          <div class="bc-btns">
+            <a class="btn" id="cBridgeDl" href="https://github.com/alifrecords/SAHNA-NURI/releases/latest/download/SahnaNuriBridge.exe" rel="noopener">YUKLAB OLISH (.exe)</a>
+            <button class="btn" id="cBridge" type="button">BRIDGE ULASH</button>
+          </div>
+        </div>
         <div class="conn-grid">
           <div class="ccard">
             <b>uDMX</b><span>Anyma uDMX va klonlari (kumush USB → XLR kabel). Teatrdagi kabelingiz shu turda.</span>
@@ -292,6 +302,7 @@ if (location.protocol === 'file:') {
       <section class="panel grow1 help">
         <div class="ph"><h2>BIRINCHI MARTA ULASH (WINDOWS · uDMX)</h2></div>
         <div data-i18n-html="help" class="help-body">
+        <p class="bridge-tip"><b>Eng oson yoʻl — SAHNA NURI Bridge:</b> chapdagi <b>YUKLAB OLISH (.exe)</b> → faylni bir marta ishga tushiring (Windows „Неизвестный издатель“ desa: <b>Подробнее → Выполнить в любом случае</b>) → <b>BRIDGE ULASH</b>. Zadig kerak emas, quyidagi qadamlar faqat Bridge’siz ulash uchun.</p>
         <ol>
           <li><b>FreeStyler’ni yoping.</b> Bir vaqtda faqat bitta dastur kabeldan foydalana oladi.</li>
           <li>Dasturni <b>Chrome</b> yoki <b>Edge</b>’da oching.</li>

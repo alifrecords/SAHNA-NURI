@@ -490,6 +490,7 @@
     play.fx = (show.cues[i].fx || []).map((x) => ({ type: x.type, fids: x.fids.filter((id) => show.fixtures.some((f) => f.id === id)) }));
     play.cur = i; play.next = i + 1 < show.cues.length ? i + 1 : i;
     play.autoFired = false;
+    show.lastCue = i; save();
     renderCues(); renderProgrammer();
     flashBtn($('#goBtn')); flashBtn($('#go2Btn'));
   }
@@ -595,7 +596,8 @@
     const q = { id: uid(), num: nextNum(), name: sceneWord + ' ' + (show.cues.length + 1), fade: 2, ...s };
     show.cues.splice(at, 0, q);
     prog.vals = {}; prog.fx = [];
-    play.cur = at; play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0; play.fx = q.fx.map((x) => ({ ...x, fids: [...x.fids] }));
+    play.cur = at; play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0;
+    show.lastCue = at; play.fx = q.fx.map((x) => ({ ...x, fids: [...x.fids] }));
     play.next = Math.min(at + 1, show.cues.length - 1);
     save(); renderCues(); renderProgrammer();
     flashBtn($('#recBtn'));
@@ -625,6 +627,7 @@
     if (!guardAction()) return;
     const now = performance.now();
     play.from = baseLook(now); play.to = emptyLook(); play.dur = 2000; play.fadeMs = 2000; play.mib = false; play.start = now; play.paused = false; play.fx = []; play.cur = -1;
+    show.lastCue = -1; save();
     renderCues(); renderProgrammer(); toast('Sahna 2 soniyada oʻchmoqda');
   });
   let confirmAt = 0, confirmMsg = '';
@@ -832,7 +835,7 @@
     box.className = 'conn-status' + (s.ok ? ' ok' : '');
     box.innerHTML = `<span>${s.ok ? '● Ulangan: ' + esc(s.label) : '○ ' + esc(s.label)}</span>${s.error ? `<span class="err">${esc(s.error)}</span>` : ''}
       <span class="muted">Brauzer: USB ${SNDmx.support.usb ? '✓' : '✗'} · Serial ${SNDmx.support.serial ? '✓' : '✗'}</span>`;
-    const map = { udmx: '#cUdmx', pro: '#cPro', open: '#cOpen', sim: '#cSim' };
+    const map = { udmx: '#cUdmx', pro: '#cPro', open: '#cOpen', sim: '#cSim', bridge: '#cBridge' };
     $$('.ccard').forEach((x) => x.classList.remove('on'));
     $$('.ccard .btn').forEach((x) => x.classList.remove('on'));
     if (s.ok && map[s.kind]) { $(map[s.kind]).classList.add('on'); $(map[s.kind]).closest('.ccard').classList.add('on'); }
@@ -840,6 +843,7 @@
   }
   SNDmx.onStatus(() => { renderConn(); const s = SNDmx.status(); if (s.ok) toast('Ulandi: ' + s.label); else if (s.error) toast(s.error); });
   $('#cUdmx').addEventListener('click', () => SNDmx.connectUDmx());
+  $('#cBridge').addEventListener('click', () => SNDmx.connectBridge(false));
   $('#cPro').addEventListener('click', () => SNDmx.connectSerial('pro'));
   $('#cOpen').addEventListener('click', () => SNDmx.connectSerial('open'));
   $('#cSim').addEventListener('click', () => SNDmx.connectSim());
@@ -1463,6 +1467,17 @@
   function renderAllPult() { renderGroups(); renderFixtures(); renderSel(); renderCues(); renderFaders(); renderAutoBtn(); renderMib(); }
   function renderAll() { $('#showTitle').value = show.title; document.title = show.title + ' — SAHNA NURI'; renderAllPult(); renderConn(); if (tab !== 'pult') setTab(tab); }
   renderAll();
+  // Sahifa qayta ochilsa yoki kompyuter qayta yonsa: oxirgi ijro etilgan cue fade'siz tiklanadi
+  (function resumeLastCue() {
+    const i = show.lastCue;
+    if (typeof i !== 'number' || i < 0 || i >= show.cues.length) return;
+    const q = show.cues[i];
+    play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0; play.start = performance.now();
+    play.fx = (q.fx || []).map((x) => ({ type: x.type, fids: x.fids.filter((id) => show.fixtures.some((f) => f.id === id)) }));
+    play.cur = i; play.next = i + 1 < show.cues.length ? i + 1 : i; play.autoFired = true;
+    renderCues(); renderProgrammer();
+    setTimeout(() => toast(`Oxirgi sahna tiklandi: Cue ${q.num} · ${q.name}`), 600);
+  })();
   requestAnimationFrame(frame);
   SNDmx.autoConnect();
   if (L()) { L().onChange(updateLicenseUI); L().start(); }

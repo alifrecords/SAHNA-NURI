@@ -102,22 +102,81 @@ window.SNDmx = (() => {
     };
   }
 
+  /* ---------- SAHNA NURI Bridge (kompyuterdagi yordamchi dastur, ws://127.0.0.1:47800) ---------- */
+  const BRIDGE_URL = 'ws://127.0.0.1:47800';
+  function bridgeDriver(silent) {
+    let ws = null, dev = { ok: false };
+    const d = {
+      kind: 'bridge',
+      label: 'SAHNA NURI Bridge',
+      refreshMs: 1000,
+      open() {
+        return new Promise((resolve, reject) => {
+          let done = false;
+          try { ws = new WebSocket(BRIDGE_URL); } catch (e) { reject(e); return; }
+          ws.binaryType = 'arraybuffer';
+          const to = setTimeout(() => { if (!done) { done = true; try { ws.close(); } catch (_) {} reject(new Error('BRIDGE_NOT_RUNNING')); } }, 1500);
+          ws.onopen = () => { if (done) return; done = true; clearTimeout(to); resolve(); };
+          ws.onerror = () => { if (done) return; done = true; clearTimeout(to); reject(new Error('BRIDGE_NOT_RUNNING')); };
+          ws.onmessage = (ev) => {
+            if (typeof ev.data !== 'string') return;
+            let m; try { m = JSON.parse(ev.data); } catch (_) { return; }
+            if (m.type !== 'status') return;
+            dev = m;
+            if (driver === d) {
+              d.label = m.ok ? 'SAHNA NURI Bridge · uDMX' : 'SAHNA NURI Bridge';
+              setStatus({ kind: 'bridge', label: d.label, ok: !!m.ok, error: m.ok ? '' : 'Bridge ishlayapti, lekin uDMX kabel topilmadi. Kabelni tekshiring — ulanishi bilan oʻzi davom etadi.' });
+              dirty = true;
+            }
+          };
+          ws.onclose = () => {
+            if (driver === d) {
+              driver = null; stopLoop();
+              setStatus({ kind: 'none', label: 'Uzildi', ok: false, error: 'SAHNA NURI Bridge bilan aloqa uzildi — qayta ulanmoqda…' });
+              scheduleBridgeRetry();
+            }
+          };
+        });
+      },
+      async send(buf) { if (ws && ws.readyState === 1) { ws.send(buf.slice(0)); return true; } return false; },
+      async close() { try { ws && ws.close(); } catch (_) {} },
+      status: () => dev,
+    };
+    void silent;
+    return d;
+  }
+  let bridgeTimer = null, wantBridge = false;
+  function scheduleBridgeRetry() {
+    clearTimeout(bridgeTimer);
+    if (!wantBridge) return;
+    bridgeTimer = setTimeout(async () => { if (!driver && wantBridge) { const ok = await attach(bridgeDriver(true), true); if (!ok) scheduleBridgeRetry(); } }, 3000);
+  }
+  async function connectBridge(silent) {
+    wantBridge = true;
+    if (!silent) setPref('bridge');
+    const ok = await attach(bridgeDriver(silent), silent);
+    if (!ok && silent) scheduleBridgeRetry();
+    return ok;
+  }
+
   function simDriver() {
     return { kind: 'sim', label: 'Simulyatsiya (qurilmasiz)', async open() {}, async send() { return true; }, refreshMs: 1000, async close() {} };
   }
 
-  async function attach(d) {
-    await disconnect(true);
+  async function attach(d, silent) {
+    if (!silent) await disconnect(true);
     try {
       await d.open();
+      if (silent && driver && driver !== d) { await d.close(); return true; }
       driver = d;
-      setStatus({ kind: d.kind, label: d.label, ok: true, error: '' });
+      const st = d.status ? d.status() : { ok: true };
+      setStatus({ kind: d.kind, label: d.label, ok: d.kind !== 'bridge' || !!st.ok, error: d.kind === 'bridge' && !st.ok ? 'Bridge ishlayapti, lekin uDMX kabel topilmadi. Kabelni tekshiring — ulanishi bilan oʻzi davom etadi.' : '' });
       dirty = true;
       startLoop();
       return true;
     } catch (e) {
       try { await d.close(); } catch (_) {}
-      setStatus({ kind: 'none', label: 'Ulanmagan', ok: false, error: explain(e, d.kind) });
+      if (!silent) setStatus({ kind: 'none', label: 'Ulanmagan', ok: false, error: explain(e, d.kind) });
       return false;
     }
   }
@@ -128,10 +187,13 @@ window.SNDmx = (() => {
       return "uDMX ochilmadi. Windows'da qurilma drayveri WinUSB bo'lishi kerak (Zadig dasturi bilan almashtiriladi). FreeStyler ochiq bo'lsa, uni yoping.";
     if (/already open|InvalidStateError/i.test(m)) return 'Port band: boshqa dastur (FreeStyler) ishlatyapti. Uni yopib qayta urining.';
     if (/No device selected|NotFoundError/i.test(m)) return 'Qurilma tanlanmadi.';
+    if (/BRIDGE_NOT_RUNNING/.test(m)) return 'SAHNA NURI Bridge ishlamayapti. Uni yuklab olib, bir marta ishga tushiring.';
     return m;
   }
 
+  const setPref = (v) => { try { localStorage.setItem('sn_dmx_pref', v); } catch (_) {} };
   async function connectUDmx() {
+    wantBridge = false; clearTimeout(bridgeTimer); setPref('usb');
     if (!support.usb) return setStatus({ error: "Bu brauzer USB'ni qo'llamaydi. Kompyuterda Chrome yoki Edge'dan oching." }), false;
     let dev;
     try { dev = await navigator.usb.requestDevice({ filters: UDMX_FILTERS }); }
@@ -139,6 +201,7 @@ window.SNDmx = (() => {
     return attach(uDmxDriver(dev));
   }
   async function connectSerial(kind) {
+    wantBridge = false; clearTimeout(bridgeTimer); setPref('usb');
     if (!support.serial) return setStatus({ error: "Bu brauzer Serial portni qo'llamaydi. Kompyuterda Chrome yoki Edge'dan oching." }), false;
     let port;
     try { port = await navigator.serial.requestPort({}); }
@@ -147,8 +210,11 @@ window.SNDmx = (() => {
   }
   const connectSim = () => attach(simDriver());
 
-  // Avval ruxsat berilgan uDMX bo'lsa, sahifa ochilganda o'zi ulanadi
+  // Sahifa ochilganda: avval Bridge, keyin avval ruxsat berilgan uDMX — o'zi ulanadi
   async function autoConnect() {
+    let pref = '';
+    try { pref = localStorage.getItem('sn_dmx_pref') || ''; } catch (_) {}
+    if (pref !== 'usb' && await connectBridge(true)) return true;
     try {
       if (support.usb) {
         const list = await navigator.usb.getDevices();
@@ -160,6 +226,7 @@ window.SNDmx = (() => {
   }
 
   async function disconnect(silent) {
+    if (!silent) { wantBridge = false; clearTimeout(bridgeTimer); }
     stopLoop();
     if (driver) { const d = driver; driver = null; await d.close(); }
     if (!silent) setStatus({ kind: 'none', label: 'Ulanmagan', ok: false, error: '' });
@@ -203,7 +270,8 @@ window.SNDmx = (() => {
   }
 
   return {
-    universe, support, write, connectUDmx, connectSerial, connectSim, autoConnect, disconnect,
+    universe, support, write, connectUDmx, connectSerial, connectSim, connectBridge, autoConnect, disconnect,
+    bridgeDownload: 'https://github.com/alifrecords/SAHNA-NURI/releases/latest/download/SahnaNuriBridge.exe',
     status: () => status, onStatus: (f) => listeners.push(f),
   };
 })();

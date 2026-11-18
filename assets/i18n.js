@@ -149,6 +149,15 @@ window.SNI18N = (() => {
     'Dimmer blok': ['Диммерный блок', 'Dimmer pack'],
     // ulanish
     'DMX ULANISH': ['DMX-ПОДКЛЮЧЕНИЕ', 'DMX CONNECTION'],
+    'SAHNA NURI Bridge': ['SAHNA NURI Bridge', 'SAHNA NURI Bridge'],
+    'TAVSIYA': ['РЕКОМЕНДУЕТСЯ', 'RECOMMENDED'],
+    'Kompyuterga bir marta oʻrnatiladigan kichik dastur. Drayver almashtirish (Zadig) shart emas — FreeStyler drayveri bilan ishlaydi. Windows bilan birga oʻzi yonadi, kabel chiqib qolsa oʻzi qayta ulanadi va chiroqlarni oxirgi holatiga qaytaradi.': ['Небольшая программа, устанавливается на компьютер один раз. Менять драйвер (Zadig) не нужно — работает с драйвером FreeStyler. Запускается вместе с Windows, при отключении кабеля переподключается сама и возвращает приборы в последнее состояние.', 'A small program installed once on the computer. No driver swap (Zadig) needed — it works with the FreeStyler driver. Starts with Windows, reconnects by itself if the cable is unplugged and restores the fixtures to their last state.'],
+    'YUKLAB OLISH (.exe)': ['СКАЧАТЬ (.exe)', 'DOWNLOAD (.exe)'],
+    'BRIDGE ULASH': ['ПОДКЛЮЧИТЬ BRIDGE', 'CONNECT BRIDGE'],
+    'SAHNA NURI Bridge · uDMX': ['SAHNA NURI Bridge · uDMX', 'SAHNA NURI Bridge · uDMX'],
+    'SAHNA NURI Bridge ishlamayapti. Uni yuklab olib, bir marta ishga tushiring.': ['SAHNA NURI Bridge не запущен. Скачайте и запустите его один раз.', 'SAHNA NURI Bridge is not running. Download it and run it once.'],
+    'Bridge ishlayapti, lekin uDMX kabel topilmadi. Kabelni tekshiring — ulanishi bilan oʻzi davom etadi.': ['Bridge работает, но кабель uDMX не найден. Проверьте кабель — после подключения работа продолжится сама.', 'Bridge is running but the uDMX cable was not found. Check the cable — it resumes by itself once connected.'],
+    'SAHNA NURI Bridge bilan aloqa uzildi — qayta ulanmoqda…': ['Связь с SAHNA NURI Bridge потеряна — переподключение…', 'Lost connection to SAHNA NURI Bridge — reconnecting…'],
     'Anyma uDMX va klonlari (kumush USB → XLR kabel). Teatrdagi kabelingiz shu turda.': ['Anyma uDMX и клоны (серебристый кабель USB → XLR). Ваш театральный кабель этого типа.', 'Anyma uDMX and clones (silver USB → XLR cable). Your theatre cable is this type.'],
     'uDMX ULASH': ['ПОДКЛЮЧИТЬ uDMX', 'CONNECT uDMX'],
     'Enttec Pro, DMXKing ultraDMX, Eurolite USB-DMX512 PRO va mos klonlar.': ['Enttec Pro, DMXKing ultraDMX, Eurolite USB-DMX512 PRO и совместимые клоны.', 'Enttec Pro, DMXKing ultraDMX, Eurolite USB-DMX512 PRO and compatible clones.'],
@@ -289,6 +298,7 @@ window.SNI18N = (() => {
     [/^(\d+) ta cue$/, (m, i) => [`Cue: ${m[1]}`, `${m[1]} cues`][i]],
     [/^(IJRODA|PAUZA) · → (.+)$/, (m, i) => (m[1] === 'IJRODA' ? ['ИДЁТ', 'LIVE'] : ['ПАУЗА', 'PAUSE'])[i] + ' · → ' + m[2]],
     [/^Boʻlindi: (\d+) ta chapga, (\d+) ta oʻngga$/, (m, i) => [`Разделено: ${m[1]} влево, ${m[2]} вправо`, `Split: ${m[1]} left, ${m[2]} right`][i]],
+    [/^Oxirgi sahna tiklandi: (.+)$/, (m, i) => [`Последняя сцена восстановлена: ${m[1]}`, `Last scene restored: ${m[1]}`][i]],
     [/^Joriy: (.+)$/, (m, i) => [`Текущий: ${m[1]}`, `Current: ${m[1]}`][i]],
     [/^(\d+) ta chiroq oʻzgartirilgan$/, (m, i) => [`Изменено приборов: ${m[1]}`, `${m[1]} fixtures changed`][i]],
     [/^(\d+) ta chiroq qoʻshildi$/, (m, i) => [`Добавлено приборов: ${m[1]}`, `${m[1]} fixtures added`][i]],
@@ -340,7 +350,8 @@ window.SNI18N = (() => {
   // ---------- murakkab HTML bloklar ----------
   const H = {
     help: [
-      `<ol>
+      `<p class="bridge-tip"><b>Самый простой путь — SAHNA NURI Bridge:</b> слева <b>СКАЧАТЬ (.exe)</b> → запустите файл один раз (если Windows пишет «Неизвестный издатель»: <b>Подробнее → Выполнить в любом случае</b>) → <b>ПОДКЛЮЧИТЬ BRIDGE</b>. Zadig не нужен, шаги ниже — только для подключения без Bridge.</p>
+      <ol>
         <li><b>Закройте FreeStyler.</b> Кабелем одновременно может пользоваться только одна программа.</li>
         <li>Откройте программу в <b>Chrome</b> или <b>Edge</b>.</li>
         <li><b>ПОДКЛЮЧИТЬ uDMX</b> → в списке «uDMX» → <b>Подключить</b>.</li>
@@ -356,7 +367,8 @@ window.SNI18N = (() => {
       <p class="muted small">Если нужно вернуться к FreeStyler — в Zadig снова поставьте драйвер <b>libusbK</b>.</p>
       <p class="muted small">После первого разрешения программа будет подключаться сама, как только вставлен кабель.</p>
       <p class="muted small"><b>iPad и iPhone:</b> Safari не даёт доступ к USB. На них программа работает в режиме симуляции и репетиций; сигнал на сцену идёт через компьютер.</p>`,
-      `<ol>
+      `<p class="bridge-tip"><b>Easiest way — SAHNA NURI Bridge:</b> <b>DOWNLOAD (.exe)</b> on the left → run the file once (if Windows says “Unknown publisher”: <b>More info → Run anyway</b>) → <b>CONNECT BRIDGE</b>. No Zadig needed; the steps below are only for connecting without Bridge.</p>
+      <ol>
         <li><b>Close FreeStyler.</b> Only one program can use the cable at a time.</li>
         <li>Open the program in <b>Chrome</b> or <b>Edge</b>.</li>
         <li><b>CONNECT uDMX</b> → “uDMX” in the list → <b>Connect</b>.</li>
