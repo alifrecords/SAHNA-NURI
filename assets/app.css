@@ -460,3 +460,27 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .fx-panel #groupBtns .btn { min-height: 34px; font-size: 11.5px; border-radius: 9px; }
 .fx-panel #selHelp .btn { min-height: 28px; font-size: 11px; border-radius: 8px; }
 .fx-panel { gap: 8px; }
+
+/* ================= Sahna: ro'paradan (operator ko'zi) ================= */
+.stage-views .btn { min-height: 46px; font-size: 13px; }
+.stage-views .btn.on { background: var(--on); }
+.stage-wrap.front { background: #0c0a09; border-color: #0c0a09; }
+.stage-tools { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.stage-op { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.stage-op input { width: 160px; accent-color: var(--on); }
+.sfx.fr { width: 40px; height: 32px; margin: -16px 0 0 -20px; border-radius: 8px; background: rgba(10,10,10,.72); border: 1.5px solid rgba(255,255,255,.35); }
+.sfx.fr .fxi { width: 32px; height: 24px; }
+.sfx.fr .fxi .body * { fill: none; stroke: #e4e4e7; stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
+.sfx.fr .fxi .L * { fill: #52525b; }
+.sfx.fr.on { background: rgba(21,128,61,.85); border-color: #4ade80; box-shadow: 0 0 0 2px rgba(74,222,128,.5), 0 0 12px rgba(74,222,128,.6); }
+.sfx.fr.on .fxi .L * { fill: #fde68a; }
+.tz-chips .btn.on { background: var(--on); }
+h2.mt { margin-top: 6px; }
+@media (max-width: 720px) { .sfx.fr { width: 30px; height: 24px; margin: -12px 0 0 -15px; } .sfx.fr .fxi { width: 24px; height: 18px; } }
+/* Ro'paradan: moving head'lar — katta belgi; qolganlari — kichik nuqta (nur yo'naltirishga xalaqit bermasin) */
+.sfx.fr:not(.mv) { width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: rgba(161,161,170,.55); border: 1.5px solid rgba(255,255,255,.5); z-index: 0; }
+.sfx.fr:not(.mv) .fxi { display: none; }
+.sfx.fr:not(.mv).on { background: #22c55e; }
+.sfx.fr.mv { z-index: 1; }
+.stage-wrap.place .sfx.fr:not(.mv) { width: 34px; height: 26px; margin: -13px 0 0 -17px; border-radius: 7px; background: rgba(10,10,10,.72); }
+.stage-wrap.place .sfx.fr:not(.mv) .fxi { display: block; width: 26px; height: 20px; }

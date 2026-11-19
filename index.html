@@ -162,6 +162,10 @@ if (location.protocol === 'file:') {
     <div class="row2">
       <section class="panel grow2 stage-panel">
         <div class="ph"><h2 id="stageTitle">SAHNA PLANI</h2><span class="muted" id="stageCoord"></span></div>
+        <div class="grid2 stage-views" id="stageViews">
+          <button class="btn" data-sv="plan" type="button">▦ TEPADAN · PLAN</button>
+          <button class="btn" data-sv="front" type="button">◉ ROʻPARADAN · OPERATOR KOʻZI</button>
+        </div>
         <div class="grid4 stage-modes" id="stageModes">
           <button class="btn on" data-sm="aim" type="button">NUR YOʻNALTIRISH</button>
           <button class="btn" data-sm="place" type="button">CHIROQLARNI JOYLASH</button>
@@ -173,6 +177,10 @@ if (location.protocol === 'file:') {
           <img id="stageImg" alt="Sahna rasmi" hidden>
           <svg id="stageSvg" aria-hidden="true"></svg>
           <div id="stageFx"></div>
+        </div>
+        <div class="stage-tools" id="stageTools">
+          <button class="btn sm" id="stGrid" type="button">TOʻR: YOQIQ</button>
+          <label class="stage-op">Surat yorqinligi <input id="stOp" type="range" min="25" max="100" step="5" value="100" aria-label="Surat yorqinligi"></label>
         </div>
         <div class="stage-legend">
           <span><i class="lg round"></i>Moving head (Pan/Tilt)</span>
@@ -213,6 +221,12 @@ if (location.protocol === 'file:') {
         <input id="sPan" type="range" min="0" max="255" step="0.1" value="128">
         <label class="lab" for="sTilt"><span>Tilt (qoʻlda)</span><b id="sTiltV">—</b></label>
         <input id="sTilt" type="range" min="0" max="255" step="0.1" value="128">
+        <h2 class="mt">NISHON BALANDLIGI</h2>
+        <div class="grid3 tz-chips" id="tzChips">
+          <button class="btn" data-tz="0" type="button">POL</button>
+          <button class="btn" data-tz="1" type="button">BEL · 1 m</button>
+          <button class="btn" data-tz="1.6" type="button">YUZ · 1.6 m</button>
+        </div>
         <div class="grid2">
           <button class="btn" id="stBeams" type="button">HAMMA BEAM’LAR</button>
           <button class="btn" id="stDim" type="button">NURNI YOQISH (FULL)</button>

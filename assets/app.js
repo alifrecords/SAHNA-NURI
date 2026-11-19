@@ -118,7 +118,7 @@
     return ANDIJAN_PATCH.map(([name, prof, addr]) => ({ id: uid(), name, prof, addr }));
   }
 
-  function newStage() { return { w: 12, d: 7, h: 6, img: null, corners: null, pos: {}, cal: {}, points: [] }; }
+  function newStage() { return { w: 12, d: 7, h: 6, img: null, corners: null, pos: {}, cal: {}, points: [], view: 'plan', tz: 0, front: { img: null, corners: null, fpos: {}, grid: true, op: 100 } }; }
   function newShow() {
     const profiles = DEFAULT_PROFILES();
     return { v: 1, profRev: PROF_REV, title: 'Yangi spektakl', profiles, fixtures: defaultPatch(), cues: [], levels: {}, fxDepth: 100, fxSpeed: 40, master: 100, autoOn: true, mib: true, mibMove: 1.5, stage: newStage() };
@@ -1367,8 +1367,18 @@
 
   /* ================= SAHNA: plan, chiroq joylashuvi, nur yo'naltirish ================= */
   // Koordinatalar: metr. X — tomoshabin tomondan chapdan o'ngga (0..eni), Y — orqa pardadan zal tomonga (0..chuqurlik).
-  const ST = () => show.stage;
-  let stageMode = 'aim', cornerStep = 0, stageTarget = null, dragFx = null, imgNat = null;
+  const ST = () => {
+    const s = show.stage;
+    if (!s.front) s.front = { img: null, corners: null, fpos: {}, grid: true, op: 100 };
+    if (!s.front.fpos) s.front.fpos = {};
+    if (!s.view) s.view = 'plan';
+    return s;
+  };
+  // Ko'rinish: 'plan' — yuqoridan; 'front' — operator joyidan, sahnaga ro'paradan (perspektiva)
+  const FRONT = () => ST().view === 'front';
+  const curImg = () => (FRONT() ? ST().front.img : ST().img);
+  const curCornersRaw = () => (FRONT() ? ST().front.corners : ST().corners);
+  let stageMode = 'aim', cornerStep = 0, stageTarget = null, dragFx = null, imgNat = null, aimDrag = false, aimRaf = 0;
   const isMover = (f) => hasRole(prof(f), 'pan') && hasRole(prof(f), 'tilt');
 
   // 4 nuqtadan gomografiya (rasm pikseli ↔ sahna metri)
@@ -1400,15 +1410,19 @@
   // Rasm o'lchami: yuklangan rasm yoki chizilgan "virtual plan"
   function imgSize() {
     const s = ST();
-    if (s.img && imgNat) return imgNat;
+    if (curImg() && imgNat) return imgNat;
+    if (FRONT()) return { w: 1000, h: 625 };
     return { w: 1000, h: Math.round(1000 * (s.d + 4) / (s.w + 2)) };
   }
+  // Ro'paradan chizilgan sahna (surat yuklanmaganda): pol — perspektivadagi trapetsiya
+  const FRONT_VC = [[262, 345], [738, 345], [905, 545], [95, 545]];
   function virtualCorners() {
+    if (FRONT()) { const z = imgSize(); return FRONT_VC.map(([x, y]) => [x / 1000 * z.w, y / 625 * z.h]); }
     const s = ST(), z = imgSize();
     const P = (x, y) => [(x + 1) / (s.w + 2) * z.w, (y + 1) / (s.d + 4) * z.h];
     return [P(0, 0), P(s.w, 0), P(s.w, s.d), P(0, s.d)];
   }
-  function corners() { const s = ST(); return s.img && s.corners && s.corners.length === 4 ? s.corners : virtualCorners(); }
+  function corners() { const c = curCornersRaw(); return curImg() && c && c.length === 4 ? c : virtualCorners(); }
   function mats() {
     const s = ST(), meters = [[0, 0], [s.w, 0], [s.w, s.d], [0, s.d]], c = corners();
     return { toM: homog(c, meters) || homog(virtualCorners(), meters), toI: homog(meters, c) || homog(meters, virtualCorners()) };
@@ -1431,9 +1445,9 @@
   }
 
   // ---- Pan/Tilt modeli ----
-  function angles(f, X, Y) {
+  function angles(f, X, Y, tz = 0) {
     const p = ST().pos[f.id] || { x: 0, y: 0, z: ST().h };
-    const dx = X - p.x, dy = Y - p.y, h = Math.max(0.3, p.z || ST().h);
+    const dx = X - p.x, dy = Y - p.y, h = Math.max(0.3, (p.z || ST().h) - tz);
     return { az: Math.atan2(dx, dy) * 180 / Math.PI, el: Math.atan2(Math.hypot(dx, dy), h) * 180 / Math.PI };
   }
   function model(f) {
@@ -1450,8 +1464,8 @@
       }
     return out;
   }
-  function aimValues(f, X, Y, curPan) {
-    const { az, el } = angles(f, X, Y), m = model(f);
+  function aimValues(f, X, Y, curPan, tz = 0) {
+    const { az, el } = angles(f, X, Y, tz), m = model(f);
     const sols = solutions(m, az, el);
     if (!sols.length) return null;
     sols.sort((a, b) => Math.abs(a.pan - curPan) - Math.abs(b.pan - curPan));
@@ -1498,6 +1512,18 @@
     wrap.style.height = Math.round(z.h * scale) + 'px';
     svg.setAttribute('viewBox', `0 0 ${z.w} ${z.h}`);
   }
+  // Ro'paradan ko'rinishda chiroq belgisining joyi: qo'lda qo'yilgan bo'lsa — o'sha, aks holda
+  // polga tushgan nuqtasidan balandligi bo'yicha yuqoriga ko'tariladi (mahalliy masshtab bilan)
+  function frontPos(f) {
+    const s = ST(), fp = s.front.fpos[f.id];
+    if (fp) return fp;
+    const p = s.pos[f.id]; if (!p) return null;
+    const { toI } = mats(), z = imgSize();
+    const b = happ(toI, [p.x, p.y]), l = happ(toI, [p.x - 0.5, p.y]), r = happ(toI, [p.x + 0.5, p.y]);
+    const k = Math.hypot(r[0] - l[0], r[1] - l[1]);
+    const h = p.z || (isMover(f) ? s.h : s.h * 0.9);
+    return [clamp(b[0], z.w * 0.03, z.w * 0.97), clamp(b[1] - h * k, z.h * 0.05, z.h * 0.95)];
+  }
   function toScreen(xm, ym) { const { toI } = mats(); const [u, v] = happ(toI, [xm, ym]); return [u * scale, v * scale, u, v]; }
   function evToImage(e) { const r = wrap.getBoundingClientRect(); return [(e.clientX - r.left) / scale, (e.clientY - r.top) / scale]; }
   function evToMeters(e) { const { toM } = mats(); return happ(toM, evToImage(e)); }
@@ -1509,6 +1535,7 @@
     const I = (x, y) => happ(toI, [x, y]);
     const sw = Math.max(1.5, z.w / 500);
     let g = '';
+    if (FRONT()) { renderFrontSvg(); return; }
     if (!s.img) {
       // chizilgan plan: zal zonasi, metr to'ri, sahna chegarasi
       const a = I(0, s.d), b = I(s.w, s.d + 3);
@@ -1545,7 +1572,87 @@
     }
     svg.innerHTML = g;
   }
+  // ---- Ro'paradan ko'rinish chizmasi ----
+  function renderFrontSvg() {
+    const s = ST(), z = imgSize(), { toI } = mats(), F = s.front;
+    const I = (x, y) => happ(toI, [x, y]);
+    const sw = Math.max(1.5, z.w / 500), W = z.w, Hh = z.h;
+    const mv0 = selMovers()[0], bc = mv0 ? outHex(mv0) : '#fde68a'; // nur rangi — chiroqqa ketayotgan haqiqiy rang
+    let g = `<defs>
+      <linearGradient id="fwall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1917"/><stop offset="1" stop-color="#292524"/></linearGradient>
+      <linearGradient id="ffloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f3a36"/><stop offset="1" stop-color="#57514b"/></linearGradient>
+      <linearGradient id="fcur" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7f1d1d"/><stop offset=".5" stop-color="#b91c1c"/><stop offset="1" stop-color="#7f1d1d"/></linearGradient>
+      <radialGradient id="fpool"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".5" stop-color="${bc}" stop-opacity=".55"/><stop offset="1" stop-color="${bc}" stop-opacity="0"/></radialGradient>
+      <linearGradient id="fcone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${bc}" stop-opacity=".55"/><stop offset="1" stop-color="${bc}" stop-opacity=".1"/></linearGradient>
+      <filter id="fblur"><feGaussianBlur stdDeviation="${W / 300}"/></filter></defs>`;
+    if (!F.img) {
+      // chizilgan sahna: devorlar, pol, pardalar, ferma
+      const c = virtualCorners(), [bl, br, fr, fl] = c, top = Hh * 0.19;
+      g += `<rect width="${W}" height="${Hh}" fill="#0c0a09"/>
+        <polygon points="${bl[0]},${top} ${br[0]},${top} ${br[0]},${bl[1]} ${bl[0]},${bl[1]}" fill="url(#fwall)"/>
+        <polygon points="${W * 0.09},${Hh * 0.06} ${bl[0]},${top} ${bl[0]},${bl[1]} ${fl[0]},${fl[1]}" fill="#1c1917"/>
+        <polygon points="${W * 0.91},${Hh * 0.06} ${br[0]},${top} ${br[0]},${br[1]} ${fr[0]},${fr[1]}" fill="#1c1917"/>
+        <polygon points="${c.map((q) => q.join(',')).join(' ')}" fill="url(#ffloor)"/>
+        <rect x="0" y="${fl[1]}" width="${W}" height="${Hh - fl[1]}" fill="#18181b"/><rect x="0" y="${fl[1]}" width="${W}" height="${W / 250}" fill="#3f3f46"/>
+        <rect x="0" y="0" width="${W * 0.1}" height="${Hh}" fill="url(#fcur)"/><rect x="${W * 0.9}" y="0" width="${W * 0.1}" height="${Hh}" fill="url(#fcur)"/>
+        <rect x="${W * 0.12}" y="${Hh * 0.095}" width="${W * 0.76}" height="${Hh * 0.016}" fill="#52525b"/>`;
+    }
+    // pol to'ri (metr)
+    if (F.grid !== false) {
+      const col = '#4ade80', op = F.img ? 0.75 : 0.5;
+      for (let x = 0; x <= s.w + 1e-6; x += 1) { const a = I(x, 0), b = I(x, s.d); g += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${col}" stroke-width="${sw * (x % 2 ? 0.5 : 0.9)}" opacity="${op}"/>`; }
+      for (let y = 0; y <= s.d + 1e-6; y += 1) { const a = I(0, y), b = I(s.w, y); g += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${col}" stroke-width="${sw * 0.7}" opacity="${op}"/>`; }
+      const ob = I(s.w / 2, s.d - 0.35), oa = I(s.w / 2, 0.45);
+      g += `<text x="${ob[0]}" y="${ob[1]}" text-anchor="middle" font-size="${W / 85}" font-weight="800" fill="#bbf7d0" opacity=".85" letter-spacing="3">OLDI</text>
+        <text x="${oa[0]}" y="${oa[1]}" text-anchor="middle" font-size="${W / 95}" font-weight="800" fill="#bbf7d0" opacity=".85" letter-spacing="3">ORQA</text>`;
+    }
+    // burchak belgilari
+    const c = corners();
+    if (F.img || stageMode === 'corners') {
+      g += `<polygon points="${c.map((q) => q.join(',')).join(' ')}" fill="none" stroke="#22c55e" stroke-width="${sw * 1.6}" stroke-dasharray="${sw * 6} ${sw * 4}"/>`;
+      c.forEach((q, i) => {
+        const act = stageMode === 'corners' && i === cornerStep;
+        g += `<circle cx="${q[0]}" cy="${q[1]}" r="${W / 75}" fill="${act ? '#2563eb' : '#15803d'}" stroke="#fff" stroke-width="${sw * 1.4}"/><text x="${q[0]}" y="${q[1] + W / 190}" text-anchor="middle" font-size="${W / 70}" font-weight="800" fill="#fff">${i + 1}</text>`;
+      });
+    }
+    // saqlangan nuqtalar
+    s.points.forEach((q) => {
+      const a = I(q.x, q.y);
+      g += `<circle cx="${a[0]}" cy="${a[1]}" r="${W / 170}" fill="#facc15" stroke="#000" stroke-width="${sw * 0.8}"/><text x="${a[0] + W / 110}" y="${a[1] + W / 260}" font-size="${W / 85}" font-weight="700" fill="#fef08a" paint-order="stroke" stroke="#000" stroke-width="${sw * 1.2}">${esc(q.n)}</text>`;
+    });
+    // nurlar va nishon
+    if (stageTarget) {
+      const t = I(stageTarget.x, stageTarget.y);
+      const l = I(stageTarget.x - 0.5, stageTarget.y), r = I(stageTarget.x + 0.5, stageTarget.y), k = Math.hypot(r[0] - l[0], r[1] - l[1]);
+      const tz = stageTarget.z || 0, th = [t[0], t[1] - tz * k];
+      const mv = selMovers(), rw = k * 0.55;
+      for (const f of mv) {
+        const a = frontPos(f); if (!a) continue;
+        const dx = th[0] - a[0], dy = th[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+        g += `<polygon points="${a[0] + nx * 3},${a[1] + ny * 3} ${a[0] - nx * 3},${a[1] - ny * 3} ${th[0] - nx * rw},${th[1] - ny * rw} ${th[0] + nx * rw},${th[1] + ny * rw}" fill="url(#fcone)"/>`;
+      }
+      if (mv.length) g += `<ellipse cx="${t[0]}" cy="${t[1]}" rx="${k * 1.1}" ry="${k * 0.35}" fill="url(#fpool)" filter="url(#fblur)"/>`;
+      if (tz > 0) g += `<line x1="${t[0]}" y1="${t[1]}" x2="${th[0]}" y2="${th[1]}" stroke="#fff" stroke-width="${sw}" stroke-dasharray="${sw * 3} ${sw * 3}" opacity=".8"/><circle cx="${th[0]}" cy="${th[1]}" r="${W / 200}" fill="#fff"/>`;
+      const R0 = W / 60, R1 = W / 38;
+      g += `<g stroke="#fff" stroke-width="${sw * 1.6}" fill="none"><circle cx="${t[0]}" cy="${t[1]}" r="${R0}"/><path d="M${t[0] - R1} ${t[1]}H${t[0] - R0 * 0.55}M${t[0] + R0 * 0.55} ${t[1]}H${t[0] + R1}M${t[0]} ${t[1] - R1}V${t[1] - R0 * 0.55}M${t[0]} ${t[1] + R0 * 0.55}V${t[1] + R1}"/></g><circle cx="${t[0]}" cy="${t[1]}" r="${sw * 1.5}" fill="#fff"/>`;
+      const lx = t[0] + R1 + 6, ly = t[1] + 6, bw = W / 5.2, bh = W / 26;
+      g += `<g transform="translate(${Math.min(lx, W - bw - 6)},${Math.min(ly, Hh - bh - 6)})"><rect width="${bw}" height="${bh}" rx="${W / 120}" fill="rgba(0,0,0,.78)"/>
+        <text x="${W / 110}" y="${bh * 0.42}" font-size="${W / 85}" font-weight="800" fill="#fff">NISHON · ${mv.length} ta beam</text>
+        <text x="${W / 110}" y="${bh * 0.82}" font-size="${W / 98}" fill="#d4d4d8">${stageTarget.x.toFixed(1)} m chapdan · ${(s.d - stageTarget.y).toFixed(1)} m oldidan${tz ? ` · ${tz} m` : ''}</text></g>`;
+    }
+    // chap / o'ng (tomoshabin tomondan)
+    g += `<text x="${W * 0.11}" y="${Hh - W / 80}" font-size="${W / 90}" font-weight="800" fill="#a1a1aa" letter-spacing="2" paint-order="stroke" stroke="#000" stroke-width="${sw}">◀ TOMOSHABIN CHAPI</text>
+      <text x="${W * 0.89}" y="${Hh - W / 80}" text-anchor="end" font-size="${W / 90}" font-weight="800" fill="#a1a1aa" letter-spacing="2" paint-order="stroke" stroke="#000" stroke-width="${sw}">TOMOSHABIN OʻNGI ▶</text>`;
+    svg.innerHTML = g;
+  }
   function renderStageFx() {
+    if (FRONT()) {
+      fxLayer.innerHTML = show.fixtures.map((f) => {
+        const q = frontPos(f); if (!q) return '';
+        return `<button type="button" class="sfx fr ${isMover(f) ? 'mv' : ''} ${sel.has(f.id) ? 'on' : ''}" data-sf="${f.id}" style="left:${(q[0] * scale).toFixed(1)}px;top:${(q[1] * scale).toFixed(1)}px" aria-label="${esc(f.name)}${sel.has(f.id) ? ', tanlangan' : ''}" title="${esc(f.name)}">${iconSvg(iconKey(f))}</button>`;
+      }).join('');
+      return;
+    }
     const s = ST();
     fxLayer.innerHTML = show.fixtures.map((f) => {
       const p = s.pos[f.id]; if (!p) return '';
@@ -1560,16 +1667,27 @@
     calib: '1) Bitta moving head tanlang. 2) Oʻngdagi Pan/Tilt slayderlari bilan nurni poldagi belgiga aniq tushiring. 3) Planda oʻsha belgini bosing. 3–4 nuqta yetarli.',
   };
   const CORNER_NAMES = ['chap orqa', 'oʻng orqa', 'oʻng old', 'chap old'];
+  const FRONT_HINTS = {
+    aim: 'Suratdagi sahna poliga bosing — tanlangan moving head’lar shu nuqtaga buriladi. Bosib turib sudrasangiz, nurlar ergashadi. Chiroqni tanlash: belgisini bosing.',
+    place: 'Chiroq belgilarini suratdagi haqiqiy joyiga sudrab qoʻying (faqat koʻrinish uchun). Yoʻnaltirish aniqligi uchun chiroqning X, Y va balandligini oʻngda yozing yoki „Tepadan“ planda joylang.',
+    calib: '1) Bitta moving head tanlang. 2) Pan/Tilt slayderlari bilan nurni poldagi belgiga tushiring. 3) Suratda oʻsha joyni bosing. 3–4 nuqta yetarli.',
+  };
   function renderStageSide() {
     const s = ST();
     $('#stW').value = s.w; $('#stD').value = s.d; $('#stH').value = s.h;
     $$('#stageModes [data-sm]').forEach((b) => b.classList.toggle('on', b.dataset.sm === stageMode));
+    $$('#stageViews [data-sv]').forEach((b) => b.classList.toggle('on', b.dataset.sv === s.view));
+    $('#stageTools').hidden = !FRONT();
+    $('#stGrid').textContent = s.front.grid !== false ? 'TOʻR: YOQIQ' : 'TOʻR: OʻCHIQ';
+    $('#stOp').value = s.front.op || 100;
+    $$('#tzChips [data-tz]').forEach((b) => b.classList.toggle('on', +b.dataset.tz === (+s.tz || 0)));
     wrap.classList.toggle('place', stageMode === 'place');
     $('#stageHint').textContent = stageMode === 'corners'
-      ? `${cornerStep + 1}-burchak: rasmda sahnaning ${CORNER_NAMES[cornerStep]} burchagini bosing (tomoshabin tomondan qaraganda).`
-      : HINTS[stageMode];
-    $('#stageTitle').textContent = s.img ? 'SAHNA · YUKLANGAN RASM' : `SAHNA PLANI · YUQORIDAN · ${s.w} × ${s.d} m`;
-    $('#stClear').disabled = !s.img;
+      ? (FRONT() ? `${cornerStep + 1}-burchak: suratda sahna POLINING ${CORNER_NAMES[cornerStep]} burchagini bosing.` : `${cornerStep + 1}-burchak: rasmda sahnaning ${CORNER_NAMES[cornerStep]} burchagini bosing (tomoshabin tomondan qaraganda).`)
+      : (FRONT() ? FRONT_HINTS[stageMode] : HINTS[stageMode]);
+    $('#stageTitle').textContent = FRONT() ? (s.front.img ? 'SAHNA · ROʻPARADAN · SURAT' : 'SAHNA · ROʻPARADAN · NAMUNA (surat yuklang)') : s.img ? 'SAHNA · YUKLANGAN RASM' : `SAHNA PLANI · YUQORIDAN · ${s.w} × ${s.d} m`;
+    $('#stClear').disabled = !curImg();
+    $('#stUpload').textContent = FRONT() ? 'SAHNA SURATINI YUKLASH' : 'RASM YUKLASH';
     const ids = [...sel], f = ids.length === 1 ? show.fixtures.find((x) => x.id === ids[0]) : null;
     const p = f && s.pos[f.id];
     $('#stSelTitle').textContent = f ? 'TANLANGAN: ' + f.name.toUpperCase() : ids.length ? `TANLANGAN: ${ids.length} TA CHIROQ` : 'TANLANGAN CHIROQ';
@@ -1596,9 +1714,11 @@
   }
   function renderStageAll() {
     ensurePositions();
-    const s = ST();
-    if (s.img) { if (imgEl.getAttribute('src') !== s.img) { imgNat = null; imgEl.src = s.img; } imgEl.hidden = false; }
+    const s = ST(), im = curImg();
+    if (im) { if (imgEl.getAttribute('src') !== im) { imgNat = null; imgEl.src = im; } imgEl.hidden = false; }
     else { imgEl.hidden = true; imgEl.removeAttribute('src'); imgNat = null; }
+    imgEl.style.opacity = FRONT() ? (s.front.op || 100) / 100 : 1;
+    wrap.classList.toggle('front', FRONT());
     layoutStage(); renderStageSvg(); renderStageFx(); renderStageSide();
   }
   imgEl.addEventListener('load', () => { imgNat = { w: imgEl.naturalWidth, h: imgEl.naturalHeight }; if (tab === 'sahna') { layoutStage(); renderStageSvg(); renderStageFx(); } });
@@ -1607,23 +1727,24 @@
   function selMovers() { return show.fixtures.filter((f) => sel.has(f.id) && isMover(f)); }
 
   // ---- Yo'naltirish ----
-  function aimAt(X, Y) {
-    const mv = selMovers();
-    stageTarget = { x: X, y: Y };
+  function aimAt(X, Y, quiet) {
+    const mv = selMovers(), tz = +ST().tz || 0;
+    stageTarget = { x: X, y: Y, z: tz };
     if (!mv.length) { toast('Avval moving head (Beam) tanlang'); renderStageSvg(); return; }
     if (!guardAction()) return;
     const live = liveLook(performance.now());
     let miss = 0;
     for (const f of mv) {
-      const v = aimValues(f, X, Y, live[f.id].pan);
+      const v = aimValues(f, X, Y, live[f.id].pan, tz);
       if (!v) { miss++; continue; }
       prog.vals[f.id] = prog.vals[f.id] || {};
       prog.vals[f.id].pan = Math.round(v.pan * 100) / 100;
       prog.vals[f.id].tilt = Math.round(v.tilt * 100) / 100;
     }
-    if (miss) toast(`${miss} ta chiroq bu nuqtaga yeta olmaydi (burilish chegarasi)`);
+    if (miss && !quiet) toast(`${miss} ta chiroq bu nuqtaga yeta olmaydi (burilish chegarasi)`);
     $('#stageCoord').textContent = `${X.toFixed(1)} m × ${Y.toFixed(1)} m`;
-    renderStageSvg(); renderStageSide(); renderProgrammer();
+    renderStageSvg();
+    if (!quiet) { renderStageSide(); renderProgrammer(); }
   }
 
   // ---- Sichqoncha / barmoq ----
@@ -1644,11 +1765,11 @@
     }
     const [X, Y] = evToMeters(e);
     if (stageMode === 'corners') {
-      const s = ST();
-      if (!s.img) { toast('Avval sahna rasmini yuklang'); return; }
-      const c = (s.corners && s.corners.length === 4) ? s.corners.map((p) => [...p]) : virtualCorners();
+      const s = ST(), cr = curCornersRaw();
+      if (!curImg()) { toast('Avval sahna rasmini yuklang'); return; }
+      const c = (cr && cr.length === 4) ? cr.map((p) => [...p]) : virtualCorners();
       c[cornerStep] = evToImage(e).map((v) => Math.round(v));
-      s.corners = c;
+      if (FRONT()) s.front.corners = c; else s.corners = c;
       cornerStep++;
       if (cornerStep >= 4) { cornerStep = 0; stageMode = 'aim'; toast('Sahna burchaklari saqlandi'); }
       save(); renderStageAll();
@@ -1667,8 +1788,22 @@
     }
     if (stageMode === 'place') return;
     aimAt(X, Y);
+    if (selMovers().length) { aimDrag = true; try { wrap.setPointerCapture(e.pointerId); } catch (_) {} }
   });
   wrap.addEventListener('pointermove', (e) => {
+    if (aimDrag) {
+      const [X, Y] = evToMeters(e), s = ST();
+      if (!aimRaf) aimRaf = requestAnimationFrame(() => { aimRaf = 0; aimAt(clamp(X, -1, s.w + 1), clamp(Y, -1, s.d + 1), true); });
+      return;
+    }
+    if (dragFx && FRONT()) {
+      const q = evToImage(e), z = imgSize();
+      ST().front.fpos[dragFx.id] = [Math.round(clamp(q[0], 0, z.w)), Math.round(clamp(q[1], 0, z.h))];
+      dragFx.moved = true;
+      const el = fxLayer.querySelector(`[data-sf="${dragFx.id}"]`);
+      if (el) { el.style.left = ST().front.fpos[dragFx.id][0] * scale + 'px'; el.style.top = ST().front.fpos[dragFx.id][1] * scale + 'px'; }
+      return;
+    }
     if (!dragFx) {
       if (e.pointerType === 'mouse') { const [X, Y] = evToMeters(e); $('#stageCoord').textContent = `${X.toFixed(1)} m × ${Y.toFixed(1)} m`; }
       return;
@@ -1682,6 +1817,7 @@
     $('#stageCoord').textContent = `${s.pos[dragFx.id].x.toFixed(1)} m × ${s.pos[dragFx.id].y.toFixed(1)} m`;
   });
   const endDrag = () => {
+    if (aimDrag) { aimDrag = false; renderStageSide(); renderProgrammer(); return; }
     if (!dragFx) return;
     const f = show.fixtures.find((x) => x.id === dragFx.id);
     if (dragFx.moved && f && ST().cal[f.id] && (ST().cal[f.id].pts || []).length) fitCal(f);
@@ -1700,6 +1836,20 @@
     }
     renderStageAll();
   });
+  $('#stageViews').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-sv]'); if (!b) return;
+    const s = ST(); if (s.view === b.dataset.sv) return;
+    s.view = b.dataset.sv; stageMode = 'aim'; cornerStep = 0; imgNat = null;
+    save(); renderStageAll();
+  });
+  $('#stGrid').addEventListener('click', () => { const F = ST().front; F.grid = F.grid === false; save(); renderStageSvg(); renderStageSide(); });
+  $('#stOp').addEventListener('input', (e) => { ST().front.op = +e.target.value; imgEl.style.opacity = e.target.value / 100; });
+  $('#stOp').addEventListener('change', () => save());
+  $('#tzChips').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-tz]'); if (!b) return;
+    ST().tz = +b.dataset.tz; save(); renderStageSide();
+    if (stageTarget) aimAt(stageTarget.x, stageTarget.y);
+  });
   $('#stUpload').addEventListener('click', () => $('#stFile').click());
   $('#stFile').addEventListener('change', async (e) => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
@@ -1711,18 +1861,27 @@
       cv.width = Math.round(im.naturalWidth * k); cv.height = Math.round(im.naturalHeight * k);
       cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
       const s = ST();
-      s.img = cv.toDataURL('image/jpeg', 0.82);
+      const data = cv.toDataURL('image/jpeg', 0.82);
       const w = cv.width, h = cv.height;
-      s.corners = [[w * 0.1, h * 0.12], [w * 0.9, h * 0.12], [w * 0.9, h * 0.85], [w * 0.1, h * 0.85]].map((p) => p.map(Math.round));
+      if (FRONT()) {
+        s.front.img = data;
+        s.front.corners = FRONT_VC.map(([x, y]) => [Math.round(x / 1000 * w), Math.round(y / 625 * h)]);
+        s.front.fpos = {};
+      } else {
+        s.img = data;
+        s.corners = [[w * 0.1, h * 0.12], [w * 0.9, h * 0.12], [w * 0.9, h * 0.85], [w * 0.1, h * 0.85]].map((p) => p.map(Math.round));
+      }
       imgNat = { w, h };
       stageMode = 'corners'; cornerStep = 0;
       save(true); renderStageAll();
-      toast('Rasm yuklandi. Endi sahnaning 4 burchagini belgilang.');
+      toast(FRONT() ? 'Surat yuklandi. Endi sahna POLINING 4 burchagini belgilang.' : 'Rasm yuklandi. Endi sahnaning 4 burchagini belgilang.');
     } catch (err) { toast('Rasmni yuklab boʻlmadi: ' + err.message); }
   });
   $('#stClear').addEventListener('click', () => {
     if (!confirmSoft('Sahna rasmi olib tashlansinmi? Chiroqlar joyi saqlanadi.')) return;
-    const s = ST(); s.img = null; s.corners = null; stageMode = 'aim'; save(); renderStageAll();
+    const s = ST();
+    if (FRONT()) { s.front.img = null; s.front.corners = null; s.front.fpos = {}; } else { s.img = null; s.corners = null; }
+    stageMode = 'aim'; save(); renderStageAll();
   });
   const dimChange = () => {
     const s = ST();
@@ -1771,12 +1930,13 @@
   $('#ptSave').addEventListener('click', () => {
     if (!stageTarget) { toast('Avval planda nuqtani bosing'); return; }
     const n = $('#ptName').value.trim() || ('Nuqta ' + (ST().points.length + 1));
-    ST().points.push({ n: n.slice(0, 24), x: +stageTarget.x.toFixed(2), y: +stageTarget.y.toFixed(2) });
+    ST().points.push({ n: n.slice(0, 24), x: +stageTarget.x.toFixed(2), y: +stageTarget.y.toFixed(2), z: +(stageTarget.z || 0) });
     $('#ptName').value = ''; save(); renderStageSide(); toast(`„${n}“ saqlandi`);
   });
   $('#ptList').addEventListener('click', (e) => {
     const b = e.target.closest('[data-pt]'); if (!b) return;
     const q = ST().points[+b.dataset.pt];
+    if (q.z != null) ST().tz = q.z;
     aimAt(q.x, q.y); flashBtn(b);
   });
   $('#ptList').addEventListener('contextmenu', (e) => {
