@@ -320,3 +320,12 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
   .inst-grid { grid-template-columns: 1fr; }
   #installModal[data-os="android"] .inst-card[data-os="android"], #installModal[data-os="ios"] .inst-card[data-os="ios"] { order: -1; }
 }
+
+/* Patch qulfi va tiklash */
+.ph-r { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lockbtn { background: #fff; color: var(--ink); border: 1.5px solid var(--ink); }
+.lockbtn.locked { background: var(--on); color: #fff; border-color: var(--on); }
+.lock-note { margin: 8px 0 0; padding: 8px 12px; border-radius: 10px; background: var(--on-soft); color: #14532d; font-size: 13px; }
+.restore { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: #fef2f2; color: var(--red); font-size: 13px; font-weight: 600; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+#patchRows input:disabled, #patchRows select:disabled { appearance: none; -webkit-appearance: none; background-image: none; background: transparent; border-color: transparent; color: var(--ink); opacity: 1; cursor: default; -webkit-text-fill-color: var(--ink); }

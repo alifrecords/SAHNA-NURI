@@ -9,6 +9,14 @@ window.SNI18N = (() => {
 
   // ---------- aniq moslik: o'zbekcha → [ruscha, inglizcha] ----------
   const D = {
+    '🔒 QULFLANGAN': ['🔒 ЗАБЛОКИРОВАН', '🔒 LOCKED'],
+    '🔓 QULF OCHIQ': ['🔓 РАЗБЛОКИРОВАН', '🔓 UNLOCKED'],
+    'TIKLASH': ['ВОССТАНОВИТЬ', 'RESTORE'],
+    '🔒 Patch qulflangan: chiroqlarni oʻchirib, nomi, profili yoki manzilini oʻzgartirib boʻlmaydi. Oʻzgartirish uchun qulfni oching.': ['🔒 Патч заблокирован: приборы нельзя удалить, переименовать, сменить профиль или адрес. Для изменений разблокируйте.', '🔒 Patch is locked: fixtures can’t be deleted, renamed or re-addressed. Unlock to make changes.'],
+    '🔒 Patch qulflangan': ['🔒 Патч заблокирован', '🔒 Patch is locked'],
+    '🔒 Patch qulflandi': ['🔒 Патч заблокирован', '🔒 Patch locked'],
+    '🔓 Qulf ochildi. Ish tugagach yana qulflang.': ['🔓 Разблокировано. После работы заблокируйте снова.', '🔓 Unlocked. Lock it again when done.'],
+    'Patch qulfi ochilsinmi? Chiroqlarni oʻchirish va oʻzgartirish mumkin boʻladi. Tasdiqlash uchun yana bir marta bosing.': ['Разблокировать патч? Приборы можно будет удалять и менять. Нажмите ещё раз для подтверждения.', 'Unlock the patch? Fixtures can then be deleted and changed. Click again to confirm.'],
     '⬇ ILOVA': ['⬇ ПРИЛОЖЕНИЕ', '⬇ APP'],
     'Kompyuter yoki telefonga ilova sifatida oʻrnatish': ['Установить как приложение на компьютер или телефон', 'Install as an app on a computer or phone'],
     'Ilova sifatida oʻrnatish': ['Установка как приложения', 'Install as an app'],
@@ -296,6 +304,8 @@ window.SNI18N = (() => {
     [/^(.+) kalibrlash nuqtalari oʻchirilsinmi\?$/, (m, i) => [`Удалить точки калибровки ${m[1]}?`, `Delete calibration points of ${m[1]}?`][i]],
     [/^„(.+)“ nuqtasi oʻchirilsinmi\?$/, (m, i) => [`Удалить точку «${m[1]}»?`, `Delete point “${m[1]}”?`][i]],
     [/^(.+) oʻchirilsinmi\?$/, (m, i) => [`Удалить ${m[1]}?`, `Delete ${m[1]}?`][i]],
+    [/^Roʻyxatdan (\d+) ta chiroq yoʻqolgan: (.+)$/, (m, i) => [`Из списка пропало приборов: ${m[1]} — ${m[2]}`, `${m[1]} fixture(s) missing from the list: ${m[2]}`][i]],
+    [/^(\d+) ta chiroq tiklandi: (.+)$/, (m, i) => [`Восстановлено приборов: ${m[1]} — ${m[2]}`, `${m[1]} fixture(s) restored: ${m[2]}`][i]],
     [/^(\d+) ta yoniq$/, (m, i) => [`Горят: ${m[1]}`, `${m[1]} lit`][i]],
     [/^(\d+) ta chiroq · (\d+) ta tanlangan$/, (m, i) => [`Приборов: ${m[1]} · выбрано: ${m[2]}`, `${m[1]} fixtures · ${m[2]} selected`][i]],
     [/^(\d+) ta chiroq · (\d+) \/ 512 kanal band$/, (m, i) => [`Приборов: ${m[1]} · занято ${m[2]} / 512 каналов`, `${m[1]} fixtures · ${m[2]} / 512 channels used`][i]],

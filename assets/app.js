@@ -759,24 +759,73 @@
     else w.hidden = true;
     $('#addProf').innerHTML = opts($('#addProf').value || 'fs_beam18');
     $('#addAddr').value = nextFree();
+    renderLock();
   }
+
+  /* ---------- Patch qulfi: tasodifan o'chirish/o'zgartirishdan himoya ---------- */
+  const patchLocked = () => show.patchLocked !== false; // standart: qulflangan
+  function renderLock() {
+    const L = patchLocked();
+    const b = $('#patchLock');
+    b.textContent = L ? '🔒 QULFLANGAN' : '🔓 QULF OCHIQ';
+    b.classList.toggle('locked', L);
+    b.title = L ? 'Patch himoyalangan. Ochish uchun bosing.' : 'Patchni qulflash';
+    $('#lockNote').hidden = !L;
+    document.querySelectorAll('#patchRows input, #patchRows select').forEach((el) => { el.disabled = L; });
+    document.querySelectorAll('#patchRows [data-pd]').forEach((el) => { el.hidden = L; });
+    ['#addFix', '#autoAddr', '#defPatch', '#importBtn'].forEach((id) => { const el = $(id); if (el) el.disabled = L; });
+    renderRestore();
+  }
+  $('#patchLock').addEventListener('click', () => {
+    if (patchLocked()) {
+      if (!confirmSoft('Patch qulfi ochilsinmi? Chiroqlarni oʻchirish va oʻzgartirish mumkin boʻladi.')) return;
+      show.patchLocked = false; toast('🔓 Qulf ochildi. Ish tugagach yana qulflang.');
+    } else { show.patchLocked = true; toast('🔒 Patch qulflandi'); }
+    save(); renderPatch();
+  });
+
+  /* ---------- Yo'qolgan chiroqlarni tiklash (Andijon teatri ro'yxati bo'yicha) ---------- */
+  function missingStd() {
+    const names = new Set(show.fixtures.map((f) => f.name));
+    const known = ANDIJAN_PATCH.filter(([n]) => names.has(n)).length;
+    if (known < 10) return []; // boshqa teatr patchi — tegilmaydi
+    return ANDIJAN_PATCH.filter(([n]) => !names.has(n));
+  }
+  function renderRestore() {
+    const miss = missingStd(), box = $('#restoreBox');
+    box.hidden = !miss.length;
+    if (miss.length) $('#restoreText').textContent = `Roʻyxatdan ${miss.length} ta chiroq yoʻqolgan: ${miss.map(([n]) => n).join(', ')}`;
+  }
+  $('#restoreBtn').addEventListener('click', () => {
+    const miss = missingStd(); if (!miss.length) return;
+    const D = DEFAULT_PROFILES();
+    for (const [name, pk, addr] of miss) {
+      if (!show.profiles[pk]) show.profiles[pk] = D[pk];
+      show.fixtures.push({ id: uid(), name, prof: pk, addr });
+    }
+    show.fixtures.sort((a, b) => a.addr - b.addr);
+    save(); renderPatch(); renderAllPult();
+    toast(`${miss.length} ta chiroq tiklandi: ${miss.map(([n]) => n).join(', ')}`);
+  });
   function nextFree() { let m = 0; for (const f of show.fixtures) m = Math.max(m, f.addr + prof(f).ch.length - 1); return Math.min(512, m + 1); }
   $('#patchRows').addEventListener('change', (e) => {
     const t = e.target, d = t.dataset;
     const f = show.fixtures.find((x) => x.id === (d.pn || d.pp || d.pa)); if (!f) return;
+    if (patchLocked()) { renderPatch(); return; }
     if (d.pn) f.name = t.value.slice(0, 30);
     if (d.pp) f.prof = t.value;
     if (d.pa) f.addr = clamp(Math.round(+t.value || 1), 1, 512);
     save(); renderPatch(); renderAllPult();
   });
   $('#patchRows').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-pd]'); if (!b) return;
+    const b = e.target.closest('[data-pd]'); if (!b || patchLocked()) return;
     const f = show.fixtures.find((x) => x.id === b.dataset.pd);
     if (!confirmSoft(`${f.name} oʻchirilsinmi?`)) return;
     show.fixtures = show.fixtures.filter((x) => x !== f); sel.delete(f.id); delete prog.vals[f.id];
     save(); renderPatch(); renderAllPult();
   });
   $('#addFix').addEventListener('click', () => {
+    if (patchLocked()) return toast('🔒 Patch qulflangan');
     const p = $('#addProf').value, n = clamp(+$('#addCount').value || 1, 1, 64);
     if (isStart() && show.fixtures.length + n > LIMITS.fixtures) { toast(`Start tarifida ${LIMITS.fixtures} tagacha chiroq. PRO’ga oʻting.`); openPaywall(); return; }
     let addr = clamp(+$('#addAddr').value || nextFree(), 1, 512);
@@ -786,10 +835,12 @@
     save(); renderPatch(); renderAllPult(); toast(`${n} ta chiroq qoʻshildi`);
   });
   $('#autoAddr').addEventListener('click', () => {
+    if (patchLocked()) return toast('🔒 Patch qulflangan');
     let a = 1; for (const f of show.fixtures) { f.addr = a; a += prof(f).ch.length; }
     save(); renderPatch(); renderAllPult(); toast(a - 1 > 512 ? 'Diqqat: kanallar 512 dan oshdi' : 'Manzillar ketma-ket qoʻyildi');
   });
   $('#defPatch').addEventListener('click', () => {
+    if (patchLocked()) return toast('🔒 Patch qulflangan');
     if (!confirmSoft('Patch Andijon teatrining 35 ta chirogʻiga (FreeStyler) qaytarilsinmi? Cue’lar oʻchmaydi, lekin chiroqlar almashadi.')) return;
     show.profiles = { ...show.profiles, ...DEFAULT_PROFILES() };
     const usedK = new Set(show.fixtures.map((f) => f.prof));
@@ -803,7 +854,7 @@
     a.download = (show.title || 'spektakl').replace(/[^\p{L}\p{N} _-]/gu, '').trim() + '.sahnanuri.json';
     a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   });
-  $('#importBtn').addEventListener('click', () => $('#importFile').click());
+  $('#importBtn').addEventListener('click', () => { if (patchLocked()) return toast('🔒 Patch qulflangan'); $('#importFile').click(); });
   $('#importFile').addEventListener('change', async (e) => {
     const file = e.target.files[0]; e.target.value = ''; if (!file) return;
     try {

@@ -219,7 +219,9 @@ if (location.protocol === 'file:') {
   <section class="tab" id="tab-patch" hidden>
     <div class="row2">
       <section class="panel grow2">
-        <div class="ph"><h2>PATCH · CHIROQLAR VA DMX MANZILLAR</h2><span class="muted" id="patchInfo"></span></div>
+        <div class="ph"><h2>PATCH · CHIROQLAR VA DMX MANZILLAR</h2><span class="ph-r"><span class="muted" id="patchInfo"></span><button class="btn sm lockbtn" id="patchLock" type="button"></button></span></div>
+        <p class="lock-note" id="lockNote" hidden>🔒 Patch qulflangan: chiroqlarni oʻchirib, nomi, profili yoki manzilini oʻzgartirib boʻlmaydi. Oʻzgartirish uchun qulfni oching.</p>
+        <div class="restore" id="restoreBox" hidden><span id="restoreText"></span><button class="btn sm go" id="restoreBtn" type="button">TIKLASH</button></div>
         <div class="tbl-wrap">
           <table class="tbl">
             <thead><tr><th>№</th><th>Nomi</th><th>Profil</th><th>Manzil</th><th>Kanal</th><th>Oraliq</th><th></th></tr></thead>
