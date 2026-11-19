@@ -36,6 +36,37 @@
     { id: 'kamalak', n: 'Kamalak' }, { id: 'doira', n: 'Doira' }, { id: 'tolqin', n: 'Toʻlqin' },
   ];
   const DEF_WHEEL = { Oq: 0, Qizil: 9, 'Toʻq sariq': 18, Sariq: 27, Yashil: 36, 'Koʻk': 54, Binafsha: 63, Pushti: 72, 'Iliq oq': 90 };
+  // Chiroq modellari rasmlari (o'zimiz chizgan vektor; "L" — yonadigan linza/LED qismlari)
+  const ICONS = {
+    par: `<g class="body"><path d="M14 12h30l6 4v16l-6 4H14z"/><path d="M50 18h4v12h-4"/><path d="M28 36v6M20 42h18"/></g>
+          <g class="L"><circle cx="20" cy="20" r="2.4"/><circle cx="27" cy="20" r="2.4"/><circle cx="34" cy="20" r="2.4"/><circle cx="20" cy="28" r="2.4"/><circle cx="27" cy="28" r="2.4"/><circle cx="34" cy="28" r="2.4"/><circle cx="41" cy="24" r="2.4"/></g>`,
+    par2: `<g class="body"><path d="M10 24a10 10 0 0 1 10-10h18l10 4v12l-10 4H20a10 10 0 0 1-10-10z"/><path d="M28 34v6M20 40h16"/><path d="M48 20h5v8h-5"/></g>
+          <g class="L"><circle cx="20" cy="24" r="7"/></g>`,
+    bar: `<g class="body"><rect x="4" y="16" width="56" height="14" rx="3"/><path d="M10 30v6h44v-6"/><path d="M8 36h48"/></g>
+          <g class="L"><circle cx="14" cy="23" r="4"/><circle cx="26" cy="23" r="4"/><circle cx="38" cy="23" r="4"/><circle cx="50" cy="23" r="4"/></g>`,
+    panel: `<g class="body"><path d="M8 12h48l-4 24H12z"/><path d="M32 36v6M22 42h20"/></g>
+          <g class="L">${Array.from({length:18},(_,i)=>`<circle cx="${15+(i%6)*7}" cy="${18+Math.floor(i/6)*6}" r="1.9"/>`).join('')}</g>`,
+    fresnel: `<g class="body"><path d="M12 15h28l8 3v12l-8 3H12z"/><path d="M48 19h5v10h-5"/><path d="M8 15h4v18H8z"/><path d="M26 33v7M18 40h16"/><path d="M30 8v7"/></g>
+          <g class="L"><rect x="8.5" y="17" width="3" height="14" rx="1"/></g>`,
+    beam: `<g class="body"><rect x="16" y="38" width="32" height="7" rx="2"/><path d="M20 38V24M44 38V24"/><rect x="23" y="6" width="18" height="26" rx="9"/></g>
+          <g class="L"><circle cx="32" cy="13" r="4.2"/></g>`,
+    spot: `<g class="body"><rect x="14" y="38" width="36" height="7" rx="2"/><path d="M17 38V20M47 38V20"/><path d="M21 8h22l4 18H17z"/><path d="M17 26h30v6H17z"/></g>
+          <g class="L"><ellipse cx="32" cy="12" rx="8" ry="3.4"/></g>`,
+    dimmer: `<g class="body"><rect x="10" y="6" width="44" height="36" rx="3"/><path d="M10 18h44M10 30h44"/><path d="M16 42v3M48 42v3"/></g>
+          <g class="L">${[12,24,36].map(y=>[0,1,2,3,4,5].map(j=>`<rect x="${15+j*6.4}" y="${y-3}" width="3.4" height="4" rx="1"/>`).join('')).join('')}</g>`,
+  };
+  const ICON_BY_KEY = { fs_propar8: 'par', fs_warning8: 'bar', fs_5rc: 'panel', fs_led2lin5: 'fresnel', fs_propar2: 'par2', fs_beam18: 'beam', fs_front12: 'spot', fs_dim24: 'dimmer' };
+  function iconKey(f) {
+    const pr = show.profiles[f.prof] || {};
+    if (pr.icon && ICONS[pr.icon]) return pr.icon;
+    if (ICON_BY_KEY[f.prof]) return ICON_BY_KEY[f.prof];
+    const has = (r) => (pr.ch || []).some((x) => x.r === r);
+    if (has('pan')) return has('gobo') ? 'beam' : 'spot';
+    if (has('r') || has('g') || has('b')) return 'par';
+    if ((pr.ch || []).length > 8 && (pr.ch || []).every((x) => x.r === 'dim')) return 'dimmer';
+    return 'par2';
+  }
+  const iconSvg = (k) => `<svg class="fxi" viewBox="0 0 64 48" aria-hidden="true">${ICONS[k] || ICONS.par2}</svg>`;
   const c = (n, r, d = 0) => ({ n, r, d });
 
   // Andijon teatri — FreeStyler X2 (Andijan2026.2.flf) dagi haqiqiy chiroqlar.
@@ -356,8 +387,28 @@
     };
   }
   function renderFixtures() {
-    $('#fixtureBtns').innerHTML = show.fixtures.map((f) => `<button class="btn ${sel.has(f.id) ? 'on' : ''}" data-f="${f.id}" type="button" aria-pressed="${sel.has(f.id)}"><span>${esc(f.name)}</span><small>DMX ${String(f.addr).padStart(3, '0')}${hasRole(prof(f), 'pan') ? ` <b class="dir" data-dir="${f.id}"></b>` : ''}</small><span class="lvl"><i data-lv="${f.id}"></i></span><i class="led" aria-hidden="true"></i></button>`).join('')
+    // Turlar bo'yicha guruhlab, rasmli tugmalar (guruhlar patchdagi birinchi chirog'i tartibida)
+    const groups = [];
+    for (const f of show.fixtures) {
+      const g = prof(f).group || 'Boshqa';
+      let G = groups.find((x) => x.g === g); if (!G) groups.push(G = { g, list: [] });
+      G.list.push(f);
+    }
+    const tile = (f) => `<button class="btn ${sel.has(f.id) ? 'on' : ''}" data-f="${f.id}" type="button" aria-pressed="${sel.has(f.id)}">${iconSvg(iconKey(f))}<span>${esc(f.name)}</span><small>DMX ${String(f.addr).padStart(3, '0')}${hasRole(prof(f), 'pan') ? ` <b class="dir" data-dir="${f.id}"></b>` : ''}</small><span class="lvl"><i data-lv="${f.id}"></i></span><i class="led" aria-hidden="true"></i></button>`;
+    $('#fixtureBtns').innerHTML = groups.map((G) => `<div class="fx-grp">${esc(G.g.toUpperCase())} · ${G.list.length}</div>${G.list.map(tile).join('')}`).join('')
       || '<div class="empty" style="grid-column:1/-1">Chiroqlar yoʻq. Patch boʻlimida qoʻshing.</div>';
+  }
+  // Tugmadagi rasm linzasi yonadigan rang — chiroqqa haqiqatan ketayotgan qiymatlardan
+  function outHex(f) {
+    const pr = prof(f), at = (r) => { const k = pr.ch.findIndex((x) => x.r === r); return k < 0 ? null : buf[f.addr - 1 + k] || 0; };
+    const r = at('r'), g = at('g'), b = at('b'), w = at('w') || 0;
+    if (r != null || g != null || b != null) {
+      const R = (r || 0) + w * 0.7, G = (g || 0) + w * 0.6, B = (b || 0) + w * 0.4, m = Math.max(R, G, B, 1);
+      return `rgb(${Math.round(R / m * 255)},${Math.round(G / m * 255)},${Math.round(B / m * 255)})`;
+    }
+    const cw = at('cwheel');
+    if (cw != null) { const n = Object.entries(pr.wheel || DEF_WHEEL).find(([, v]) => v === cw); const c = n && COLORS.find((x) => x.n === n[0]); return c ? c.hex : '#FFFFFF'; }
+    return '#FFE7B0';
   }
   $('#fixtureBtns').addEventListener('click', (e) => {
     const el = e.target.closest('[data-f]'); if (!el) return;
@@ -381,6 +432,7 @@
       const lit = v >= LIT_MIN;
       if (lit) litN++;
       const btn = el.closest('[data-f]');
+      if (btn && lit) { const c = outHex(f); if (btn._c !== c) { btn._c = c; btn.style.setProperty('--c', c); } }
       if (btn && btn.classList.contains('lit') !== lit) {
         btn.classList.toggle('lit', lit);
         btn.title = lit ? `${f.name}: yoniq (${Math.round(v / 2.55)}%)` : `${f.name}: o'chiq`;
