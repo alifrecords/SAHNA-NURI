@@ -386,18 +386,50 @@
       renderSel();
     };
   }
+  // Nom bitta qatorda: model qismi joy yetmasa qisqaradi (…), raqami (-27) doim ko'rinadi
+  function ftName(n) {
+    const m = /^(.*?)([-\s]\d+)$/.exec(n);
+    return m ? `<span class="ft-n"><span class="pre">${esc(m[1])}</span><b>${esc(m[2])}</b></span>` : `<span class="ft-n"><span class="pre">${esc(n)}</span></span>`;
+  }
   function renderFixtures() {
-    // Turlar bo'yicha guruhlab, rasmli tugmalar (guruhlar patchdagi birinchi chirog'i tartibida)
+    // Turlar bo'yicha ketma-ket (guruhlar patchdagi birinchi chirog'i tartibida), har guruh — o'z fon tusida
     const groups = [];
     for (const f of show.fixtures) {
       const g = prof(f).group || 'Boshqa';
       let G = groups.find((x) => x.g === g); if (!G) groups.push(G = { g, list: [] });
       G.list.push(f);
     }
-    const tile = (f) => `<button class="btn ${sel.has(f.id) ? 'on' : ''}" data-f="${f.id}" type="button" aria-pressed="${sel.has(f.id)}">${iconSvg(iconKey(f))}<span>${esc(f.name)}</span><small>DMX ${String(f.addr).padStart(3, '0')}${hasRole(prof(f), 'pan') ? ` <b class="dir" data-dir="${f.id}"></b>` : ''}</small><span class="lvl"><i data-lv="${f.id}"></i></span><i class="led" aria-hidden="true"></i></button>`;
-    $('#fixtureBtns').innerHTML = groups.map((G) => `<div class="fx-grp">${esc(G.g.toUpperCase())} · ${G.list.length}</div>${G.list.map(tile).join('')}`).join('')
+    const tile = (f, gi, first) => `<button class="ft g${gi % 2} ${first ? 'gfirst' : ''} ${sel.has(f.id) ? 'on' : ''}" data-f="${f.id}" type="button" aria-pressed="${sel.has(f.id)}" title="${esc(f.name)} · ${esc(prof(f).group)} · DMX ${f.addr}">${iconSvg(iconKey(f))}${ftName(f.name)}<small>DMX ${String(f.addr).padStart(3, '0')}${hasRole(prof(f), 'pan') ? ` <b class="dir" data-dir="${f.id}"></b>` : ''}</small><span class="lvl"><i data-lv="${f.id}"></i></span><i class="led" aria-hidden="true"></i></button>`;
+    $('#fixtureBtns').innerHTML = groups.map((G, gi) => G.list.map((f, i) => tile(f, gi, i === 0)).join('')).join('')
       || '<div class="empty" style="grid-column:1/-1">Chiroqlar yoʻq. Patch boʻlimida qoʻshing.</div>';
+    fitFixtures();
   }
+  // Hamma chiroq bitta oynaga sig'sin: ekran balandligi va panel eniga qarab ustunlar soni va tugma o'lchami tanlanadi
+  function fitFixtures() {
+    const box = $('#fixtureBtns'); if (!box || !box.offsetParent) return;
+    const n = box.querySelectorAll('[data-f]').length; if (!n) return;
+    const gap = 5, W = box.clientWidth;
+    // Bo'limlar paneli (Pult/Sahna/...) ekran tepasida turgan holat hisobga olinadi — sarlavha yuqoriga surilgan bo'ladi
+    const tabs = $('#tabs');
+    const ref = tabs ? tabs.getBoundingClientRect().top + window.scrollY - 8 : 0;
+    const top = box.getBoundingClientRect().top + window.scrollY - ref;
+    const avail = Math.max(260, window.innerHeight - top - 22);
+    let best = null;
+    for (let cols = 3; cols <= 10; cols++) {
+      const w = (W - gap * (cols - 1)) / cols; if (w < 44) break;
+      const rows = Math.ceil(n / cols);
+      const h = Math.min((avail - gap * (rows - 1)) / rows, w * 1.15, 92);
+      const score = Math.min(w * 0.85, h); // ikkala o'lcham ham yetarli bo'lsin
+      if (h >= 40 && (!best || score > best.score)) best = { cols, h, w, score };
+    }
+    if (!best) { const cols = Math.max(4, Math.floor((W + gap) / (48 + gap))); best = { cols, h: 54, w: (W - gap * (cols - 1)) / cols }; }
+    box.style.setProperty('--cols', best.cols);
+    box.style.setProperty('--th', Math.floor(best.h) + 'px');
+    box.classList.toggle('tight', best.h < 54); // juda kichik bo'lsa DMX qatori yashiriladi (sichqoncha ustida ko'rinadi)
+    box.style.setProperty('--fs', Math.max(8, Math.min(11.5, best.h / 6.2, best.w / 6.4)).toFixed(1) + 'px');
+  }
+  window.addEventListener('resize', () => fitFixtures());
+  if (window.ResizeObserver) new ResizeObserver(() => fitFixtures()).observe($('#fixtureBtns'));
   // Tugmadagi rasm linzasi yonadigan rang — chiroqqa haqiqatan ketayotgan qiymatlardan
   function outHex(f) {
     const pr = prof(f), at = (r) => { const k = pr.ch.findIndex((x) => x.r === r); return k < 0 ? null : buf[f.addr - 1 + k] || 0; };
@@ -1763,6 +1795,7 @@
     tab = t;
     $$('#tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
     $$('.tab').forEach((s) => { s.hidden = s.id !== 'tab-' + t; });
+    if (t === 'pult') requestAnimationFrame(fitFixtures);
     if (t === 'patch') renderPatch();
     if (t === 'profil') renderProfiles();
     if (t === 'ulanish') renderConn();

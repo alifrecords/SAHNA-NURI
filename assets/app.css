@@ -423,16 +423,40 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 }
 @media (prefers-reduced-motion: reduce) { .cue-panel, .insp-panel { transition: none; } .insp-panel.open .insp-body { animation: none; } }
 
-/* ================= Chiroq tugmalari: model rasmi bilan ================= */
-.fixtures { gap: 8px; }
-.fx-grp { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 8px 2px 0; font-size: 10.5px; font-weight: 800; letter-spacing: .1em; color: var(--muted); }
-.fx-grp:first-child { margin-top: 0; }
-.fx-grp::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-.fixtures .btn { --c: #fff; min-height: 98px; justify-content: flex-start; padding: 7px 4px 10px; border-radius: 14px; }
-.fixtures .btn .fxi { width: 54px; height: 40px; flex: 0 0 auto; margin: 2px 0 1px; }
-.fxi .body * { fill: none; stroke: #a1a1aa; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.fxi .L * { fill: #3f3f46; stroke: none; transition: fill .15s; }
-.fixtures .btn.on .fxi .body * { stroke: #fff; }
-.fixtures .btn.lit .fxi .body * { stroke: #e4e4e7; }
-.fixtures .btn.lit .fxi .L * { fill: var(--c); filter: drop-shadow(0 0 2px var(--c)) drop-shadow(0 0 5px var(--c)); }
-.fixtures .btn .lvl { position: absolute; left: 10px; right: 10px; bottom: 5px; width: auto; margin: 0; }
+
+/* ================= Chiroq tugmalari: oq, ixcham, rasm + yozuv, bitta oynaga sig'adi ================= */
+.grid4.fixtures { grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 5px; }
+.ft { --c: #fff; position: relative; height: var(--th, 64px); min-width: 0; padding: 3px 2px 6px; border: 1.5px solid transparent; border-radius: 10px;
+  background: transparent; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; font: inherit; line-height: 1.1; transition: background .12s, border-color .12s; }
+.ft.g1 { background: #f4f4f5; }
+.ft:hover { background: #e4e4e7; }
+.ft:focus-visible { outline: 2px solid var(--on); outline-offset: 1px; }
+.ft .fxi { width: auto; height: 42%; max-width: 80%; flex: 0 1 auto; margin-bottom: 1px; }
+.ft .fxi .body * { fill: none; stroke: #52525b; stroke-width: 2.2; stroke-linejoin: round; stroke-linecap: round; }
+.ft .fxi .L * { fill: #e4e4e7; stroke: #a1a1aa; stroke-width: .6; transition: fill .15s; }
+.ft .ft-n { display: flex; max-width: 100%; min-width: 0; font-size: var(--fs, 10.5px); font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.ft .ft-n .pre { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ft .ft-n b { flex: 0 0 auto; font-weight: 800; }
+.fixtures.tight .ft small { display: none; }
+.fixtures.tight .ft .fxi { height: 48%; }
+.ft small { font-size: calc(var(--fs, 10.5px) - 1.5px); color: var(--muted); font-weight: 500; white-space: nowrap; }
+.ft small .dir { font-size: inherit; }
+.ft .lvl { position: absolute; left: 8px; right: 8px; bottom: 3px; height: 2.5px; border-radius: 2px; background: #e4e4e7; overflow: hidden; }
+.ft .lvl i { display: block; height: 100%; width: 0; background: #a1a1aa; }
+.ft .led { position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: #d4d4d8; }
+/* tanlangan: och yashil fon + yashil hoshiya */
+.ft.on { background: var(--on-soft); border-color: var(--on); }
+.ft.on .ft-n { color: #14532d; }
+.ft.on .fxi .body * { stroke: #15803d; }
+/* yoniq: yashil yonuvchi chiroqcha, rasmdagi linza haqiqiy rangda, yengil yashil nur */
+.ft.lit { box-shadow: 0 0 0 2px #22c55e, 0 0 10px 1px rgba(34,197,94,.45); border-color: transparent; z-index: 1; }
+.ft.lit.on { border-color: var(--on); }
+.ft.lit .led { background: #22c55e; box-shadow: 0 0 6px 2px rgba(34,197,94,.85); animation: ledpulse 1.6s ease-in-out infinite; }
+.ft.lit .fxi .L * { fill: var(--c); stroke: rgba(0,0,0,.35); filter: drop-shadow(0 0 2px var(--c)) drop-shadow(0 0 4px var(--c)); }
+.ft.lit .lvl i { background: #22c55e; }
+@media (prefers-reduced-motion: reduce) { .ft.lit .led { animation: none; } }
+/* Guruh tugmalari ixchamroq — chiroqlarga ko'proq joy */
+.fx-panel #groupBtns, .fx-panel #selHelp { gap: 5px; }
+.fx-panel #groupBtns .btn { min-height: 34px; font-size: 11.5px; border-radius: 9px; }
+.fx-panel #selHelp .btn { min-height: 28px; font-size: 11px; border-radius: 8px; }
+.fx-panel { gap: 8px; }
