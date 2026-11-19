@@ -99,6 +99,25 @@ if (location.protocol === 'file:') {
         <div class="auto-bar" aria-hidden="true" title="Avtomatik oʻtishgacha"><i id="autoBar"></i></div>
       </section>
 
+      <section class="panel insp-panel" id="insp" aria-label="Chiroq sozlamalari">
+        <button class="insp-tab" id="inspTab" type="button" aria-expanded="false" aria-controls="inspBody" title="Chiroq sozlamalarini ochish / yopish">
+          <span class="insp-chev" aria-hidden="true">‹</span>
+          <span class="insp-vt">CHIROQ SOZLAMALARI</span>
+          <i class="insp-dot" id="inspDot" aria-hidden="true"></i>
+        </button>
+        <div class="insp-body" id="inspBody">
+          <div class="ph insp-h">
+            <h2>CHIROQ SOZLAMALARI</h2>
+            <span class="ph-r">
+              <button class="btn sm icon" id="inspPrev" type="button" title="Oldingi chiroq" aria-label="Oldingi chiroq">◀</button>
+              <button class="btn sm icon" id="inspNext" type="button" title="Keyingi chiroq" aria-label="Keyingi chiroq">▶</button>
+              <button class="btn sm icon" id="inspClose" type="button" title="Yopish" aria-label="Yopish">»</button>
+            </span>
+          </div>
+          <div id="inspContent"></div>
+        </div>
+      </section>
+
       <section class="panel prog-panel">
         <div class="ph"><h2>PROGRAMMER</h2><span class="muted" id="progInfo"></span></div>
         <label class="lab" for="dimR"><span>Intensivlik</span><b id="dimV">0%</b></label>

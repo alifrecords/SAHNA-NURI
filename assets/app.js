@@ -128,11 +128,14 @@
   const sel = new Set();                 // tanlangan chiroqlar
   const prog = { vals: {}, fx: [] };     // programmer: {fid: {param: v}}, fx: [{type, fids}]
   const flash = new Set();               // bosib turilgan FLASH guruhlari
+  const insp = { focus: null, drag: false }; // chiroq sozlamalari paneli: fokusdagi chiroq
   let blackout = false;
   const play = { cur: -1, next: 0, from: null, to: null, start: 0, dur: 0, paused: false, pausedAt: 0, fx: [] };
 
   const prof = (f) => show.profiles[f.prof] || { name: '?', group: 'Boshqa', ch: [] };
   const hasRole = (p, r) => p.ch.some((x) => x.r === r);
+  // Kanal turi → programmer parametri (qolganlari "raw" — alohida kanal qiymati)
+  const PARAM_ROLE = { dim: 'dim', r: 'r', g: 'g', b: 'b', w: 'w', pan: 'pan', tilt: 'tilt', gobo: 'gobo' };
   const defParams = () => ({ dim: 0, r: 255, g: 255, b: 255, w: 0, pan: 128, tilt: 128, col: 'Oq', gobo: 0 });
   const groups = () => [...new Set(show.fixtures.map((f) => prof(f).group))];
 
@@ -161,7 +164,14 @@
   const mibMoveMs = () => clamp(+show.mibMove || 0, 0, 10) * 1000;
   function lerpParams(a, b, k) {
     const o = {};
-    for (const key in b) o[key] = typeof b[key] === 'number' ? a[key] + (b[key] - a[key]) * k : (k < 0.5 ? a[key] : b[key]);
+    for (const key in b) {
+      if (key === 'raw') { // alohida kanallar (shutter, lampa, zoom...) — har biri o'z qiymatiga silliq o'tadi
+        const ra = a.raw || {}, rb = b.raw || {}; o.raw = {};
+        for (const c in rb) o.raw[c] = ra[c] == null ? rb[c] : ra[c] + (rb[c] - ra[c]) * k;
+        continue;
+      }
+      o[key] = typeof b[key] === 'number' ? a[key] + (b[key] - a[key]) * k : (k < 0.5 ? a[key] : b[key]);
+    }
     return o;
   }
   function mixFixture(id, a, b, t) {
@@ -210,10 +220,17 @@
     return clamp(((play.paused ? play.pausedAt : now) - play.start) / play.dur, 0, 1);
   }
 
+  // Ikki holatni qo'shish: alohida kanallar (raw) ham birlashadi, ustma-ust yozilmaydi
+  function mergeP(a, b) {
+    if (!b) return { ...a };
+    const o = { ...a, ...b };
+    if (a.raw || b.raw) o.raw = { ...(a.raw || {}), ...(b.raw || {}) };
+    return o;
+  }
   // Programmer qo'shilgan "jonli" holat (cue yozish uchun ham shu ishlatiladi)
   function liveLook(now) {
     const base = baseLook(now), out = {};
-    for (const f of show.fixtures) out[f.id] = { ...(base[f.id] || defParams()), ...(prog.vals[f.id] || {}) };
+    for (const f of show.fixtures) out[f.id] = mergeP(base[f.id] || defParams(), prog.vals[f.id]);
     return out;
   }
 
@@ -284,6 +301,8 @@
           case 'gobo': v = p.gobo || 0; break;
           default: v = ch.d || 0;
         }
+        // Chiroq sozlamalari panelida qo'lda berilgan kanal qiymati (yorqinlik/rang/pan/tilt bundan mustasno)
+        if (p.raw && p.raw[k] != null && !PARAM_ROLE[ch.r]) v = p.raw[k];
         buf[a] = clamp(Math.round(v), 0, 255);
       });
       // Kanal sinovi: qo'lda ushlab turilgan qiymatlar hammasidan ustun
@@ -305,7 +324,7 @@
     }
     const k = fadeProgress(now);
     $('#fadeBar').style.width = (k * 100).toFixed(1) + '%';
-    if (frameN++ % 6 === 0) { updateFixtureLevels(); if (tab === 'monitor') renderMonitor(); }
+    if (frameN++ % 6 === 0) { updateFixtureLevels(); if (tab === 'monitor') renderMonitor(); if (tab === 'pult') refreshInspOut(); }
     requestAnimationFrame(frame);
   }
   let frameN = 0;
@@ -344,6 +363,7 @@
     const el = e.target.closest('[data-f]'); if (!el) return;
     const id = el.dataset.f;
     sel.has(id) ? sel.delete(id) : sel.add(id);
+    if (sel.has(id)) { insp.focus = id; inspOpen(true); }
     renderSel();
   });
   // Chiroq yoniq deb hisoblanadigan eng kichik chiqish qiymati (0–255)
@@ -404,7 +424,7 @@
   function firstSelParams() {
     const id = [...sel][0]; if (!id) return null;
     // maqsad holat (fade tugagandagi qiymat) + programmer
-    return { ...defParams(), ...((play.to && play.to[id]) || {}), ...(prog.vals[id] || {}) };
+    return mergeP({ ...defParams(), ...((play.to && play.to[id]) || {}) }, prog.vals[id]);
   }
   function renderProgrammer() {
     const p = firstSelParams();
@@ -420,6 +440,7 @@
     $('#fxBtns').innerHTML = EFFECTS.map((x) => `<button class="btn ${activeFx.has(x.id) ? 'on' : ''}" data-x="${x.id}" type="button" aria-pressed="${activeFx.has(x.id)}">${esc(x.n)}</button>`).join('');
     const n = Object.keys(prog.vals).length;
     $('#progInfo').textContent = n ? `${n} ta chiroq oʻzgartirilgan` : '';
+    if (!insp.drag) renderInsp();
   }
   $('#dimR').addEventListener('input', (e) => { if (setProg('dim', +e.target.value * 2.55)) $('#dimV').textContent = e.target.value + '%'; else e.target.value = 0; });
   $$('[data-dim]').forEach((b) => b.addEventListener('click', () => { if (setProg('dim', +b.dataset.dim * 2.55)) renderProgrammer(); }));
@@ -639,7 +660,7 @@
   }
   function snapshot() {
     const live = liveLook(performance.now()), look = {};
-    for (const id in live) { const p = live[id]; look[id] = { ...p, dim: Math.round(p.dim), pan: Math.round(p.pan * 100) / 100, tilt: Math.round(p.tilt * 100) / 100, r: Math.round(p.r), g: Math.round(p.g), b: Math.round(p.b), w: Math.round(p.w) }; }
+    for (const id in live) { const p = live[id]; look[id] = { ...p, ...(p.raw ? { raw: Object.fromEntries(Object.entries(p.raw).map(([k, v]) => [k, Math.round(v)])) } : {}), dim: Math.round(p.dim), pan: Math.round(p.pan * 100) / 100, tilt: Math.round(p.tilt * 100) / 100, r: Math.round(p.r), g: Math.round(p.g), b: Math.round(p.b), w: Math.round(p.w) }; }
     return { look, fx: [...play.fx, ...prog.fx].map((x) => ({ type: x.type, fids: [...x.fids] })) };
   }
   $('#recBtn').addEventListener('click', () => {
@@ -693,6 +714,237 @@
     confirmMsg = msg; confirmAt = now; toast(msg + ' Tasdiqlash uchun yana bir marta bosing.');
     return false;
   }
+
+
+  /* ================= CHIROQ SOZLAMALARI (inspektor) =================
+     Pultda chiroq bosilganda uning har bir kanali ko'rinadi va boshqariladi.
+     O'zgarishlar programmerga yoziladi → CUE YOZISH bilan cue'ga tushadi. */
+  const INSP_KEY = 'sn_insp_open';
+  const ROLE_CHIP = { dim: 'yorqinlik', r: 'qizil', g: 'yashil', b: 'koʻk', w: 'oq', pan: 'pan', tilt: 'tilt', panF: 'pan aniq', tiltF: 'tilt aniq', strobe: 'shutter', cwheel: 'rang gʻild.', gobo: 'gobo', fixed: 'kanal', a: 'amber', uv: 'UV' };
+  const ROLE_TINT = { r: '#DC2626', g: '#16A34A', b: '#2563EB', w: '#d4d4d8', dim: '#f59e0b' };
+  function inspOpen(v) {
+    const open = v ?? !$('#insp').classList.contains('open');
+    $('#insp').classList.toggle('open', open);
+    document.querySelector('#tab-pult .row3').classList.toggle('insp-open', open);
+    $('#inspTab').setAttribute('aria-expanded', open);
+    try { localStorage.setItem(INSP_KEY, open ? '1' : '0'); } catch (_) {}
+    if (open) renderInsp();
+  }
+  const inspFix = () => show.fixtures.find((f) => f.id === insp.focus) || null;
+  // O'zgarish kimga tegadi: fokusdagi chiroq + u bilan bir turdagi tanlangan chiroqlar
+  function inspTargets(f) {
+    if (!f) return [];
+    if (!sel.has(f.id)) return [f];
+    return show.fixtures.filter((x) => sel.has(x.id) && x.prof === f.prof);
+  }
+  const tgtParams = (id) => mergeP({ ...defParams(), ...((play.to && play.to[id]) || {}) }, prog.vals[id]);
+  function chVal(f, ch, k, p) {
+    const pr = prof(f);
+    if (PARAM_ROLE[ch.r]) return clamp(Math.round(p[PARAM_ROLE[ch.r]] ?? 0), 0, 255);
+    if (p.raw && p.raw[k] != null) return Math.round(p.raw[k]);
+    if (ch.r === 'cwheel') return (pr.wheel || DEF_WHEEL)[p.col] ?? 0;
+    if (ch.r === 'panF') return Math.round((p.pan - Math.floor(p.pan)) * 255);
+    if (ch.r === 'tiltF') return Math.round((p.tilt - Math.floor(p.tilt)) * 255);
+    return ch.d || 0;
+  }
+  const inProg = (id, ch, k) => { const v = prog.vals[id]; if (!v) return false; return PARAM_ROLE[ch.r] ? v[PARAM_ROLE[ch.r]] != null : !!(v.raw && v.raw[k] != null) || (ch.r === 'cwheel' && v.col != null); };
+  function chText(f, ch, v) {
+    const pr = prof(f);
+    if (ch.r === 'dim') return Math.round(v / 2.55) + '%';
+    if (ch.r === 'pan') return Math.round((v / 255 - 0.5) * (pr.panRange || 540)) + '°';
+    if (ch.r === 'tilt') return Math.round((v / 255 - 0.5) * (pr.tiltRange || 270)) + '°';
+    if (ch.r === 'cwheel') { const n = Object.entries(pr.wheel || DEF_WHEEL).find(([, x]) => x === v); return n ? n[0] : ''; }
+    return '';
+  }
+  function outColor(f, p) {
+    const pr = prof(f);
+    if (hasRole(pr, 'r') || hasRole(pr, 'g') || hasRole(pr, 'b')) {
+      const w = hasRole(pr, 'w') ? (p.w || 0) * 0.6 : 0;
+      return `rgb(${Math.min(255, p.r + w) | 0},${Math.min(255, p.g + w) | 0},${Math.min(255, p.b + w) | 0})`;
+    }
+    if (hasRole(pr, 'cwheel')) return (COLORS.find((c) => c.n === p.col) || COLORS[7]).hex;
+    return '#FFF4D6';
+  }
+  function setParam(ids, key, v) {
+    for (const id of ids) { prog.vals[id] = prog.vals[id] || {}; prog.vals[id][key] = v; }
+  }
+  function setRaw(ids, k, v) {
+    for (const id of ids) { const o = (prog.vals[id] = prog.vals[id] || {}); o.raw = { ...(o.raw || {}), [k]: v }; }
+  }
+  function releaseCh(ids, ch, k) {
+    for (const id of ids) {
+      const o = prog.vals[id]; if (!o) continue;
+      if (PARAM_ROLE[ch.r]) delete o[PARAM_ROLE[ch.r]];
+      else { if (o.raw) { delete o.raw[k]; if (!Object.keys(o.raw).length) delete o.raw; } if (ch.r === 'cwheel') delete o.col; }
+      if (!Object.keys(o).length) delete prog.vals[id];
+    }
+  }
+  function renderInsp() {
+    const box = $('#inspContent'); if (!box) return;
+    let f = inspFix();
+    if (!f && sel.size) { insp.focus = [...sel][0]; f = inspFix(); }
+    $('#inspDot').classList.toggle('on', !!f);
+    if (!$('#insp').classList.contains('open')) return;
+    if (!f) {
+      box.innerHTML = `<div class="insp-empty"><div class="insp-bulb" aria-hidden="true"></div><b>Chiroq tanlanmagan</b><span>Chap tomondagi istalgan chiroqni bosing — uning barcha kanallari shu yerda ochiladi.</span></div>`;
+      return;
+    }
+    const pr = prof(f), tg = inspTargets(f), p = tgtParams(f.id);
+    const end = f.addr + pr.ch.length - 1;
+    const mover = hasRole(pr, 'pan') || hasRole(pr, 'tilt');
+    const idx = show.fixtures.indexOf(f) + 1;
+    const wheel = hasRole(pr, 'cwheel') ? Object.entries(pr.wheel || DEF_WHEEL) : null;
+    const rgb = hasRole(pr, 'r') || hasRole(pr, 'g') || hasRole(pr, 'b');
+    box.innerHTML = `
+      <div class="insp-card">
+        <div class="insp-orb" id="inspOrb" style="--c:${outColor(f, p)}"><i></i></div>
+        <div class="insp-id">
+          <b>${esc(f.name)}</b>
+          <span>${esc(pr.name)}</span>
+          <span class="insp-addr">DMX ${f.addr}–${end} · ${idx}/${show.fixtures.length}</span>
+        </div>
+      </div>
+      ${tg.length > 1 ? `<div class="insp-multi">✦ ${tg.length} ta bir xil chiroqqa birdaniga</div>` : sel.has(f.id) ? '' : '<div class="insp-multi warn">Bu chiroq tanlanmagan — oʻzgarish faqat unga</div>'}
+      <div class="insp-quick">
+        <button class="btn sm" data-iq="full" type="button">FULL</button>
+        <button class="btn sm" data-iq="half" type="button">50%</button>
+        <button class="btn sm" data-iq="off" type="button">0%</button>
+        <button class="btn sm" data-iq="hl" type="button" title="Toʻliq yorqin, oq, shutter ochiq${mover ? ', markazda' : ''}">YORITISH</button>
+        <button class="btn sm" data-iq="rel" type="button" title="Shu chiroq uchun programmerdagi oʻzgarishlarni olib tashlash">TOZALASH</button>
+      </div>
+      ${rgb ? `<div class="insp-sw">${COLORS.map((c, i) => `<button class="sw-b ${p.col === c.n && prog.vals[f.id]?.col ? 'on' : ''}" data-ic="${i}" type="button" title="${esc(c.n)}" style="--c:${c.hex}"></button>`).join('')}</div>` : ''}
+      ${wheel ? `<div class="insp-sw wheel" title="Rang gʻildiragi">${wheel.map(([n, v]) => { const c = COLORS.find((x) => x.n === n); return `<button class="sw-b ${p.col === n ? 'on' : ''}" data-iw="${esc(n)}" type="button" title="${esc(n)} · ${v}" style="--c:${c ? c.hex : '#888'}"></button>`; }).join('')}</div>` : ''}
+      ${mover ? `<div class="insp-xy-w">
+        <div class="insp-xy" id="inspXY" role="slider" tabindex="0" aria-label="Pan va Tilt" aria-valuetext="Pan ${Math.round(p.pan)}, Tilt ${Math.round(p.tilt)}">
+          <i class="xy-c"></i><i class="xy-h"></i><i class="xy-v"></i>
+          <b class="xy-dot" id="inspXYDot" style="left:${(p.pan / 255) * 100}%;top:${(1 - p.tilt / 255) * 100}%"></b>
+        </div>
+        <div class="xy-read"><span>PAN <b id="inspPanT">${chText(f, { r: 'pan' }, p.pan)}</b></span><span>TILT <b id="inspTiltT">${chText(f, { r: 'tilt' }, p.tilt)}</b></span><button class="btn sm" data-iq="center" type="button">MARKAZ</button></div>
+      </div>` : ''}
+      <div class="insp-rows" id="inspRows">
+        ${pr.ch.map((ch, k) => {
+          const v = chVal(f, ch, k, p), held = inProg(f.id, ch, k);
+          return `<div class="ir ${held ? 'held' : ''}" data-k="${k}">
+            <span class="ir-n"><i>${f.addr + k}</i>${esc(ch.n)}<em style="${ROLE_TINT[ch.r] ? `--t:${ROLE_TINT[ch.r]}` : ''}">${ROLE_CHIP[ch.r] || ch.r}</em></span>
+            <input type="range" min="0" max="255" value="${v}" data-ik="${k}" aria-label="${esc(ch.n)}" style="${ROLE_TINT[ch.r] ? `accent-color:${ROLE_TINT[ch.r]}` : ''}">
+            <input class="n" type="number" min="0" max="255" value="${v}" data-ikn="${k}" aria-label="${esc(ch.n)} qiymati">
+            <span class="ir-t" data-it="${k}">${chText(f, ch, v)}</span>
+            <button class="btn sm x" data-ir="${k}" type="button" title="Oʻz holiga qaytarish" ${held ? '' : 'disabled'}>↺</button>
+            <span class="ir-o" aria-hidden="true"><i data-io="${k}"></i></span>
+          </div>`;
+        }).join('')}
+      </div>
+      <p class="muted small insp-foot">Oʻzgarishlar programmerga tushadi — CUE YOZISH yoki YANGILASH bosilsa, sahnaga yoziladi. Ingichka yashil chiziq — chiroqqa hozir ketayotgan haqiqiy qiymat.</p>`;
+    refreshInspOut();
+  }
+  // Har kadrda: haqiqiy chiqish chiziqlari, orb va (surilmayotgan bo'lsa) qiymatlar
+  function refreshInspOut() {
+    if (!$('#insp').classList.contains('open')) return;
+    const f = inspFix(); if (!f) return;
+    const pr = prof(f), p = tgtParams(f.id);
+    let dimOut = 0;
+    pr.ch.forEach((ch, k) => {
+      const a = f.addr - 1 + k, o = buf[a] || 0;
+      const el = document.querySelector(`[data-io="${k}"]`); if (el) el.style.width = (o / 2.55) + '%';
+      if (ch.r === 'dim') dimOut = Math.max(dimOut, o);
+      if (insp.drag) return;
+      const v = chVal(f, ch, k, p), r = document.querySelector(`[data-ik="${k}"]`), n = document.querySelector(`[data-ikn="${k}"]`);
+      if (r && document.activeElement !== r && +r.value !== v) r.value = v;
+      if (n && document.activeElement !== n && +n.value !== v) n.value = v;
+      const t = document.querySelector(`[data-it="${k}"]`); if (t) t.textContent = chText(f, ch, v);
+    });
+    if (!hasRole(pr, 'dim')) dimOut = Math.max(...pr.ch.map((ch, k) => (['r', 'g', 'b', 'w'].includes(ch.r) ? buf[f.addr - 1 + k] || 0 : 0)), 0);
+    const orb = $('#inspOrb');
+    if (orb) { orb.style.setProperty('--c', outColor(f, p)); orb.style.setProperty('--a', (dimOut / 255).toFixed(2)); orb.classList.toggle('lit', dimOut >= LIT_MIN); }
+    const dot = $('#inspXYDot');
+    if (dot && !insp.drag) { dot.style.left = (p.pan / 255) * 100 + '%'; dot.style.top = (1 - p.tilt / 255) * 100 + '%'; $('#inspPanT').textContent = chText(f, { r: 'pan' }, p.pan); $('#inspTiltT').textContent = chText(f, { r: 'tilt' }, p.tilt); }
+  }
+  function inspSetCh(k, v) {
+    const f = inspFix(); if (!f || !guardAction()) return false;
+    const ch = prof(f).ch[k], tg = inspTargets(f).map((x) => x.id);
+    v = clamp(Math.round(+v || 0), 0, 255);
+    if (PARAM_ROLE[ch.r]) setParam(tg, PARAM_ROLE[ch.r], v);
+    else if (ch.r === 'panF' || ch.r === 'tiltF') { const key = ch.r === 'panF' ? 'pan' : 'tilt'; for (const id of tg) { const base = Math.floor(tgtParams(id)[key]); setParam([id], key, base + v / 256); } }
+    else setRaw(tg, k, v);
+    const row = document.querySelector(`.ir[data-k="${k}"]`);
+    if (row) { row.classList.add('held'); row.querySelector('[data-ir]').disabled = false; const t = row.querySelector('[data-it]'); if (t) t.textContent = chText(f, ch, v); }
+    return true;
+  }
+  $('#inspTab').addEventListener('click', () => inspOpen());
+  $('#inspClose').addEventListener('click', () => inspOpen(false));
+  function inspStep(d) {
+    const list = show.fixtures; if (!list.length) return;
+    const i = list.indexOf(inspFix());
+    const nf = list[((i < 0 ? 0 : i + d) % list.length + list.length) % list.length];
+    insp.focus = nf.id; sel.clear(); sel.add(nf.id); renderSel();
+    const b = document.querySelector(`#fixtureBtns [data-f="${nf.id}"]`); if (b) b.scrollIntoView({ block: 'nearest' });
+  }
+  $('#inspPrev').addEventListener('click', () => inspStep(-1));
+  $('#inspNext').addEventListener('click', () => inspStep(1));
+  $('#inspContent').addEventListener('pointerdown', (e) => { if (e.target.matches('input[type=range]')) insp.drag = true; });
+  window.addEventListener('pointerup', () => { insp.drag = false; });
+  $('#inspContent').addEventListener('input', (e) => {
+    const k = e.target.dataset.ik ?? e.target.dataset.ikn; if (k == null) return;
+    if (!inspSetCh(+k, e.target.value)) { renderInsp(); return; }
+    const other = document.querySelector(e.target.dataset.ik != null ? `[data-ikn="${k}"]` : `[data-ik="${k}"]`); if (other) other.value = e.target.value;
+  });
+  $('#inspContent').addEventListener('change', (e) => { if (e.target.dataset.ik != null || e.target.dataset.ikn != null) { renderProgrammer(); renderInsp(); } });
+  $('#inspContent').addEventListener('click', (e) => {
+    const f = inspFix(); if (!f) return;
+    const pr = prof(f), ids = inspTargets(f).map((x) => x.id);
+    const r = e.target.closest('[data-ir]'), q = e.target.closest('[data-iq]'), c = e.target.closest('[data-ic]'), w = e.target.closest('[data-iw]');
+    if (r) { releaseCh(ids, pr.ch[+r.dataset.ir], +r.dataset.ir); }
+    else if (!(q || c || w)) return;
+    else if (!guardAction()) return;
+    else if (c) { const x = COLORS[+c.dataset.ic]; const [R, G, B, W] = x.rgbw; ids.forEach((id) => { prog.vals[id] = prog.vals[id] || {}; Object.assign(prog.vals[id], { r: R, g: G, b: B, w: W, col: x.n }); }); }
+    else if (w) { ids.forEach((id) => { const o = (prog.vals[id] = prog.vals[id] || {}); o.col = w.dataset.iw; if (o.raw) { pr.ch.forEach((ch, k) => { if (ch.r === 'cwheel') delete o.raw[k]; }); } }); }
+    else if (q) {
+      const a = q.dataset.iq;
+      if (a === 'full') setParam(ids, 'dim', 255);
+      else if (a === 'half') setParam(ids, 'dim', 128);
+      else if (a === 'off') setParam(ids, 'dim', 0);
+      else if (a === 'center') { setParam(ids, 'pan', 128); setParam(ids, 'tilt', 128); }
+      else if (a === 'rel') ids.forEach((id) => delete prog.vals[id]);
+      else if (a === 'hl') {
+        ids.forEach((id) => {
+          const o = (prog.vals[id] = prog.vals[id] || {});
+          Object.assign(o, { dim: 255, r: 255, g: 255, b: 255, w: 255, col: 'Oq' });
+          if (hasRole(pr, 'pan')) Object.assign(o, { pan: 128, tilt: 128 });
+          if (o.raw) pr.ch.forEach((ch, k) => { if (ch.r === 'strobe' || ch.r === 'cwheel') delete o.raw[k]; });
+        });
+      }
+    }
+    renderProgrammer(); renderInsp();
+  });
+  // XY pad: Pan (gorizontal) va Tilt (vertikal) bitta barmoq bilan
+  function xyFrom(e) {
+    const pad = $('#inspXY'), r = pad.getBoundingClientRect();
+    return { pan: clamp((e.clientX - r.left) / r.width, 0, 1) * 255, tilt: (1 - clamp((e.clientY - r.top) / r.height, 0, 1)) * 255 };
+  }
+  function xyApply(v) {
+    const f = inspFix(); if (!f) return;
+    const ids = inspTargets(f).map((x) => x.id);
+    setParam(ids, 'pan', Math.round(v.pan * 100) / 100); setParam(ids, 'tilt', Math.round(v.tilt * 100) / 100);
+    const dot = $('#inspXYDot'); dot.style.left = (v.pan / 255) * 100 + '%'; dot.style.top = (1 - v.tilt / 255) * 100 + '%';
+    $('#inspPanT').textContent = chText(f, { r: 'pan' }, v.pan); $('#inspTiltT').textContent = chText(f, { r: 'tilt' }, v.tilt);
+  }
+  $('#inspContent').addEventListener('pointerdown', (e) => {
+    const pad = e.target.closest('#inspXY'); if (!pad) return;
+    if (!guardAction()) return;
+    e.preventDefault(); insp.drag = true; pad.setPointerCapture(e.pointerId); xyApply(xyFrom(e));
+    const mv = (ev) => xyApply(xyFrom(ev));
+    const up = () => { pad.removeEventListener('pointermove', mv); pad.removeEventListener('pointerup', up); pad.removeEventListener('pointercancel', up); insp.drag = false; renderProgrammer(); renderInsp(); };
+    pad.addEventListener('pointermove', mv); pad.addEventListener('pointerup', up); pad.addEventListener('pointercancel', up);
+  });
+  $('#inspContent').addEventListener('keydown', (e) => {
+    if (e.target.id !== 'inspXY') return;
+    const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key]; if (!d) return;
+    e.preventDefault(); e.stopPropagation();
+    const f = inspFix(); if (!f || !guardAction()) return;
+    const p = tgtParams(f.id), st = e.shiftKey ? 8 : 1;
+    xyApply({ pan: clamp(p.pan + d[0] * st, 0, 255), tilt: clamp(p.tilt + d[1] * st, 0, 255) });
+  });
+  try { if (localStorage.getItem(INSP_KEY) === '1') setTimeout(() => inspOpen(true), 0); } catch (_) {}
 
   /* ================= Faderlar ================= */
   function renderFaders() {
