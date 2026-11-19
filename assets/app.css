@@ -329,3 +329,17 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .restore { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 0; padding: 10px 12px; border-radius: 10px; background: #fef2f2; color: var(--red); font-size: 13px; font-weight: 600; }
 .btn:disabled { opacity: .4; cursor: not-allowed; }
 #patchRows input:disabled, #patchRows select:disabled { appearance: none; -webkit-appearance: none; background-image: none; background: transparent; border-color: transparent; color: var(--ink); opacity: 1; cursor: default; -webkit-text-fill-color: var(--ink); }
+
+/* Kanal sinovi */
+.ctest { margin-bottom: 14px; }
+.ct-pick { max-width: 420px; }
+.ct-rows { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.ct-row { display: grid; grid-template-columns: minmax(170px, 1.1fr) 3fr 64px 86px 40px; gap: 10px; align-items: center; padding: 4px 8px; border-radius: 10px; }
+.ct-row.held { background: #fef9c3; }
+.ct-n { font-size: 13px; }
+.ct-n b { display: inline-block; min-width: 30px; color: var(--muted); }
+.ct-n small { color: var(--muted); margin-left: 4px; }
+.ct-row input[type=range] { width: 100%; accent-color: var(--on); }
+.ct-row input.n { width: 64px; }
+.warn-t { color: #a16207 !important; font-weight: 700; }
+@media (max-width: 720px) { .ct-row { grid-template-columns: 1fr 64px; } .ct-row input[type=range] { grid-column: 1 / -1; order: 3; } }

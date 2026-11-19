@@ -329,6 +329,12 @@ if (location.protocol === 'file:') {
 
   <!-- ================= MONITOR ================= -->
   <section class="tab" id="tab-monitor" hidden>
+    <section class="panel ctest">
+      <div class="ph"><h2>KANAL SINOVI</h2><span class="ph-r"><span class="muted" id="ctState">Har bir kanalni alohida surib, sahnada natijani koʻring</span><button class="btn sm" id="ctReset" type="button">HAMMASINI QOʻYIB YUBORISH</button></span></div>
+      <label class="f ct-pick">Chiroq<select id="ctFix"></select></label>
+      <div class="ct-rows" id="ctRows"></div>
+      <p class="muted small">Surilgan kanal shu sahifa ochiq turguncha qoʻlda ushlab turiladi. Toʻgʻri qiymat topilsa — <b>PROFILGA</b> tugmasi uni shu turdagi barcha chiroqlar uchun doimiy qiladi.</p>
+    </section>
     <section class="panel">
       <div class="ph"><h2>DMX MONITOR · UNIVERSE 1</h2><span class="muted">Chiqayotgan 512 kanal qiymati (0–255)</span></div>
       <div class="mon" id="mon"></div>

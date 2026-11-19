@@ -9,6 +9,13 @@ window.SNI18N = (() => {
 
   // ---------- aniq moslik: o'zbekcha → [ruscha, inglizcha] ----------
   const D = {
+    'KANAL SINOVI': ['ТЕСТ КАНАЛОВ', 'CHANNEL TEST'],
+    'Chiroq': ['Прибор', 'Fixture'],
+    'HAMMASINI QOʻYIB YUBORISH': ['ОТПУСТИТЬ ВСЁ', 'RELEASE ALL'],
+    'PROFILGA': ['В ПРОФИЛЬ', 'TO PROFILE'],
+    'Har bir kanalni alohida surib, sahnada natijani koʻring': ['Двигайте каждый канал отдельно и смотрите результат на сцене', 'Move each channel separately and watch the result on stage'],
+    'Kanal sinovi tugadi — qiymatlar qoʻyib yuborildi': ['Тест каналов завершён — значения отпущены', 'Channel test ended — values released'],
+    'Barcha kanallar qoʻyib yuborildi': ['Все каналы отпущены', 'All channels released'],
     '🔒 QULFLANGAN': ['🔒 ЗАБЛОКИРОВАН', '🔒 LOCKED'],
     '🔓 QULF OCHIQ': ['🔓 РАЗБЛОКИРОВАН', '🔓 UNLOCKED'],
     'TIKLASH': ['ВОССТАНОВИТЬ', 'RESTORE'],
@@ -306,6 +313,7 @@ window.SNI18N = (() => {
     [/^(.+) oʻchirilsinmi\?$/, (m, i) => [`Удалить ${m[1]}?`, `Delete ${m[1]}?`][i]],
     [/^Roʻyxatdan (\d+) ta chiroq yoʻqolgan: (.+)$/, (m, i) => [`Из списка пропало приборов: ${m[1]} — ${m[2]}`, `${m[1]} fixture(s) missing from the list: ${m[2]}`][i]],
     [/^(\d+) ta chiroq tiklandi: (.+)$/, (m, i) => [`Восстановлено приборов: ${m[1]} — ${m[2]}`, `${m[1]} fixture(s) restored: ${m[2]}`][i]],
+    [/^⚠ (\d+) ta kanal qoʻlda ushlab turilibdi$/, (m, i) => [`⚠ Вручную удерживается каналов: ${m[1]}`, `⚠ ${m[1]} channel(s) held manually`][i]],
     [/^(\d+) ta yoniq$/, (m, i) => [`Горят: ${m[1]}`, `${m[1]} lit`][i]],
     [/^(\d+) ta chiroq · (\d+) ta tanlangan$/, (m, i) => [`Приборов: ${m[1]} · выбрано: ${m[2]}`, `${m[1]} fixtures · ${m[2]} selected`][i]],
     [/^(\d+) ta chiroq · (\d+) \/ 512 kanal band$/, (m, i) => [`Приборов: ${m[1]} · занято ${m[2]} / 512 каналов`, `${m[1]} fixtures · ${m[2]} / 512 channels used`][i]],

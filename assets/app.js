@@ -224,6 +224,7 @@
   }
 
   /* ================= DMX hisoblash ================= */
+  const chTest = {}; // { fixtureId: { kanalIndeks: qiymat } } — saqlanmaydi
   const buf = new Uint8Array(512);
   function compute(now) {
     const live = liveLook(now);
@@ -285,6 +286,9 @@
         }
         buf[a] = clamp(Math.round(v), 0, 255);
       });
+      // Kanal sinovi: qo'lda ushlab turilgan qiymatlar hammasidan ustun
+      const ov = chTest[f.id];
+      if (ov) for (const k in ov) { const a = f.addr - 1 + +k; if (a >= 0 && a < 512) buf[a] = ov[k]; }
     }
     return buf;
   }
@@ -975,6 +979,56 @@
     }
   }
 
+  /* ================= KANAL SINOVI ================= */
+  const ROLE_TXT = { dim: 'yorqinlik', r: 'qizil', g: 'yashil', b: 'koʻk', w: 'oq', pan: 'pan', tilt: 'tilt', panF: 'pan fine', tiltF: 'tilt fine', strobe: 'strob/shutter', cwheel: 'rang gʻildiragi', gobo: 'gobo', fixed: 'doimiy' };
+  function renderChTest() {
+    const fs = $('#ctFix'), cur = fs.value;
+    fs.innerHTML = show.fixtures.map((f) => `<option value="${f.id}" ${f.id === cur ? 'selected' : ''}>${esc(f.name)} · DMX ${f.addr}</option>`).join('');
+    const f = show.fixtures.find((x) => x.id === fs.value); if (!f) { $('#ctRows').innerHTML = ''; return; }
+    const pr = prof(f), ov = chTest[f.id] || {};
+    $('#ctRows').innerHTML = pr.ch.map((ch, k) => {
+      const held = ov[k] != null, v = held ? ov[k] : (SNDmx.universe[f.addr - 1 + k] || 0);
+      const canSave = ch.r === 'fixed' || ch.r === 'strobe';
+      return `<div class="ct-row ${held ? 'held' : ''}">
+        <span class="ct-n"><b>${f.addr + k}</b> ${esc(ch.n)} <small>${ROLE_TXT[ch.r] || ch.r}</small></span>
+        <input type="range" min="0" max="255" value="${v}" data-ct="${k}" aria-label="${esc(ch.n)}">
+        <input class="n" type="number" min="0" max="255" value="${v}" data-ctn="${k}" aria-label="${esc(ch.n)} qiymati">
+        ${canSave ? `<button class="btn sm" data-cts="${k}" type="button" ${held ? '' : 'disabled'} title="Shu qiymatni profilga doimiy yozish">PROFILGA</button>` : '<span></span>'}
+        <button class="btn sm x" data-ctr="${k}" type="button" ${held ? '' : 'disabled'} title="Qoʻyib yuborish">↺</button>
+      </div>`;
+    }).join('');
+    const n = Object.values(chTest).reduce((a, o) => a + Object.keys(o).length, 0);
+    $('#ctState').textContent = n ? `⚠ ${n} ta kanal qoʻlda ushlab turilibdi` : 'Har bir kanalni alohida surib, sahnada natijani koʻring';
+    $('#ctState').classList.toggle('warn-t', !!n);
+  }
+  function ctSet(k, v) {
+    const id = $('#ctFix').value; if (!id) return;
+    (chTest[id] = chTest[id] || {})[k] = clamp(Math.round(+v || 0), 0, 255);
+  }
+  $('#ctFix').addEventListener('change', renderChTest);
+  $('#ctRows').addEventListener('input', (e) => {
+    const k = e.target.dataset.ct ?? e.target.dataset.ctn; if (k == null) return;
+    ctSet(k, e.target.value);
+    const row = e.target.closest('.ct-row');
+    row.classList.add('held');
+    row.querySelectorAll('input').forEach((i) => { if (i !== e.target) i.value = chTest[$('#ctFix').value][k]; });
+    row.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+  });
+  $('#ctRows').addEventListener('change', (e) => { if (e.target.dataset.ct != null || e.target.dataset.ctn != null) renderChTest(); });
+  $('#ctRows').addEventListener('click', (e) => {
+    const id = $('#ctFix').value, f = show.fixtures.find((x) => x.id === id); if (!f) return;
+    const r = e.target.closest('[data-ctr]'), sv = e.target.closest('[data-cts]');
+    if (r) { if (chTest[id]) { delete chTest[id][r.dataset.ctr]; if (!Object.keys(chTest[id]).length) delete chTest[id]; } renderChTest(); }
+    if (sv) {
+      const k = +sv.dataset.cts, v = chTest[id]?.[k]; if (v == null) return;
+      const pr = prof(f); pr.ch[k].d = v;
+      delete chTest[id][k]; if (!Object.keys(chTest[id]).length) delete chTest[id];
+      save(); renderChTest();
+      toast(`${pr.name}: „${pr.ch[k].n}“ = ${v} — barcha shu turdagi chiroqlarga yozildi`);
+    }
+  });
+  $('#ctReset').addEventListener('click', () => { for (const k in chTest) delete chTest[k]; renderChTest(); toast('Barcha kanallar qoʻyib yuborildi'); });
+
   /* ================= SAHNA: plan, chiroq joylashuvi, nur yo'naltirish ================= */
   // Koordinatalar: metr. X — tomoshabin tomondan chapdan o'ngga (0..eni), Y — orqa pardadan zal tomonga (0..chuqurlik).
   const ST = () => show.stage;
@@ -1400,13 +1454,15 @@
   /* ================= Bo'limlar ================= */
   let tab = 'pult';
   function setTab(t) {
+    // Monitordan chiqilganda qo'lda ushlab turilgan sinov qiymatlari avtomatik qo'yib yuboriladi
+    if (t !== 'monitor' && Object.keys(chTest).length) { for (const k in chTest) delete chTest[k]; toast('Kanal sinovi tugadi — qiymatlar qoʻyib yuborildi'); }
     tab = t;
     $$('#tabs [data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === t));
     $$('.tab').forEach((s) => { s.hidden = s.id !== 'tab-' + t; });
     if (t === 'patch') renderPatch();
     if (t === 'profil') renderProfiles();
     if (t === 'ulanish') renderConn();
-    if (t === 'monitor') { $('#mon').innerHTML = ''; renderMonitor(); }
+    if (t === 'monitor') { $('#mon').innerHTML = ''; renderMonitor(); renderChTest(); }
     if (t === 'sahna') renderStageAll();
   }
   $('#tabs').addEventListener('click', (e) => { const b = e.target.closest('[data-tab]'); if (b) setTab(b.dataset.tab); });
