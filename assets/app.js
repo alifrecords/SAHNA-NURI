@@ -42,7 +42,7 @@
   // Kanal nomlari va tartibi FreeStyler'ning o'z .fxt fayllaridan (Fixtures papkasi) olingan.
   // "Ochiq" qiymatlar FreeStyler'dagi highlight qiymatlariga mos (strob 0, shutter 255).
   const fx0 = (n, d = 0) => c(n, 'fixed', d);
-  const PROF_REV = 2;
+  const PROF_REV = 3;
   const DEFAULT_PROFILES = () => ({
     fs_propar8: { name: 'ProPar8 (8 kanal)', group: 'ProPar8',
       ch: [c('Lamp', 'dim'), c('Red', 'r'), c('Green', 'g'), c('Blue', 'b'), c('WW (iliq oq)', 'w'), c('Strobe', 'strobe', 0), fx0('Func Macro'), fx0('Func')] },
@@ -60,7 +60,8 @@
         fx0('Frost'), fx0('Zoom'), fx0('Focus'), fx0('Reset'), fx0('Effect'), fx0('EffectSpeed')] },
     fs_front12: { name: 'Front Light 800W (12 kanal)', group: 'Front Light', panRange: 540, tiltRange: 270,
       ch: [c('Pan', 'pan', 128), c('Pan 16bit', 'panF'), c('Tilt', 'tilt', 128), c('Tilt 16bit', 'tiltF'), fx0('PanTilt Speed'),
-        fx0('Dimmer'), c('Lamp', 'dim'), c('Shutter', 'strobe', 255), fx0('Color'), fx0('CTO'), fx0('Zoom'), fx0('Func')] },
+        // FreeStyler: dimmer = 6-kanal; Lamp (7) — lampa yoqish, 255 = yoniq (doim yoqiq turadi, blackout'da ham o'chmaydi)
+        c('Dimmer', 'dim'), fx0('Lamp (yoqish)', 255), c('Shutter', 'strobe', 255), fx0('Color'), fx0('CTO'), fx0('Zoom'), fx0('Func')] },
     fs_dim24: { name: '24 channel dimmerpack (24 kanal)', group: 'Dimmer', ch: Array.from({ length: 24 }, (_, i) => c('Dimmer ' + (i + 1), 'dim')) },
   });
   // Eski (taxminiy) standart profillar — avtomatik yangilash uchun
@@ -98,8 +99,10 @@
   if (!show || !Array.isArray(show.fixtures) || !show.profiles) show = newShow();
   // FreeStyler profillari yangilangan bo'lsa — saqlangan eski fs_* profillar yangisiga almashtiriladi
   if ((show.profRev || 0) < PROF_REV) {
-    const D = DEFAULT_PROFILES();
-    for (const k in D) if (show.profiles[k]) show.profiles[k] = D[k];
+    const D = DEFAULT_PROFILES(), rev = show.profRev || 0;
+    // rev 2: barcha fs_* profillar; rev 3: faqat Front Light (boshqa profillardagi sozlashlar saqlanadi)
+    const keys = rev < 2 ? Object.keys(D) : ['fs_front12'];
+    for (const k of keys) if (show.profiles[k]) show.profiles[k] = D[k];
     show.profRev = PROF_REV;
     try { localStorage.setItem(SHOW_KEY, JSON.stringify(show)); } catch (_) {}
   }
