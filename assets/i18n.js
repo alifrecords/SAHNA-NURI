@@ -9,6 +9,11 @@ window.SNI18N = (() => {
 
   // ---------- aniq moslik: o'zbekcha → [ruscha, inglizcha] ----------
   const D = {
+    '✎ AVTO-SAQLASH: YOQIQ': ['✎ АВТОСОХРАНЕНИЕ: ВКЛ', '✎ AUTO-SAVE: ON'],
+    '✎ AVTO-SAQLASH: OʻCHIQ': ['✎ АВТОСОХРАНЕНИЕ: ВЫКЛ', '✎ AUTO-SAVE: OFF'],
+    'Sahna almashtirilganda unga qilingan oʻzgarishlar oʻsha sahnaga avtomatik yoziladi': ['При смене сцены сделанные изменения автоматически записываются в неё', 'When you switch scenes, your changes are saved into the scene you left'],
+    'Avto-saqlash yoqildi: sahna almashganda oʻzgarishlar oʻsha sahnaga yoziladi': ['Автосохранение включено: при смене сцены изменения записываются в неё', 'Auto-save on: changes are saved into the scene when you switch'],
+    'Avto-saqlash oʻchdi: oʻzgarishlar programmerda qoladi (YANGILASH bilan yozasiz)': ['Автосохранение выключено: изменения остаются в программере (запишите кнопкой ОБНОВИТЬ)', 'Auto-save off: changes stay in the programmer (write them with UPDATE)'],
     '▦ TEPADAN · PLAN': ['▦ СВЕРХУ · ПЛАН', '▦ TOP · PLAN'],
     '◉ ROʻPARADAN · OPERATOR KOʻZI': ['◉ ИЗ ЗАЛА · ГЛАЗАМИ ОПЕРАТОРА', '◉ FRONT · OPERATOR VIEW'],
     'TOʻR: YOQIQ': ['СЕТКА: ВКЛ', 'GRID: ON'], 'TOʻR: OʻCHIQ': ['СЕТКА: ВЫКЛ', 'GRID: OFF'],
@@ -345,6 +350,10 @@ window.SNI18N = (() => {
     [/^(\d+) ta chiroq tiklandi: (.+)$/, (m, i) => [`Восстановлено приборов: ${m[1]} — ${m[2]}`, `${m[1]} fixture(s) restored: ${m[2]}`][i]],
     [/^⚠ (\d+) ta kanal qoʻlda ushlab turilibdi$/, (m, i) => [`⚠ Вручную удерживается каналов: ${m[1]}`, `⚠ ${m[1]} channel(s) held manually`][i]],
     [/^✦ (\d+) ta bir xil chiroqqa birdaniga$/, (m, i) => [`✦ Сразу на ${m[1]} одинаковых прибора`, `✦ Applies to ${m[1]} identical fixtures`][i]],
+    [/^„(.+)“ saqlandi$/, (m, i) => [`«${m[1]}» сохранена`, `“${m[1]}” saved`][i]],
+    [/^„(.+)“ — oʻzgarish yoʻq$/, (m, i) => [`«${m[1]}» — без изменений`, `“${m[1]}” — no changes`][i]],
+    [/^● (\d+) ta chiroq oʻzgardi → „(.+)“ga yoziladi$/, (m, i) => [`● Изменено приборов: ${m[1]} → запишется в «${m[2]}»`, `● ${m[1]} fixture(s) changed → will be saved to “${m[2]}”`][i]],
+    [/^● (\d+) ta chiroq programmerda — barcha sahnalar ustidan turadi$/, (m, i) => [`● В программере приборов: ${m[1]} — перекрывают все сцены`, `● ${m[1]} fixture(s) in the programmer — override every scene`][i]],
     [/^(\d+) ta yoniq$/, (m, i) => [`Горят: ${m[1]}`, `${m[1]} lit`][i]],
     [/^(\d+) ta chiroq · (\d+) ta tanlangan$/, (m, i) => [`Приборов: ${m[1]} · выбрано: ${m[2]}`, `${m[1]} fixtures · ${m[2]} selected`][i]],
     [/^(\d+) ta chiroq · (\d+) \/ 512 kanal band$/, (m, i) => [`Приборов: ${m[1]} · занято ${m[2]} / 512 каналов`, `${m[1]} fixtures · ${m[2]} / 512 channels used`][i]],

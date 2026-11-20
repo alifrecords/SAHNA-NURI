@@ -524,6 +524,7 @@
     $('#fxBtns').innerHTML = EFFECTS.map((x) => `<button class="btn ${activeFx.has(x.id) ? 'on' : ''}" data-x="${x.id}" type="button" aria-pressed="${activeFx.has(x.id)}">${esc(x.n)}</button>`).join('');
     const n = Object.keys(prog.vals).length;
     $('#progInfo').textContent = n ? `${n} ta chiroq oʻzgartirilgan` : '';
+    renderEditBar();
     if (!insp.drag) renderInsp();
   }
   $('#dimR').addEventListener('input', (e) => { if (setProg('dim', +e.target.value * 2.55)) $('#dimV').textContent = e.target.value + '%'; else e.target.value = 0; });
@@ -603,19 +604,19 @@
     }
     const cur = show.cues[play.cur];
     $('#cueInfo').textContent = cur ? `Joriy: ${cur.num} · ${cur.name}` : `${show.cues.length} ta cue`;
+    renderEditBar();
   }
   $('#cueList').addEventListener('click', (e) => {
     if (e.target.closest('input')) return;
     const row = e.target.closest('[data-i]'); if (!row) return;
-    play.next = +row.dataset.i; renderCues();
-  });
-  $('#cueList').addEventListener('dblclick', (e) => {
-    if (e.target.closest('input')) return;
-    const row = e.target.closest('[data-i]'); if (row) goTo(+row.dataset.i);
+    // Sahnani bosish — o'sha sahnaga o'tish (sozlamalari darhol ko'rinadi)
+    const i = +row.dataset.i;
+    if (i === play.cur && !Object.keys(prog.vals).length) return;
+    goTo(i);
   });
   $('#cueList').addEventListener('keydown', (e) => {
     const row = e.target.closest('.cue[data-i]');
-    if (row && e.target === row && (e.key === 'Enter')) { play.next = +row.dataset.i; renderCues(); }
+    if (row && e.target === row && (e.key === 'Enter')) goTo(+row.dataset.i);
   });
   $('#cueList').addEventListener('change', (e) => {
     const n = e.target.dataset.name, f = e.target.dataset.fade;
@@ -631,9 +632,40 @@
     }
   });
 
+  // Programmerdagi o'zgarishlarni sahnaga yozish (faqat o'zgartirilgan chiroqlar; qolganlari tegilmaydi)
+  function commitProg(i) {
+    const q = show.cues[i]; if (!q) return 0;
+    const ids = Object.keys(prog.vals);
+    if (!ids.length && !prog.fx.length) return 0;
+    q.look = q.look || {};
+    for (const id of ids) {
+      const p = mergeP(q.look[id] || defParams(), prog.vals[id]);
+      if (p.raw) p.raw = Object.fromEntries(Object.entries(p.raw).map(([k, v]) => [k, Math.round(v)]));
+      q.look[id] = { ...p, dim: Math.round(p.dim), r: Math.round(p.r), g: Math.round(p.g), b: Math.round(p.b), w: Math.round(p.w), pan: Math.round(p.pan * 100) / 100, tilt: Math.round(p.tilt * 100) / 100 };
+    }
+    if (prog.fx.length) q.fx = [...(q.fx || []), ...prog.fx.map((x) => ({ type: x.type, fids: [...x.fids] }))];
+    prog.vals = {}; prog.fx = [];
+    return ids.length || 1;
+  }
+  function renderEditBar() {
+    const on = show.autoSave !== false, n = Object.keys(prog.vals).length, cur = show.cues[play.cur];
+    const b = $('#autoSaveBtn'); if (!b) return;
+    b.textContent = on ? '✎ AVTO-SAQLASH: YOQIQ' : '✎ AVTO-SAQLASH: OʻCHIQ';
+    b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    const st = $('#editSt');
+    st.className = 'edit-st' + (n ? ' dirty' : '');
+    st.textContent = !n ? (cur ? `„${cur.name}“ — oʻzgarish yoʻq` : '')
+      : on && cur ? `● ${n} ta chiroq oʻzgardi → „${cur.name}“ga yoziladi`
+        : `● ${n} ta chiroq programmerda — barcha sahnalar ustidan turadi`;
+  }
   function goTo(i) {
     if (!guardAction()) return;
     if (i < 0 || i >= show.cues.length) { toast(show.cues.length ? 'Roʻyxat oxiri' : 'Avval cue yozing'); return; }
+    // Avto-saqlash: joriy sahnaga qilingan o'zgarishlar o'sha sahnada qoladi, keyingi sahnaga "yopishib" o'tmaydi
+    if (show.autoSave !== false && play.cur >= 0 && play.cur < show.cues.length) {
+      const n = commitProg(play.cur);
+      if (n) { toast(`„${show.cues[play.cur].name}“ saqlandi`); play.to = cueLook(show.cues[play.cur]); play.from = null; play.dur = 0; play.fadeMs = 0; }
+    }
     const now = performance.now();
     play.from = baseLook(now);
     play.to = cueLook(show.cues[i]);
@@ -731,6 +763,11 @@
     toast(mibOn() ? 'Moving head’lar qorongʻida buriladi, keyin fade bilan yonadi' : 'Qorongʻida burilish oʻchirildi: nur yonib turgan holda buriladi');
   });
   $('#mibTime').addEventListener('change', (e) => { show.mibMove = clamp(+e.target.value || 0, 0, 10); e.target.value = show.mibMove; save(); });
+  $('#autoSaveBtn').addEventListener('click', () => {
+    show.autoSave = show.autoSave === false;
+    save(); renderEditBar();
+    toast(show.autoSave ? 'Avto-saqlash yoqildi: sahna almashganda oʻzgarishlar oʻsha sahnaga yoziladi' : 'Avto-saqlash oʻchdi: oʻzgarishlar programmerda qoladi (YANGILASH bilan yozasiz)');
+  });
   $('#autoBtn').addEventListener('click', () => {
     show.autoOn = !show.autoOn; save(); renderAutoBtn();
     toast(show.autoOn ? 'Avtomatik oʻtish yoqildi' : 'Avtomatik oʻtish oʻchirildi — faqat GO bilan');
