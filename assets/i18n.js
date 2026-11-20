@@ -9,6 +9,7 @@ window.SNI18N = (() => {
 
   // ---------- aniq moslik: o'zbekcha → [ruscha, inglizcha] ----------
   const D = {
+    'Bosish: tanlash → tahrir → olib tashlash · Ushlab sudrash: tartibni almashtirish': ['Нажатие: выбор → правка → снять · Перетаскивание: изменить порядок', 'Click: select → edit → clear · Drag: reorder'],
     'Sahna tanlanmagan: hozir yoniq turgan chiroqlar saqlanadi.': ['Сцена не выбрана: сохраняются горящие сейчас приборы.', 'No scene selected: the fixtures lit right now are saved.'],
     'Saqlash uchun holat yoʻq: sahnani tanlang yoki chiroqlarni yoqing': ['Нечего сохранять: выберите сцену или включите приборы', 'Nothing to save: pick a scene or turn fixtures on'],
     'Sudrab Banklar paneliga tashlang — bank sifatida saqlanadi': ['Перетащите на панель Банки — сохранится как банк', 'Drag onto the Banks panel to save as a bank'],
@@ -387,6 +388,10 @@ window.SNI18N = (() => {
     [/^„(.+)“ banki saqlandi$/, (m, i) => [`Банк «${m[1]}» сохранён`, `Bank “${m[1]}” saved`][i]],
     [/^„(.+)“ banki oʻchirilsinmi\?/, (m, i) => [`Удалить банк «${m[1]}»? Нажмите ещё раз для подтверждения.`, `Delete bank “${m[1]}”? Click again to confirm.`][i]],
     [/^(\d+) ta$/, (m, i) => [`${m[1]} шт.`, `${m[1]}`][i]],
+    [/^✎ „(.+)“ tahrirda — oʻzgarishlar shu sahnaga yoziladi$/, (m, i) => [`✎ «${m[1]}» в правке — изменения записываются в эту сцену`, `✎ “${m[1]}” in edit — changes are written to this scene`][i]],
+    [/^✎ „(.+)“ tahrirda( · (\d+) ta chiroq oʻzgardi)? — yana bossangiz saqlanadi$/, (m, i) => [`✎ «${m[1]}» в правке${m[3] ? ` · изменено приборов: ${m[3]}` : ''} — нажмите ещё раз, чтобы сохранить`, `✎ “${m[1]}” in edit${m[3] ? ` · ${m[3]} fixture(s) changed` : ''} — click again to save`][i]],
+    [/^„(.+)“ — belgi olib tashlandi$/, (m, i) => [`«${m[1]}» — отметка снята`, `“${m[1]}” — mark cleared`][i]],
+    [/^„(.+)“ (\d+)-oʻringa koʻchirildi$/, (m, i) => [`«${m[1]}» перемещена на ${m[2]}-е место`, `“${m[1]}” moved to position ${m[2]}`][i]],
     [/^(\d+) ta yoniq$/, (m, i) => [`Горят: ${m[1]}`, `${m[1]} lit`][i]],
     [/^(\d+) ta chiroq · (\d+) ta tanlangan$/, (m, i) => [`Приборов: ${m[1]} · выбрано: ${m[2]}`, `${m[1]} fixtures · ${m[2]} selected`][i]],
     [/^(\d+) ta chiroq · (\d+) \/ 512 kanal band$/, (m, i) => [`Приборов: ${m[1]} · занято ${m[2]} / 512 каналов`, `${m[1]} fixtures · ${m[2]} / 512 channels used`][i]],

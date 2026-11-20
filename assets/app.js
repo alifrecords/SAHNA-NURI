@@ -160,7 +160,8 @@
   const prog = { vals: {}, fx: [] };     // programmer: {fid: {param: v}}, fx: [{type, fids}]
   const flash = new Set();               // bosib turilgan FLASH guruhlari
   const insp = { focus: null, drag: false, solo: null };
-  const bank = { lib: [], loaded: false, q: '', open: {}, undo: null, undoT: 0 }; // banklar kutubxonasi holati // chiroq sozlamalari paneli: fokusdagi chiroq
+  const bank = { lib: [], loaded: false, q: '', open: {}, undo: null, undoT: 0 }; // banklar kutubxonasi holati
+  const cueMark = { id: null, edit: false }; // sahna belgisi: 1-bosish tanlash, 2 — tahrir, 3 — olib tashlash // chiroq sozlamalari paneli: fokusdagi chiroq
   let blackout = false;
   const play = { cur: -1, next: 0, from: null, to: null, start: 0, dur: 0, paused: false, pausedAt: 0, fx: [] };
 
@@ -643,10 +644,11 @@
       list.innerHTML = '<div class="empty">Hali cue yoʻq. Chiroqlarni tanlab, rang va intensivlik bering, keyin „CUE YOZISH“ ni bosing.</div>';
     } else {
       list.innerHTML = show.cues.map((q, i) => {
-        const cls = i === play.cur ? 'cur' : i === play.next ? 'next' : '';
+        const mk = cueMark.id === q.id;
+        const cls = (i === play.cur ? 'cur' : i === play.next ? 'next' : '') + (mk ? ' mk' : '') + (mk && cueMark.edit ? ' edit' : '');
         const st = cueStatus(i);
-        return `<div class="cue ${cls}" data-i="${i}" role="button" tabindex="0" aria-label="Cue ${esc(q.num)} ${esc(q.name)}">
-          <b class="cue-grip" draggable="true" data-dragcue="${i}" title="Sudrab Banklar paneliga tashlang — bank sifatida saqlanadi">${esc(q.num)}</b>
+        return `<div class="cue ${cls}" data-i="${i}" role="button" tabindex="0" aria-label="Cue ${esc(q.num)} ${esc(q.name)}" title="Bosish: tanlash → tahrir → olib tashlash · Ushlab sudrash: tartibni almashtirish">
+          <b class="cue-grip" data-dragcue="${i}">${esc(q.num)}</b>
           <input data-name="${i}" value="${esc(q.name)}" aria-label="Cue nomi">
           <input data-fade="${i}" type="number" min="0" max="600" step="0.5" value="${q.fade}" aria-label="Fade soniya">
           <input class="auto" data-auto="${i}" inputmode="numeric" placeholder="qoʻlda" value="${q.auto ? fmtTime(q.auto) : ''}" aria-label="Avtomatik oʻtish vaqti (daqiqa:soniya)">
@@ -660,10 +662,16 @@
   $('#cueList').addEventListener('click', (e) => {
     if (e.target.closest('input')) return;
     const row = e.target.closest('[data-i]'); if (!row) return;
-    // Sahnani bosish — o'sha sahnaga o'tish (sozlamalari darhol ko'rinadi)
-    const i = +row.dataset.i;
-    if (i === play.cur && !Object.keys(prog.vals).length) return;
-    goTo(i);
+    // 1-bosish: sahnani tanlash (ijroga o'tadi) · 2-bosish: tahrir (✎, o'zgarishlar shu sahnaga yoziladi)
+    // 3-bosish: tahrirni saqlab, belgini olib tashlash
+    const i = +row.dataset.i, q = show.cues[i];
+    if (cueMark.id !== q.id || i !== play.cur) { goTo(i); cueMark.id = q.id; cueMark.edit = false; renderCues(); return; }
+    if (!cueMark.edit) { cueMark.edit = true; renderCues(); toast(`✎ „${q.name}“ tahrirda — oʻzgarishlar shu sahnaga yoziladi`); return; }
+    const n = commitProg(i);
+    if (n) { play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0; save(); }
+    cueMark.id = null; cueMark.edit = false;
+    renderCues(); renderProgrammer();
+    toast(n ? `„${q.name}“ saqlandi` : `„${q.name}“ — belgi olib tashlandi`);
   });
   $('#cueList').addEventListener('keydown', (e) => {
     const row = e.target.closest('.cue[data-i]');
@@ -707,6 +715,9 @@
     b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     const st = $('#editSt');
     st.className = 'edit-st' + (n ? ' dirty' : '');
+    const ed = cur && cueMark.edit && cueMark.id === cur.id;
+    st.className = 'edit-st' + (n ? ' dirty' : '') + (ed ? ' editing' : '');
+    if (ed) { st.textContent = `✎ „${cur.name}“ tahrirda${n ? ` · ${n} ta chiroq oʻzgardi` : ''} — yana bossangiz saqlanadi`; return; }
     st.textContent = !n ? (cur ? `„${cur.name}“ — oʻzgarish yoʻq` : '')
       : on && cur ? `● ${n} ta chiroq oʻzgardi → „${cur.name}“ga yoziladi`
         : `● ${n} ta chiroq programmerda — barcha sahnalar ustidan turadi`;
@@ -715,7 +726,8 @@
     if (!guardAction()) return;
     if (i < 0 || i >= show.cues.length) { toast(show.cues.length ? 'Roʻyxat oxiri' : 'Avval cue yozing'); return; }
     // Avto-saqlash: joriy sahnaga qilingan o'zgarishlar o'sha sahnada qoladi, keyingi sahnaga "yopishib" o'tmaydi
-    if (show.autoSave !== false && play.cur >= 0 && play.cur < show.cues.length) {
+    const editing = cueMark.edit && show.cues[play.cur] && cueMark.id === show.cues[play.cur].id;
+    if ((show.autoSave !== false || editing) && play.cur >= 0 && play.cur < show.cues.length) {
       const n = commitProg(play.cur);
       if (n) { toast(`„${show.cues[play.cur].name}“ saqlandi`); play.to = cueLook(show.cues[play.cur]); play.from = null; play.dur = 0; play.fadeMs = 0; }
     }
@@ -736,6 +748,7 @@
     play.cur = i; play.next = i + 1 < show.cues.length ? i + 1 : i;
     play.autoFired = false;
     show.lastCue = i; save();
+    cueMark.id = show.cues[i].id; cueMark.edit = false;
     renderCues(); renderProgrammer();
     flashBtn($('#goBtn')); flashBtn($('#go2Btn'));
   }
@@ -848,6 +861,7 @@
     prog.vals = {}; prog.fx = [];
     play.cur = at; play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0;
     show.lastCue = at; play.fx = q.fx.map((x) => ({ ...x, fids: [...x.fids] }));
+    cueMark.id = q.id; cueMark.edit = false;
     play.next = Math.min(at + 1, show.cues.length - 1);
     save(); renderCues(); renderProgrammer();
     flashBtn($('#recBtn'));
@@ -1109,12 +1123,42 @@
   }
   $('#bankSave').addEventListener('click', () => { if (saveBankFrom(play.cur, $('#bankName').value)) $('#bankName').value = ''; });
   // Sahnani raqamidan ushlab Banklar paneliga sudrash — bank sifatida saqlanadi
-  $('#cueList').addEventListener('dragstart', (e) => {
-    const h = e.target.closest('[data-dragcue]'); if (!h) return;
-    e.dataTransfer.setData('text/sn-cue', h.dataset.dragcue); e.dataTransfer.effectAllowed = 'copy';
-    document.body.classList.add('cue-dragging');
+  // Sahna qatorini ushlab sudrash: ro'yxat ichida — tartibni almashtirish; Banklar paneliga — bank sifatida saqlash
+  $('#cueList').addEventListener('pointerdown', (e) => {
+    const row = e.target.closest('.cue[data-i]'); if (!row) return;
+    row.draggable = !e.target.closest('input');
   });
-  $('#cueList').addEventListener('dragend', () => { document.body.classList.remove('cue-dragging'); $('#bankPanel').classList.remove('drop-bank'); });
+  $('#cueList').addEventListener('dragstart', (e) => {
+    const row = e.target.closest('.cue[data-i]'); if (!row || e.target.closest('input')) return;
+    e.dataTransfer.setData('text/sn-cue', row.dataset.i); e.dataTransfer.effectAllowed = 'copyMove';
+    document.body.classList.add('cue-dragging'); row.classList.add('dragging');
+  });
+  const clearCueDrop = () => $$('.cue.drop-before, .cue.drop-after').forEach((x) => x.classList.remove('drop-before', 'drop-after'));
+  $('#cueList').addEventListener('dragend', () => { document.body.classList.remove('cue-dragging'); $('#bankPanel').classList.remove('drop-bank'); clearCueDrop(); $$('.cue.dragging').forEach((x) => x.classList.remove('dragging')); });
+  $('#cueList').addEventListener('dragover', (e) => {
+    if (![...(e.dataTransfer?.types || [])].includes('text/sn-cue')) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+    const row = e.target.closest('.cue[data-i]'); clearCueDrop(); if (!row) return;
+    const r = row.getBoundingClientRect();
+    row.classList.add(e.clientY < r.top + r.height / 2 ? 'drop-before' : 'drop-after');
+  });
+  $('#cueList').addEventListener('drop', (e) => {
+    if (![...(e.dataTransfer?.types || [])].includes('text/sn-cue')) return;
+    e.preventDefault();
+    const from = +e.dataTransfer.getData('text/sn-cue'), row = e.target.closest('.cue[data-i]');
+    const before = row && row.classList.contains('drop-before');
+    clearCueDrop(); document.body.classList.remove('cue-dragging');
+    let to = row ? +row.dataset.i + (before ? 0 : 1) : show.cues.length;
+    if (from < to) to--;
+    if (to === from || !show.cues[from]) return;
+    const curId = show.cues[play.cur]?.id, nextId = show.cues[play.next]?.id, lastId = show.cues[show.lastCue]?.id;
+    const [q] = show.cues.splice(from, 1); show.cues.splice(to, 0, q);
+    show.cues.forEach((c, k) => { c.num = String(k + 1); }); // raqamlar tartib bo'yicha qayta qo'yiladi
+    const idx = (id) => show.cues.findIndex((c) => c.id === id);
+    if (curId) play.cur = idx(curId); if (nextId) play.next = idx(nextId); if (lastId) show.lastCue = idx(lastId);
+    save(); renderCues();
+    toast(`„${q.name}“ ${to + 1}-oʻringa koʻchirildi`);
+  });
   const isCueDrag = (e) => [...(e.dataTransfer?.types || [])].includes('text/sn-cue');
   $('#bankPanel').addEventListener('dragover', (e) => { if (!isCueDrag(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; $('#bankPanel').classList.add('drop-bank'); if (!$('#bankPanel').classList.contains('open')) bankOpen(true); });
   $('#bankPanel').addEventListener('dragleave', (e) => { if (!$('#bankPanel').contains(e.relatedTarget)) $('#bankPanel').classList.remove('drop-bank'); });
