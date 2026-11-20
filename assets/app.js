@@ -161,7 +161,7 @@
   const flash = new Set();               // bosib turilgan FLASH guruhlari
   const insp = { focus: null, drag: false, solo: null };
   const bank = { lib: [], loaded: false, q: '', open: {}, undo: null, undoT: 0 }; // banklar kutubxonasi holati
-  const cueMark = { id: null, edit: false }; // sahna belgisi: 1-bosish tanlash, 2 — tahrir, 3 — olib tashlash // chiroq sozlamalari paneli: fokusdagi chiroq
+  const cueMark = { id: null, stage: 0 }; // sahna: 1-bosish — tanlash, 2 — belgilash, 3 — ijroga (chiroqlar yonadi) // chiroq sozlamalari paneli: fokusdagi chiroq
   let blackout = false;
   const play = { cur: -1, next: 0, from: null, to: null, start: 0, dur: 0, paused: false, pausedAt: 0, fx: [] };
 
@@ -645,9 +645,9 @@
     } else {
       list.innerHTML = show.cues.map((q, i) => {
         const mk = cueMark.id === q.id;
-        const cls = (i === play.cur ? 'cur' : i === play.next ? 'next' : '') + (mk ? ' mk' : '') + (mk && cueMark.edit ? ' edit' : '');
+        const cls = (i === play.cur ? 'cur' : i === play.next ? 'next' : '') + (mk ? ' mk' : '') + (mk && cueMark.stage === 2 ? ' mk2' : '');
         const st = cueStatus(i);
-        return `<div class="cue ${cls}" data-i="${i}" role="button" tabindex="0" aria-label="Cue ${esc(q.num)} ${esc(q.name)}" title="Bosish: tanlash → tahrir → olib tashlash · Ushlab sudrash: tartibni almashtirish">
+        return `<div class="cue ${cls}" data-i="${i}" role="button" tabindex="0" aria-label="Cue ${esc(q.num)} ${esc(q.name)}" title="1-bosish: tanlash · 2: belgilash · 3: ijroga (chiroqlar yonadi) · Ushlab sudrash: tartib">
           <b class="cue-grip" data-dragcue="${i}">${esc(q.num)}</b>
           <input data-name="${i}" value="${esc(q.name)}" aria-label="Cue nomi">
           <input data-fade="${i}" type="number" min="0" max="600" step="0.5" value="${q.fade}" aria-label="Fade soniya">
@@ -662,16 +662,13 @@
   $('#cueList').addEventListener('click', (e) => {
     if (e.target.closest('input')) return;
     const row = e.target.closest('[data-i]'); if (!row) return;
-    // 1-bosish: sahnani tanlash (ijroga o'tadi) · 2-bosish: tahrir (✎, o'zgarishlar shu sahnaga yoziladi)
-    // 3-bosish: tahrirni saqlab, belgini olib tashlash
+    // 1-bosish: tanlash (keyingi bo'ladi) · 2-bosish: belgilash · 3-bosish: ijroga — chiroqlar yonadi.
+    // 1–2-bosishda sahnadagi chiroqlar o'zgarmaydi (spektakl paytida tasodifan almashib ketmaydi).
     const i = +row.dataset.i, q = show.cues[i];
-    if (cueMark.id !== q.id || i !== play.cur) { goTo(i); cueMark.id = q.id; cueMark.edit = false; renderCues(); return; }
-    if (!cueMark.edit) { cueMark.edit = true; renderCues(); toast(`✎ „${q.name}“ tahrirda — oʻzgarishlar shu sahnaga yoziladi`); return; }
-    const n = commitProg(i);
-    if (n) { play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0; save(); }
-    cueMark.id = null; cueMark.edit = false;
-    renderCues(); renderProgrammer();
-    toast(n ? `„${q.name}“ saqlandi` : `„${q.name}“ — belgi olib tashlandi`);
+    if (cueMark.id !== q.id) { cueMark.id = q.id; cueMark.stage = 1; play.next = i; renderCues(); return; }
+    if (cueMark.stage === 1) { cueMark.stage = 2; renderCues(); return; }
+    cueMark.id = null; cueMark.stage = 0;
+    goTo(i);
   });
   $('#cueList').addEventListener('keydown', (e) => {
     const row = e.target.closest('.cue[data-i]');
@@ -715,9 +712,8 @@
     b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     const st = $('#editSt');
     st.className = 'edit-st' + (n ? ' dirty' : '');
-    const ed = cur && cueMark.edit && cueMark.id === cur.id;
-    st.className = 'edit-st' + (n ? ' dirty' : '') + (ed ? ' editing' : '');
-    if (ed) { st.textContent = `✎ „${cur.name}“ tahrirda${n ? ` · ${n} ta chiroq oʻzgardi` : ''} — yana bossangiz saqlanadi`; return; }
+    const mq = cueMark.id && show.cues.find((c) => c.id === cueMark.id);
+    if (mq && !n) { st.className = 'edit-st editing'; st.textContent = cueMark.stage === 1 ? `„${mq.name}“ tanlandi — yana 2 marta bossangiz, ijroga oʻtadi` : `◆ „${mq.name}“ belgilandi — yana bir bossangiz, chiroqlar yonadi`; return; }
     st.textContent = !n ? (cur ? `„${cur.name}“ — oʻzgarish yoʻq` : '')
       : on && cur ? `● ${n} ta chiroq oʻzgardi → „${cur.name}“ga yoziladi`
         : `● ${n} ta chiroq programmerda — barcha sahnalar ustidan turadi`;
@@ -726,8 +722,7 @@
     if (!guardAction()) return;
     if (i < 0 || i >= show.cues.length) { toast(show.cues.length ? 'Roʻyxat oxiri' : 'Avval cue yozing'); return; }
     // Avto-saqlash: joriy sahnaga qilingan o'zgarishlar o'sha sahnada qoladi, keyingi sahnaga "yopishib" o'tmaydi
-    const editing = cueMark.edit && show.cues[play.cur] && cueMark.id === show.cues[play.cur].id;
-    if ((show.autoSave !== false || editing) && play.cur >= 0 && play.cur < show.cues.length) {
+    if (show.autoSave !== false && play.cur >= 0 && play.cur < show.cues.length) {
       const n = commitProg(play.cur);
       if (n) { toast(`„${show.cues[play.cur].name}“ saqlandi`); play.to = cueLook(show.cues[play.cur]); play.from = null; play.dur = 0; play.fadeMs = 0; }
     }
@@ -748,7 +743,7 @@
     play.cur = i; play.next = i + 1 < show.cues.length ? i + 1 : i;
     play.autoFired = false;
     show.lastCue = i; save();
-    cueMark.id = show.cues[i].id; cueMark.edit = false;
+    if (cueMark.id === show.cues[i].id) { cueMark.id = null; cueMark.stage = 0; }
     renderCues(); renderProgrammer();
     flashBtn($('#goBtn')); flashBtn($('#go2Btn'));
   }
@@ -861,7 +856,6 @@
     prog.vals = {}; prog.fx = [];
     play.cur = at; play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0;
     show.lastCue = at; play.fx = q.fx.map((x) => ({ ...x, fids: [...x.fids] }));
-    cueMark.id = q.id; cueMark.edit = false;
     play.next = Math.min(at + 1, show.cues.length - 1);
     save(); renderCues(); renderProgrammer();
     flashBtn($('#recBtn'));
