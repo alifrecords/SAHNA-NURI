@@ -159,7 +159,7 @@
   const sel = new Set();                 // tanlangan chiroqlar
   const prog = { vals: {}, fx: [] };     // programmer: {fid: {param: v}}, fx: [{type, fids}]
   const flash = new Set();               // bosib turilgan FLASH guruhlari
-  const insp = { focus: null, drag: false }; // chiroq sozlamalari paneli: fokusdagi chiroq
+  const insp = { focus: null, drag: false, solo: null }; // chiroq sozlamalari paneli: fokusdagi chiroq
   let blackout = false;
   const play = { cur: -1, next: 0, from: null, to: null, start: 0, dur: 0, paused: false, pausedAt: 0, fx: [] };
 
@@ -445,8 +445,13 @@
   $('#fixtureBtns').addEventListener('click', (e) => {
     const el = e.target.closest('[data-f]'); if (!el) return;
     const id = el.dataset.f;
-    sel.has(id) ? sel.delete(id) : sel.add(id);
-    if (sel.has(id)) { insp.focus = id; inspOpen(true); }
+    // 1-bosish: tanlash · 2-bosish: faqat shu chiroqni sozlash (yakka) · 3-bosish: tanlovdan olish
+    if (!sel.has(id)) { sel.add(id); insp.focus = id; inspOpen(true); }
+    else if (insp.solo !== id) { insp.solo = id; insp.focus = id; inspOpen(true); }
+    else {
+      sel.delete(id); insp.solo = null;
+      if (insp.focus === id) insp.focus = sel.size ? [...sel][sel.size - 1] : null;
+    }
     renderSel();
   });
   // Chiroq yoniq deb hisoblanadigan eng kichik chiqish qiymati (0–255)
@@ -492,21 +497,24 @@
     renderSel(); flashBtn(b);
   });
   function renderSel() {
-    $$('#fixtureBtns [data-f]').forEach((b) => { const on = sel.has(b.dataset.f); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    if (insp.solo && !sel.has(insp.solo)) insp.solo = null;
+    $$('#fixtureBtns [data-f]').forEach((b) => { const on = sel.has(b.dataset.f), ed = insp.solo === b.dataset.f; b.classList.toggle('on', on); b.classList.toggle('edit', ed); b.setAttribute('aria-pressed', on); });
     renderGroups();
     $('#selInfo').textContent = `${show.fixtures.length} ta chiroq · ${sel.size} ta tanlangan`;
     renderProgrammer();
   }
 
   /* ================= PULT: programmer ================= */
-  function setProg(param, value, ids = [...sel]) {
+  // Programmer kimga tegadi: yakka sozlanayotgan chiroq bo'lsa — faqat unga, aks holda barcha tanlanganlarga
+  const progIds = () => (insp.solo && sel.has(insp.solo) ? [insp.solo] : [...sel]);
+  function setProg(param, value, ids = progIds()) {
     if (!ids.length) { toast('Avval chiroq tanlang'); return false; }
     if (!guardAction()) return false;
     for (const id of ids) { prog.vals[id] = prog.vals[id] || {}; prog.vals[id][param] = value; }
     return true;
   }
   function firstSelParams() {
-    const id = [...sel][0]; if (!id) return null;
+    const id = progIds()[0]; if (!id) return null;
     // maqsad holat (fade tugagandagi qiymat) + programmer
     return mergeP({ ...defParams(), ...((play.to && play.to[id]) || {}) }, prog.vals[id]);
   }
@@ -534,7 +542,7 @@
   $('#colorBtns').addEventListener('click', (e) => {
     const el = e.target.closest('[data-c]'); if (!el) return;
     const x = COLORS[+el.dataset.c];
-    const ids = [...sel];
+    const ids = progIds();
     if (!setProg('col', x.n, ids)) return;
     ids.forEach((id) => { const [r, g, b, w] = x.rgbw; Object.assign(prog.vals[id], { r, g, b, w }); });
     renderProgrammer();
@@ -855,7 +863,7 @@
   // O'zgarish kimga tegadi: fokusdagi chiroq + u bilan bir turdagi tanlangan chiroqlar
   function inspTargets(f) {
     if (!f) return [];
-    if (!sel.has(f.id)) return [f];
+    if (!sel.has(f.id) || insp.solo === f.id) return [f];
     return show.fixtures.filter((x) => sel.has(x.id) && x.prof === f.prof);
   }
   const tgtParams = (id) => mergeP({ ...defParams(), ...((play.to && play.to[id]) || {}) }, prog.vals[id]);
@@ -925,7 +933,7 @@
           <span class="insp-addr">DMX ${f.addr}–${end} · ${idx}/${show.fixtures.length}</span>
         </div>
       </div>
-      ${tg.length > 1 ? `<div class="insp-multi">✦ ${tg.length} ta bir xil chiroqqa birdaniga</div>` : sel.has(f.id) ? '' : '<div class="insp-multi warn">Bu chiroq tanlanmagan — oʻzgarish faqat unga</div>'}
+      ${insp.solo === f.id ? '<div class="insp-multi solo">✎ Faqat shu chiroq sozlanmoqda · yana bosilsa — tanlovdan olinadi</div>' : tg.length > 1 ? `<div class="insp-multi">✦ ${tg.length} ta bir xil chiroqqa birdaniga · alohida sozlash uchun chiroqni yana bir marta bosing</div>` : sel.has(f.id) ? '' : '<div class="insp-multi warn">Bu chiroq tanlanmagan — oʻzgarish faqat unga</div>'}
       <div class="insp-quick">
         <button class="btn sm" data-iq="full" type="button">FULL</button>
         <button class="btn sm" data-iq="half" type="button">50%</button>
@@ -997,7 +1005,7 @@
     const list = show.fixtures; if (!list.length) return;
     const i = list.indexOf(inspFix());
     const nf = list[((i < 0 ? 0 : i + d) % list.length + list.length) % list.length];
-    insp.focus = nf.id; sel.clear(); sel.add(nf.id); renderSel();
+    insp.focus = nf.id; insp.solo = null; sel.clear(); sel.add(nf.id); renderSel();
     const b = document.querySelector(`#fixtureBtns [data-f="${nf.id}"]`); if (b) b.scrollIntoView({ block: 'nearest' });
   }
   $('#inspPrev').addEventListener('click', () => inspStep(-1));

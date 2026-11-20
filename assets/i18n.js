@@ -9,6 +9,7 @@ window.SNI18N = (() => {
 
   // ---------- aniq moslik: o'zbekcha → [ruscha, inglizcha] ----------
   const D = {
+    '✎ Faqat shu chiroq sozlanmoqda · yana bosilsa — tanlovdan olinadi': ['✎ Настраивается только этот прибор · ещё нажатие — снять выбор', '✎ Editing this fixture only · click again to deselect'],
     '✎ AVTO-SAQLASH: YOQIQ': ['✎ АВТОСОХРАНЕНИЕ: ВКЛ', '✎ AUTO-SAVE: ON'],
     '✎ AVTO-SAQLASH: OʻCHIQ': ['✎ АВТОСОХРАНЕНИЕ: ВЫКЛ', '✎ AUTO-SAVE: OFF'],
     'Sahna almashtirilganda unga qilingan oʻzgarishlar oʻsha sahnaga avtomatik yoziladi': ['При смене сцены сделанные изменения автоматически записываются в неё', 'When you switch scenes, your changes are saved into the scene you left'],
@@ -349,6 +350,7 @@ window.SNI18N = (() => {
     [/^Roʻyxatdan (\d+) ta chiroq yoʻqolgan: (.+)$/, (m, i) => [`Из списка пропало приборов: ${m[1]} — ${m[2]}`, `${m[1]} fixture(s) missing from the list: ${m[2]}`][i]],
     [/^(\d+) ta chiroq tiklandi: (.+)$/, (m, i) => [`Восстановлено приборов: ${m[1]} — ${m[2]}`, `${m[1]} fixture(s) restored: ${m[2]}`][i]],
     [/^⚠ (\d+) ta kanal qoʻlda ushlab turilibdi$/, (m, i) => [`⚠ Вручную удерживается каналов: ${m[1]}`, `⚠ ${m[1]} channel(s) held manually`][i]],
+    [/^✦ (\d+) ta bir xil chiroqqa birdaniga · alohida sozlash uchun chiroqni yana bir marta bosing$/, (m, i) => [`✦ Сразу на ${m[1]} одинаковых прибора · для отдельной настройки нажмите прибор ещё раз`, `✦ Applies to ${m[1]} identical fixtures · click a fixture again to edit it alone`][i]],
     [/^✦ (\d+) ta bir xil chiroqqa birdaniga$/, (m, i) => [`✦ Сразу на ${m[1]} одинаковых прибора`, `✦ Applies to ${m[1]} identical fixtures`][i]],
     [/^„(.+)“ saqlandi$/, (m, i) => [`«${m[1]}» сохранена`, `“${m[1]}” saved`][i]],
     [/^„(.+)“ — oʻzgarish yoʻq$/, (m, i) => [`«${m[1]}» — без изменений`, `“${m[1]}” — no changes`][i]],
