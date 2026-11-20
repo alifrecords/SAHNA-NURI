@@ -9,6 +9,9 @@ window.SNI18N = (() => {
 
   // ---------- aniq moslik: o'zbekcha → [ruscha, inglizcha] ----------
   const D = {
+    'Sahna tanlanmagan: hozir yoniq turgan chiroqlar saqlanadi.': ['Сцена не выбрана: сохраняются горящие сейчас приборы.', 'No scene selected: the fixtures lit right now are saved.'],
+    'Saqlash uchun holat yoʻq: sahnani tanlang yoki chiroqlarni yoqing': ['Нечего сохранять: выберите сцену или включите приборы', 'Nothing to save: pick a scene or turn fixtures on'],
+    'Sudrab Banklar paneliga tashlang — bank sifatida saqlanadi': ['Перетащите на панель Банки — сохранится как банк', 'Drag onto the Banks panel to save as a bank'],
     'BANKLAR': ['БАНКИ', 'BANKS'],
     'Banklarni ochish / yopish': ['Открыть / закрыть банки', 'Open / close banks'],
     'Banklarni yopish': ['Закрыть банки', 'Close banks'],
@@ -379,6 +382,8 @@ window.SNI18N = (() => {
     [/^„(.+)“ yuklandi — (\d+) ta chiroq$/, (m, i) => [`«${m[1]}» загружен — приборов: ${m[2]}`, `“${m[1]}” loaded — ${m[2]} fixture(s)`][i]],
     [/^„(.+)“ → „(.+)“ga qoʻshildi$/, (m, i) => [`«${m[1]}» → добавлен в «${m[2]}»`, `“${m[1]}” → added to “${m[2]}”`][i]],
     [/^„(.+)“ — yangi sahna sifatida qoʻshildi$/, (m, i) => [`«${m[1]}» — добавлен как новая сцена`, `“${m[1]}” — added as a new scene`][i]],
+    [/^„(.+)“ banki saqlandi — (\d+) ta chiroq, (\d+) tasi yoniq$/, (m, i) => [`Банк «${m[1]}» сохранён — приборов: ${m[2]}, горят: ${m[3]}`, `Bank “${m[1]}” saved — ${m[2]} fixtures, ${m[3]} lit`][i]],
+    [/^Saqlanadi: „(.+)“ sahnasi( \+ (\d+) ta chiroqdagi oʻzgarish)?\. Nom yozilmasa — sahna nomi bilan\. Sahnani raqamidan ushlab shu panelga sudrasangiz ham boʻladi\.$/, (m, i) => [`Сохраняется: сцена «${m[1]}»${m[3] ? ` + изменения ${m[3]} приборов` : ''}. Без названия — именем сцены. Можно также перетащить сцену за номер на эту панель.`, `Saves scene “${m[1]}”${m[3] ? ` + changes on ${m[3]} fixtures` : ''}. Without a name the scene name is used. You can also drag a scene by its number onto this panel.`][i]],
     [/^„(.+)“ banki saqlandi$/, (m, i) => [`Банк «${m[1]}» сохранён`, `Bank “${m[1]}” saved`][i]],
     [/^„(.+)“ banki oʻchirilsinmi\?/, (m, i) => [`Удалить банк «${m[1]}»? Нажмите ещё раз для подтверждения.`, `Delete bank “${m[1]}”? Click again to confirm.`][i]],
     [/^(\d+) ta$/, (m, i) => [`${m[1]} шт.`, `${m[1]}`][i]],

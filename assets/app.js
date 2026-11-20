@@ -646,7 +646,7 @@
         const cls = i === play.cur ? 'cur' : i === play.next ? 'next' : '';
         const st = cueStatus(i);
         return `<div class="cue ${cls}" data-i="${i}" role="button" tabindex="0" aria-label="Cue ${esc(q.num)} ${esc(q.name)}">
-          <b>${esc(q.num)}</b>
+          <b class="cue-grip" draggable="true" data-dragcue="${i}" title="Sudrab Banklar paneliga tashlang — bank sifatida saqlanadi">${esc(q.num)}</b>
           <input data-name="${i}" value="${esc(q.name)}" aria-label="Cue nomi">
           <input data-fade="${i}" type="number" min="0" max="600" step="0.5" value="${q.fade}" aria-label="Fade soniya">
           <input class="auto" data-auto="${i}" inputmode="numeric" placeholder="qoʻlda" value="${q.auto ? fmtTime(q.auto) : ''}" aria-label="Avtomatik oʻtish vaqti (daqiqa:soniya)">
@@ -702,6 +702,7 @@
     const on = show.autoSave !== false, n = Object.keys(prog.vals).length, cur = show.cues[play.cur];
     const b = $('#autoSaveBtn'); if (!b) return;
     const ub = $('#undoBank'); if (ub) ub.hidden = !(bank.undo && Date.now() - bank.undoT < 15000);
+    renderBankHint();
     b.textContent = on ? '✎ AVTO-SAQLASH: YOQIQ' : '✎ AVTO-SAQLASH: OʻCHIQ';
     b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     const st = $('#editSt');
@@ -1069,19 +1070,61 @@
     if (row) bankToCue(b, +row.dataset.i); else bankNewCue(b);
   });
   // ---- Yangi bank saqlash ----
-  $('#bankSave').addEventListener('click', () => {
-    if (!guardAction()) return;
-    const n = $('#bankName').value.trim();
-    if (!n) { $('#bankName').focus(); toast('Bank nomini yozing'); return; }
-    let look = {};
-    if (Object.keys(prog.vals).length) look = JSON.parse(JSON.stringify(prog.vals));
-    else { const live = liveLook(); for (const f of show.fixtures) { const p = live[f.id]; if (p && (p.dim > 0 || p.raw)) look[f.id] = JSON.parse(JSON.stringify(p)); } }
-    if (!Object.keys(look).length) { toast('Saqlash uchun holat yoʻq: chiroqlarni yoqing yoki sahnani tanlang'); return; }
+  // Bank uchun manba: tanlangan (joriy) sahnaning to'liq holati + programmerdagi o'zgarishlar.
+  // Fade o'rtasidagi oraliq qiymat emas — sahnaning yakuniy holati olinadi.
+  function sceneLook(i) {
+    const q = show.cues[i], look = {};
+    const ids = new Set([...(q ? Object.keys(q.look || {}) : []), ...Object.keys(prog.vals)]);
+    for (const id of ids) {
+      if (!show.fixtures.some((f) => f.id === id)) continue;
+      const base = q ? mergeP(defParams(), (q.look || {})[id] || {}) : defParams();
+      look[id] = JSON.parse(JSON.stringify(mergeP(base, prog.vals[id])));
+    }
+    return look;
+  }
+  function saveBankFrom(i, name) {
+    if (!guardAction()) return false;
+    const q = show.cues[i];
+    const n = (name || '').trim() || (q ? q.name : '');
+    if (!n) { $('#bankName').focus(); toast('Bank nomini yozing'); return false; }
+    let look = sceneLook(i);
+    if (!Object.keys(look).length) { // sahna yo'q bo'lsa — hozir yoniq turgan chiroqlar
+      const live = liveLook();
+      for (const f of show.fixtures) { const p = live[f.id]; if (p && p.dim > 0) look[f.id] = JSON.parse(JSON.stringify(p)); }
+    }
+    if (!Object.keys(look).length) { toast('Saqlash uchun holat yoʻq: sahnani tanlang yoki chiroqlarni yoqing'); return false; }
     userBanks().unshift({ id: uid(), n: n.slice(0, 40), f: 'Mening banklarim', look });
-    $('#bankName').value = '';
     bank.open['Mening banklarim'] = true;
     save(); renderBanks();
-    toast(`„${n}“ banki saqlandi`);
+    const lit = Object.values(look).filter((p) => p.dim > 0).length;
+    toast(`„${n}“ banki saqlandi — ${Object.keys(look).length} ta chiroq, ${lit} tasi yoniq`);
+    return true;
+  }
+  function renderBankHint() {
+    const el = $('#bankSaveHint'); if (!el) return;
+    const q = show.cues[play.cur], n = Object.keys(prog.vals).length;
+    el.textContent = q ? `Saqlanadi: „${q.name}“ sahnasi${n ? ` + ${n} ta chiroqdagi oʻzgarish` : ''}. Nom yozilmasa — sahna nomi bilan. Sahnani raqamidan ushlab shu panelga sudrasangiz ham boʻladi.`
+      : 'Sahna tanlanmagan: hozir yoniq turgan chiroqlar saqlanadi.';
+    if (!$('#bankName').value) $('#bankName').placeholder = q ? q.name : 'Yangi bank nomi';
+  }
+  $('#bankSave').addEventListener('click', () => { if (saveBankFrom(play.cur, $('#bankName').value)) $('#bankName').value = ''; });
+  // Sahnani raqamidan ushlab Banklar paneliga sudrash — bank sifatida saqlanadi
+  $('#cueList').addEventListener('dragstart', (e) => {
+    const h = e.target.closest('[data-dragcue]'); if (!h) return;
+    e.dataTransfer.setData('text/sn-cue', h.dataset.dragcue); e.dataTransfer.effectAllowed = 'copy';
+    document.body.classList.add('cue-dragging');
+  });
+  $('#cueList').addEventListener('dragend', () => { document.body.classList.remove('cue-dragging'); $('#bankPanel').classList.remove('drop-bank'); });
+  const isCueDrag = (e) => [...(e.dataTransfer?.types || [])].includes('text/sn-cue');
+  $('#bankPanel').addEventListener('dragover', (e) => { if (!isCueDrag(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; $('#bankPanel').classList.add('drop-bank'); if (!$('#bankPanel').classList.contains('open')) bankOpen(true); });
+  $('#bankPanel').addEventListener('dragleave', (e) => { if (!$('#bankPanel').contains(e.relatedTarget)) $('#bankPanel').classList.remove('drop-bank'); });
+  $('#bankPanel').addEventListener('drop', (e) => {
+    if (!isCueDrag(e)) return;
+    e.preventDefault(); $('#bankPanel').classList.remove('drop-bank'); document.body.classList.remove('cue-dragging');
+    const i = +e.dataTransfer.getData('text/sn-cue'), q = show.cues[i]; if (!q) return;
+    const keepProg = i === play.cur; // boshqa sahna sudralsa — programmer qo'shilmaydi
+    if (keepProg) saveBankFrom(i, q.name);
+    else { const pv = prog.vals; prog.vals = {}; saveBankFrom(i, q.name); prog.vals = pv; }
   });
   $('#bankName').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#bankSave').click(); } e.stopPropagation(); });
   $('#bankQ').addEventListener('keydown', (e) => e.stopPropagation());

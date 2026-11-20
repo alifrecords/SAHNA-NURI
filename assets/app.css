@@ -587,3 +587,9 @@ body.bank-dragging #cueList { outline: 2px dashed #6366f1; outline-offset: 4px; 
 .bank-save .btn { padding: 0 12px; font-size: 13px; white-space: nowrap; min-height: 38px; }
 /* Joriy (yashil) sahnada nom yozilayotganda matn ko'rinsin: oq fon ustida qora yozuv */
 .cue input:focus, .cue.cur input:focus { color: var(--ink); -webkit-text-fill-color: var(--ink); caret-color: var(--ink); background: #fff; }
+
+.cue-grip { cursor: grab; border-radius: 6px; padding: 2px 4px; margin-left: -4px; }
+.cue-grip:hover { background: rgba(99,102,241,.18); }
+body.cue-dragging #bankPanel { outline: 2px dashed #6366f1; outline-offset: 3px; }
+#bankPanel.drop-bank { background: #eef2ff; }
+#bankPanel.drop-bank .bank-list::before { content: "＋ Bank sifatida saqlash"; display: block; text-align: center; padding: 12px; font-weight: 800; color: #4338ca; border: 2px dashed #6366f1; border-radius: 10px; }
