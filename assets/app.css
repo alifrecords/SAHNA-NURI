@@ -628,3 +628,28 @@ body.cue-dragging #bankPanel { outline: 2px dashed #6366f1; outline-offset: 3px;
 .bk-lim { font-style: normal; font-size: 9.5px; font-weight: 800; background: #fef3c7; color: #92400e; padding: 1px 5px; border-radius: 5px; margin-left: 6px; letter-spacing: 0; }
 .fs-lay { margin-top: 8px; }
 .btn.fsgo { background: #15803d; border-color: #15803d; color: #fff; font-size: 11px; }
+
+/* Gobo */
+.gobo-w { border: 1px solid var(--line); border-radius: 12px; margin: 8px 0; background: #fff; }
+.gobo-w > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; font-size: 11px; font-weight: 900; letter-spacing: .06em; }
+.gobo-w > summary::-webkit-details-marker { display: none; }
+.gobo-w > summary::before { content: "▸"; transition: transform .15s; }
+.gobo-w[open] > summary::before { transform: rotate(90deg); }
+.gobo-w > summary span { margin-left: auto; color: #15803d; letter-spacing: 0; font-weight: 800; }
+.gobo-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 5px; padding: 0 8px 8px; }
+.gobo-g.pg { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); padding: 0; margin-bottom: 4px; }
+.gq { border: 1.5px solid #0a0a0a; border-radius: 10px; background: #fff; color: #0a0a0a; padding: 4px 1px 3px; display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 9px; font-weight: 700; line-height: 1.15; text-align: center; cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none; min-width: 0; }
+.gq span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gq small { font-size: 8px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.gq:hover { box-shadow: 0 0 0 2px rgba(10,10,10,.12); }
+.gq.on { background: rgba(34,197,94,.14); border-color: #15803d; box-shadow: 0 0 0 2px rgba(34,197,94,.35); }
+.gq.q { border-style: dashed; }
+.gobo-svg { display: block; }
+.gpick-ov { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 300; display: grid; place-items: center; padding: 16px; }
+.gpick { background: #fff; border-radius: 18px; padding: 16px; width: min(520px, 100%); max-height: 90vh; overflow: auto; box-shadow: 0 24px 60px rgba(0,0,0,.25); }
+.gpick h3 { margin: 0 0 4px; font-size: 15px; }
+.gpick-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 6px; margin: 10px 0; }
+.gpk { border: 1.5px solid #0a0a0a; border-radius: 10px; background: #fff; padding: 4px; display: grid; place-items: center; cursor: pointer; }
+.gpk.on { background: rgba(34,197,94,.14); border-color: #15803d; box-shadow: 0 0 0 2px rgba(34,197,94,.35); }
+.gpick-b { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 6px; margin-top: 10px; }
+.btn.go2 { background: #15803d; border-color: #15803d; color: #fff; }

@@ -601,6 +601,14 @@
     $('#colorBtns').innerHTML = COLORS.map((x, i) => `<button class="btn ${col === x.n ? 'on' : ''}" data-c="${i}" type="button"><span class="sw" style="background:${x.hex}"></span>${esc(x.n)}</button>`).join('');
     const pos = p && sel.size ? POSITIONS.find((x) => [...sel].every((id) => prog.vals[id] && prog.vals[id].pan === x.pan && prog.vals[id].tilt === x.tilt)) : null;
     $('#posBtns').innerHTML = POSITIONS.map((x, i) => `<button class="btn ${pos === x ? 'on' : ''}" data-p="${i}" type="button">${esc(x.n)}</button>`).join('');
+    // Gobo: tanlanganlar ichidagi birinchi gobo'li chiroq turi bo'yicha (Gobo 1)
+    const gf = progIds().map((id) => show.fixtures.find((x) => x.id === id)).find((f) => f && goboWheels(f).length);
+    $('#goboProg').hidden = !gf;
+    if (gf) {
+      const w = goboWheels(gf)[0], gp = mergeP({ ...defParams(), ...((play.to && play.to[gf.id]) || {}) }, prog.vals[gf.id]), cur = goboAt(w, chVal(gf, w.ch, w.k, gp));
+      $('#goboProgBtns').innerHTML = w.items.map((it) => goboTile(it, it === cur, 30, false, `data-pg="${it.i}"`)).join('');
+      $('#goboProgBtns').dataset.prof = gf.prof;
+    }
     const activeFx = new Set([...prog.fx, ...play.fx].map((x) => x.type));
     $('#fxBtns').innerHTML = EFFECTS.map((x) => `<button class="btn ${activeFx.has(x.id) ? 'on' : ''}" data-x="${x.id}" type="button" aria-pressed="${activeFx.has(x.id)}">${esc(x.n)}</button>`).join('');
     const n = Object.keys(prog.vals).length;
@@ -644,6 +652,13 @@
     renderProgrammer(); flashBtn(b);
     toast(`Boʻlindi: ${nl} ta chapga, ${nr} ta oʻngga`);
   });
+  $('#goboProgBtns').addEventListener('click', (e) => {
+    const el = e.target.closest('[data-pg]'); if (!el || !guardAction()) return;
+    const prKey = $('#goboProgBtns').dataset.prof, f = show.fixtures.find((x) => x.prof === prKey), w = f && goboWheels(f)[0]; if (!w) return;
+    const n = setGobo(progIds(), prKey, w, w.items[+el.dataset.pg]);
+    renderProgrammer(); if (n) toast(`Gobo „${w.items[+el.dataset.pg].n}“ — ${n} ta chiroq`);
+  });
+  $('#goboProgBtns').addEventListener('pointerdown', (e) => goboHold(e, (b) => { const prKey = $('#goboProgBtns').dataset.prof, f = show.fixtures.find((x) => x.prof === prKey), w = f && goboWheels(f)[0]; if (w) goboPick(prKey, w.ch.n, +b.dataset.pg); }));
   $('#posBtns').addEventListener('click', (e) => {
     const el = e.target.closest('[data-p]'); if (!el) return;
     const x = POSITIONS[+el.dataset.p];
@@ -1261,6 +1276,80 @@
     if (hasRole(pr, 'cwheel')) return (COLORS.find((c) => c.n === p.col) || COLORS[7]).hex;
     return '#FFF4D6';
   }
+  /* ================= GOBO =================
+     FreeStyler .fxt'dagi gobo g'ildiraklari (DMX oraliqlari). FreeStyler'da haqiqiy rasm yo'q (raqamli
+     kulrang kvadratlar), shuning uchun naqshlar vektor (assets/gobos.js). Rasm/nom almashtirilsa —
+     show.goboArt[profil][kanal][tartib] = {k, n} — shu profildagi barcha chiroqlarda o'zgaradi. */
+  const GR = (list, extra) => list.map((x, i) => [i * 10, i * 10 + 9, x[0], x[1]]).concat(extra);
+  const GOBO_DEF = {
+    fs_beam18: {
+      Gobo1: GR([['open', 'Ochiq'], ['dot', 'Nuqta'], ['ring', 'Halqa'], ['rings2', '2 halqa'], ['dots8', '8 nuqta'], ['dots12', 'Nuqtalar'], ['star5', 'Yulduz'], ['star8', 'Yulduz 8'], ['tri', 'Uchburchak'], ['tri3', '3 uchburchak'], ['square', 'Kvadrat'], ['cross', 'Xoch'], ['bars3', '3 chiziq'], ['rays12', 'Nurlar'], ['rays24', 'Nurlar 24'], ['flower', 'Gul'], ['spiral', 'Spiral'], ['halfmoon', 'Oy'], ['star6', 'Yulduzcha']],
+        [[190, 223, 'shake', 'Silkinish?'], [224, 255, 'scroll', 'Aylanish?']]),
+      Gobo2: GR([['open', 'Ochiq'], ['flower8', 'Gul 8'], ['hex', 'Olti burchak'], ['grid', 'Panjara'], ['windmill', 'Parrak'], ['leaves', 'Barglar'], ['waves', 'Toʻlqin'], ['triring', 'Uchb. halqa'], ['squares', '4 kvadrat'], ['checker', 'Shaxmat'], ['trirays', '3 nur'], ['eye', 'Koʻz'], ['bubbles', 'Pufakcha'], ['ringdots', 'Halqa+nuqta'], ['dotsfield', 'Nuqta maydon']],
+        [[150, 200, 'shake', 'Silkinish?'], [201, 255, 'scroll', 'Aylanish?']]),
+    },
+  };
+  const gArt = () => (show.goboArt = show.goboArt || {});
+  function goboWheels(f) {
+    const d = f && GOBO_DEF[f.prof]; if (!d) return [];
+    const pr = prof(f), art = gArt()[f.prof] || {};
+    return pr.ch.map((ch, k) => {
+      const def = d[ch.n.replace(/\s+/g, '')]; if (!def) return null;
+      const o = art[ch.n] || {};
+      return { k, ch, items: def.map(([lo, hi, key, n], i) => ({ i, lo, hi, key: (o[i] && o[i].k) || key, n: (o[i] && o[i].n) || n, def: key, defN: n })) };
+    }).filter(Boolean);
+  }
+  const goboVal = (it) => (it.lo === 0 ? 0 : it.hi - it.lo >= 15 ? Math.round((it.lo + it.hi) / 2) : it.lo + 5);
+  const goboAt = (w, v) => w.items.find((it) => v >= it.lo && v <= it.hi) || w.items[0];
+  const goboTile = (it, on, sz, rng, data) => `<button class="gq ${on ? 'on' : ''} ${/\?$/.test(it.n) ? 'q' : ''}" ${data} type="button" title="${esc(it.n)} · DMX ${it.lo}–${it.hi} · bosib turing — rasmni almashtirish">${window.goboSvg ? goboSvg(it.key, sz) : ''}<span>${esc(it.n)}</span>${rng ? `<small>${it.lo}–${it.hi}</small>` : ''}</button>`;
+  // ids — shu profildagi chiroqlar; Gobo1 'gobo' parametri, qolganlari xom kanal
+  function setGobo(ids, prKey, w, it) {
+    const v = goboVal(it), list = ids.filter((id) => { const f = show.fixtures.find((x) => x.id === id); return f && f.prof === prKey; });
+    if (!list.length) return 0;
+    if (PARAM_ROLE[w.ch.r]) setParam(list, PARAM_ROLE[w.ch.r], v); else setRaw(list, w.k, v);
+    return list.length;
+  }
+  // Bosib turish — rasm almashtirish oynasi (click bilan aralashmasligi uchun)
+  let gpHold = null, gpFired = false;
+  function goboHold(e, fn) {
+    const b = e.target.closest('.gq'); if (!b) return;
+    gpFired = false; clearTimeout(gpHold);
+    gpHold = setTimeout(() => { gpFired = true; fn(b); }, 550);
+  }
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => document.addEventListener(ev, () => clearTimeout(gpHold), true));
+  document.addEventListener('click', (e) => { if (gpFired && e.target.closest('.gq')) { e.stopPropagation(); e.preventDefault(); gpFired = false; } }, true);
+  function goboPick(prKey, chName, idx) {
+    const f = show.fixtures.find((x) => x.prof === prKey); if (!f) return;
+    const w = goboWheels(f).find((x) => x.ch.n === chName); if (!w) return;
+    const it = w.items[idx]; let key = it.key;
+    const ov = document.createElement('div'); ov.className = 'gpick-ov';
+    const keys = Object.keys(window.GOBO_SHAPES || {});
+    ov.innerHTML = `<div class="gpick" role="dialog" aria-label="Gobo rasmini tanlash">
+      <h3>${esc(chName)} · ${String(idx).padStart(2, '0')} (DMX ${it.lo}–${it.hi}) — rasmini tanlang</h3>
+      <p class="muted small">Sahnadagi naqshga oʻxshashini bosing. ${esc(prof(f).name)} turidagi barcha chiroqlarda oʻzgaradi.</p>
+      <div class="gpick-g">${keys.map((k) => `<button class="gpk ${k === key ? 'on' : ''}" data-gk="${k}" type="button" title="${k}">${goboSvg(k, 44)}</button>`).join('')}</div>
+      <label class="f">Nomi<input id="gpName" type="text" maxlength="24" value="${esc(it.n)}"></label>
+      <div class="gpick-b"><button class="btn sm" data-ga="reset" type="button">ASLIGA QAYTARISH</button><button class="btn sm" data-ga="x" type="button">BEKOR</button><button class="btn sm go2" data-ga="ok" type="button">SAQLASH</button></div></div>`;
+    document.body.appendChild(ov);
+    const close = () => ov.remove();
+    ov.addEventListener('click', (e) => {
+      if (e.target === ov) return close();
+      const k = e.target.closest('[data-gk]');
+      if (k) { key = k.dataset.gk; ov.querySelectorAll('.gpk').forEach((b) => b.classList.toggle('on', b === k)); return; }
+      const a = e.target.closest('[data-ga]'); if (!a) return;
+      const A = gArt(), P = (A[prKey] = A[prKey] || {}), C = (P[chName] = P[chName] || {});
+      if (a.dataset.ga === 'ok') { const n = ov.querySelector('#gpName').value.trim() || it.defN; C[idx] = { k: key, n }; if (key === it.def && n === it.defN) delete C[idx]; save(); toast('Gobo rasmi saqlandi'); }
+      else if (a.dataset.ga === 'reset') { delete C[idx]; save(); toast('Asl rasmga qaytarildi'); }
+      close(); renderProgrammer(); renderInsp();
+    });
+    setTimeout(() => ov.querySelector('#gpName').focus(), 30);
+  }
+  // Ro'paradan ko'rinish uchun: chiroqqa hozir ketayotgan gobo (ochiq bo'lmagani)
+  function goboOut(f) {
+    for (const w of goboWheels(f)) { const it = goboAt(w, buf[f.addr - 1 + w.k] || 0); if (it.def !== 'open') return it.key; }
+    return null;
+  }
+
   function setParam(ids, key, v) {
     for (const id of ids) { prog.vals[id] = prog.vals[id] || {}; prog.vals[id][key] = v; }
   }
@@ -1311,6 +1400,7 @@
         </div>
       </div>
       ${insp.solo === f.id ? '<div class="insp-multi solo">✎ Faqat shu chiroq sozlanmoqda · yana bosilsa — tanlovdan olinadi</div>' : tg.length > 1 ? `<div class="insp-multi">✦ ${tg.length} ta bir xil chiroqqa birdaniga · alohida sozlash uchun chiroqni yana bir marta bosing</div>` : sel.has(f.id) ? '' : '<div class="insp-multi warn">Bu chiroq tanlanmagan — oʻzgarish faqat unga</div>'}
+      ${goboWheels(f).map((w, wi) => { const cur = goboAt(w, chVal(f, w.ch, w.k, p)); const open = insp.gOpen ? insp.gOpen[w.ch.n] ?? wi === 0 : wi === 0; return `<details class="gobo-w" data-gw="${esc(w.ch.n)}" ${open ? 'open' : ''}><summary>${esc(w.ch.n.toUpperCase().replace(/(\d)$/, ' $1'))} · ${w.k + 1}-KANAL <span>${esc(cur.n)} · ${chVal(f, w.ch, w.k, p)}</span></summary><div class="gobo-g">${w.items.map((it) => goboTile(it, it === cur, 38, true, `data-gi="${w.k}:${it.i}"`)).join('')}</div></details>`; }).join('')}
       <div class="insp-quick">
         <button class="btn sm" data-iq="full" type="button">FULL</button>
         <button class="btn sm" data-iq="half" type="button">50%</button>
@@ -1393,6 +1483,14 @@
     const k = e.target.dataset.ik ?? e.target.dataset.ikn; if (k == null) return;
     if (!inspSetCh(+k, e.target.value)) { renderInsp(); return; }
     const other = document.querySelector(e.target.dataset.ik != null ? `[data-ikn="${k}"]` : `[data-ik="${k}"]`); if (other) other.value = e.target.value;
+  });
+  $('#inspContent').addEventListener('toggle', (e) => { const d = e.target.closest('[data-gw]'); if (d) (insp.gOpen = insp.gOpen || {})[d.dataset.gw] = d.open; }, true);
+  $('#inspContent').addEventListener('pointerdown', (e) => goboHold(e, (b) => { const f = inspFix(); const [k, i] = (b.dataset.gi || '').split(':').map(Number); const w = f && goboWheels(f).find((x) => x.k === k); if (w) goboPick(f.prof, w.ch.n, i); }));
+  $('#inspContent').addEventListener('click', (e) => {
+    const g = e.target.closest('[data-gi]'); if (!g) return;
+    const f = inspFix(); if (!f || !guardAction()) return;
+    const [k, i] = g.dataset.gi.split(':').map(Number), w = goboWheels(f).find((x) => x.k === k); if (!w) return;
+    setGobo(inspTargets(f).map((x) => x.id), f.prof, w, w.items[i]); renderProgrammer(); renderInsp();
   });
   $('#inspContent').addEventListener('change', (e) => { if (e.target.dataset.ik != null || e.target.dataset.ikn != null) { renderProgrammer(); renderInsp(); } });
   $('#inspContent').addEventListener('click', (e) => {
@@ -2118,7 +2216,10 @@
         const dx = th[0] - a[0], dy = th[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
         g += `<polygon points="${a[0] + nx * 3},${a[1] + ny * 3} ${a[0] - nx * 3},${a[1] - ny * 3} ${th[0] - nx * rw},${th[1] - ny * rw} ${th[0] + nx * rw},${th[1] + ny * rw}" fill="url(#fcone)"/>`;
       }
-      if (mv.length) g += `<ellipse cx="${t[0]}" cy="${t[1]}" rx="${k * 1.1}" ry="${k * 0.35}" fill="url(#fpool)" filter="url(#fblur)"/>`;
+      // gobo bo'lsa — polga uning naqshi tushadi (dog' xiralashadi, naqsh ko'rinadi)
+      const gk = mv0 && window.GOBO_SHAPES && goboOut(mv0);
+      if (mv.length) g += `<ellipse cx="${t[0]}" cy="${t[1]}" rx="${k * 1.1}" ry="${k * 0.35}" fill="url(#fpool)" filter="url(#fblur)" opacity="${gk ? 0.3 : 1}"/>`;
+      if (gk && GOBO_SHAPES[gk]) { const sc = (k * 2.1) / 80; g += `<g transform="translate(${t[0]} ${t[1]}) scale(${sc} ${sc * 0.32})" fill="#fff8e1" stroke="#fff8e1" opacity=".95" style="filter:drop-shadow(0 0 ${Math.max(2, k / 12)}px ${bc})">${GOBO_SHAPES[gk]}</g>`; }
       if (tz > 0) g += `<line x1="${t[0]}" y1="${t[1]}" x2="${th[0]}" y2="${th[1]}" stroke="#fff" stroke-width="${sw}" stroke-dasharray="${sw * 3} ${sw * 3}" opacity=".8"/><circle cx="${th[0]}" cy="${th[1]}" r="${W / 200}" fill="#fff"/>`;
       const R0 = W / 60, R1 = W / 38;
       g += `<g stroke="#fff" stroke-width="${sw * 1.6}" fill="none"><circle cx="${t[0]}" cy="${t[1]}" r="${R0}"/><path d="M${t[0] - R1} ${t[1]}H${t[0] - R0 * 0.55}M${t[0] + R0 * 0.55} ${t[1]}H${t[0] + R1}M${t[0]} ${t[1] - R1}V${t[1] - R0 * 0.55}M${t[0]} ${t[1] + R0 * 0.55}V${t[1] + R1}"/></g><circle cx="${t[0]}" cy="${t[1]}" r="${sw * 1.5}" fill="#fff"/>`;
