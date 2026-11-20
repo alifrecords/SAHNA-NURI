@@ -585,3 +585,5 @@ body.bank-dragging #cueList { outline: 2px dashed #6366f1; outline-offset: 4px; 
 @media (max-width: 1100px) { .bank-panel, .bank-panel.open { flex: 1 1 100%; } .bank-panel:not(.open) .bank-tab { min-height: 48px; flex-direction: row; justify-content: center; padding: 0 16px; } .bank-panel:not(.open) .insp-vt { writing-mode: horizontal-tb; transform: none; } }
 .bank-save { grid-template-columns: minmax(0, 1fr) auto; }
 .bank-save .btn { padding: 0 12px; font-size: 13px; white-space: nowrap; min-height: 38px; }
+/* Joriy (yashil) sahnada nom yozilayotganda matn ko'rinsin: oq fon ustida qora yozuv */
+.cue input:focus, .cue.cur input:focus { color: var(--ink); -webkit-text-fill-color: var(--ink); caret-color: var(--ink); background: #fff; }
