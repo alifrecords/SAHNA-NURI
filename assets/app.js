@@ -952,8 +952,18 @@
   }
   function renderInsp() {
     const box = $('#inspContent'); if (!box) return;
+    // Hech qaysi chiroq tanlanmagan bo'lsa — panel o'zi yopiladi (chiroq bosilganda yana ochiladi)
+    if (!sel.size) {
+      insp.hadSel = false;
+      insp.focus = null; insp.solo = null;
+      $('#inspDot').classList.remove('on');
+      if ($('#insp').classList.contains('open')) inspOpen(false);
+      return;
+    }
+    // Tanlov bo'shdan paydo bo'lsa (masalan, guruh tugmasi bilan) — panel o'zi ochiladi
+    if (!insp.hadSel) { insp.hadSel = true; if (!$('#insp').classList.contains('open')) { inspOpen(true); return; } }
     let f = inspFix();
-    if (!f && sel.size) { insp.focus = [...sel][0]; f = inspFix(); }
+    if (!f || !sel.has(f.id)) { insp.focus = [...sel][sel.size - 1]; f = inspFix(); }
     $('#inspDot').classList.toggle('on', !!f);
     if (!$('#insp').classList.contains('open')) return;
     if (!f) {
