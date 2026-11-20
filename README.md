@@ -80,6 +80,18 @@ Kompyuterga bir marta oʻrnatiladigan kichik dastur — Zadig va drayver almasht
 
 **iPad / iPhone:** Safari USB'ga ruxsat bermaydi — ularda simulyatsiya va mashq rejimi ishlaydi.
 
+
+## 6. 🔊 Cue-Link — Sahna Ovozi bilan bogʻlash
+
+Sahna Ovozi’da cue GO boʻlganda, unga biriktirilgan chiroq cue’si shu yerda oʻzi yonadi (Sahna Ovozi → cue ✎ → **💡 Sahna Nuri cue**: raqam yoki nom, `BO` — blackout).
+
+| Yoʻl | Qachon | Qanday |
+| --- | --- | --- |
+| Lokal | Sahna Ovozi (.exe) va Sahna Nuri bitta kompyuterda | Nuri `http://127.0.0.1:47810/events` ga oʻzi ulanadi. Internet kerak emas |
+| Online | Boshqa qurilma yoki Sahna Ovozi sayti | Ulanish → **2 · Online xona kodi** → kodni Sahna Ovozi → **💡 NURI** oynasiga yozing. Server: `functions/api/link.js` (D1 jadvallari `sn_link`, `sn_link_seen`) |
+
+Yuqoridagi **🔊 OVOZ** belgisi yashil boʻlsa — ulangan. Ikkala yoʻl birga ishlasa ham signal bir marta bajariladi.
+
 ## 6. Sahna boʻlimi (nur yoʻnaltirish)
 
 | Qadam | Nima qilinadi |

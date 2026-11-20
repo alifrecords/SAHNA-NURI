@@ -653,3 +653,21 @@ body.cue-dragging #bankPanel { outline: 2px dashed #6366f1; outline-offset: 3px;
 .gpk.on { background: rgba(34,197,94,.14); border-color: #15803d; box-shadow: 0 0 0 2px rgba(34,197,94,.35); }
 .gpick-b { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 6px; margin-top: 10px; }
 .btn.go2 { background: #15803d; border-color: #15803d; color: #fff; }
+
+/* 🔊 Cue-Link: Sahna Ovozi bilan bog'lanish */
+.pill.link .dot { background: #a1a1aa; }
+.pill.link.ok { background: var(--on-soft); color: #14532d; }
+.pill.link.ok .dot { background: var(--on); }
+.pill.link.flash { background: var(--on); color: #fff; }
+.pill.link.flash .dot { background: #fff; }
+.link-card { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.link-card .chk { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; cursor: pointer; }
+.link-card .chk input { width: 18px; height: 18px; accent-color: var(--on); }
+.link-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.link-code { font: 700 30px/1.2 ui-monospace, Consolas, monospace; letter-spacing: .18em; padding: 10px 12px; border-radius: 10px; background: var(--ink); color: #fff; text-align: center; user-select: all; }
+.link-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.link-st { font-size: 13px; font-weight: 600; color: var(--muted); }
+.link-st.ok { color: var(--on); }
+.ccard.on-link { border-color: var(--on); box-shadow: 0 0 0 2px var(--on-soft) inset; }
+.link-last { font-size: 13px; padding: 10px 12px; border-radius: 10px; background: var(--soft); }
+.link-last.hit { background: var(--on-soft); color: #14532d; font-weight: 600; }

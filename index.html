@@ -37,6 +37,7 @@ if (location.protocol === 'file:') {
     <div class="top-mid">
       <label class="pill title-pill"><span class="sr">Spektakl nomi</span><span>Spektakl:</span><input id="showTitle" value="Yangi spektakl"></label>
       <button class="pill conn" id="connPill" type="button"><i class="dot"></i><span id="connText">DMX ulanmagan</span></button>
+      <button class="pill link" id="linkPill" type="button" title="Sahna Ovozi bilan bogʻlanish (Cue-Link)"><i class="dot"></i><span id="linkText">🔊 OVOZ</span></button>
       <button class="pill lic" id="licBadge" type="button">Tekshirilmoqda…</button>
       <button class="pill inst" id="installBtn" type="button" title="Kompyuter yoki telefonga ilova sifatida oʻrnatish">⬇ ILOVA</button>
       <button class="pill msgb" id="msgBadge" type="button" title="Admin bilan yozishma">✉ ADMIN <b id="msgCount" hidden></b></button>
@@ -361,6 +362,26 @@ if (location.protocol === 'file:') {
           <button class="btn" id="cTest" type="button">SINOV SIGNALI (2 s)</button>
           <button class="btn" id="cOff" type="button">UZISH</button>
           <button class="btn" data-tab-go="monitor" type="button">MONITORNI OCHISH</button>
+        </div>
+        <div class="link-card" id="linkCard">
+          <div class="ph"><h2>🔊 SAHNA OVOZI BILAN BOGʻLASH · CUE-LINK</h2></div>
+          <p class="muted small">Sahna Ovozi’da cue GO boʻlganda, shu cue’ga biriktirilgan chiroq sahnasi bu yerda oʻzi yonadi.</p>
+          <label class="chk"><input type="checkbox" id="linkOn" checked> Sahna Ovozi’dan signal qabul qilish</label>
+          <div class="link-grid">
+            <div class="ccard" id="linkLocalCard">
+              <b>1 · Shu kompyuter (lokal)</b>
+              <span>Sahna Ovozi dasturi (.exe) shu kompyuterda ochiq boʻlsa — oʻzi ulanadi. Internet kerak emas, kechikish ~0.</span>
+              <div class="link-st" id="linkLocalSt">○ Kutilmoqda…</div>
+            </div>
+            <div class="ccard" id="linkOnlineCard">
+              <b>2 · Online xona kodi</b>
+              <span>Boshqa kompyuter, planshet yoki Sahna Ovozi sayti uchun. Shu kodni Sahna Ovozi → 💡 NURI oynasiga yozing.</span>
+              <div class="link-code" id="linkCode">——————</div>
+              <div class="link-btns"><button class="btn" id="linkCopy" type="button">NUSXALASH</button><button class="btn" id="linkNew" type="button">YANGI KOD</button></div>
+              <div class="link-st" id="linkOnlineSt">○ Kutilmoqda…</div>
+            </div>
+          </div>
+          <div class="link-last" id="linkLast">Hali signal kelmadi</div>
         </div>
       </section>
       <section class="panel grow1 help">

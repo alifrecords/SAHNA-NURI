@@ -2710,9 +2710,102 @@
   setInterval(() => chatLoad(pwOpen), 45000);
   setTimeout(() => chatLoad(false), 2500);
 
+  /* ================= 🔊 CUE-LINK: Sahna Ovozi'dan signal ================= */
+  // Sahna Ovozi'dagi cue GO bo'lganda shu yerdagi chiroq cue'si yonadi.
+  //  • Lokal: Sahna Ovozi (.exe) shu kompyuterda — http://127.0.0.1:47810/events (internetsiz, kechikish ~0)
+  //  • Online: 6 belgili xona kodi — /api/link (boshqa qurilma yoki Sahna Ovozi sayti)
+  // Signal: {t:'cue', ref:'5' (cue raqami yoki nomi, BO = blackout), src:'Q3 · Portlash', id}
+  const LINK = { on: true, room: '', local: false, online: false, ovoziAge: null, last: null, seen: [], es: null, esT: 0, gen: 0 };
+  try { const o = JSON.parse(localStorage.getItem('sn_link') || '{}'); LINK.on = o.on !== false; LINK.room = o.room || ''; } catch (_) {}
+  function linkSave() { try { localStorage.setItem('sn_link', JSON.stringify({ on: LINK.on, room: LINK.room })); } catch (_) {} }
+  function linkNewRoom() {
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', r = crypto.getRandomValues(new Uint8Array(6));
+    LINK.room = Array.from(r, (x) => A[x % A.length]).join(''); linkSave();
+  }
+  if (!/^[A-Z0-9]{6}$/.test(LINK.room)) linkNewRoom();
+  function linkFind(ref) {
+    const r = String(ref || '').trim(); if (!r) return -1;
+    let i = show.cues.findIndex((q) => String(q.num) === r);
+    if (i < 0) { const l = r.toLowerCase(); i = show.cues.findIndex((q) => String(q.name || '').trim().toLowerCase() === l); }
+    return i;
+  }
+  let linkFlashT = 0;
+  function linkFlash() { const p = $('#linkPill'); p.classList.add('flash'); clearTimeout(linkFlashT); linkFlashT = setTimeout(() => p.classList.remove('flash'), 600); }
+  function linkHandle(m, via) {
+    if (!m || !LINK.on) return;
+    if (m.id) { if (LINK.seen.includes(m.id)) return; LINK.seen.push(m.id); if (LINK.seen.length > 60) LINK.seen.shift(); } // lokal + online ikkalasidan kelsa — bir marta
+    if (m.t === 'test') { toast('🔊 Sahna Ovozi’dan sinov signali keldi'); linkFlash(); LINK.last = { src: 'Sinov signali', res: '✓', via, at: Date.now(), ok: true }; renderLink(); return; }
+    if (m.t !== 'cue') return;
+    const ref = String(m.ref || '').trim(), src = String(m.src || '');
+    let res = '', ok = true;
+    if (/^bo$/i.test(ref)) { if (!blackout) toggleBlackout(); res = 'BLACKOUT'; }
+    else {
+      const i = linkFind(ref);
+      if (i < 0) { ok = false; res = `„${ref}“ cue topilmadi`; toast(`🔊 ${src}: Sahna Nuri’da „${ref}“ cue topilmadi`); }
+      else { if (blackout) toggleBlackout(); goTo(i); const q = show.cues[i]; res = `Cue ${q.num} · ${q.name}`; toast(`🔊 ${src} → 💡 ${res}`); }
+    }
+    LINK.last = { src, res, via, at: Date.now(), ok };
+    linkFlash(); renderLink();
+  }
+  function linkLocal() {
+    clearTimeout(LINK.esT);
+    if (LINK.es) { try { LINK.es.close(); } catch (_) {} LINK.es = null; }
+    if (!LINK.on || typeof EventSource === 'undefined') { LINK.local = false; renderLink(); return; }
+    let es;
+    try { es = new EventSource('http://127.0.0.1:47810/events'); } catch (_) { LINK.esT = setTimeout(linkLocal, 5000); return; }
+    LINK.es = es;
+    es.onopen = () => { LINK.local = true; renderLink(); };
+    es.onmessage = (e) => { try { linkHandle(JSON.parse(e.data), 'lokal'); } catch (_) {} };
+    es.onerror = () => { const was = LINK.local; LINK.local = false; try { es.close(); } catch (_) {} if (LINK.es === es) LINK.es = null; if (was) renderLink(); LINK.esT = setTimeout(linkLocal, was ? 1000 : 5000); };
+  }
+  async function linkPoll() {
+    const my = ++LINK.gen; let after = -1;
+    while (my === LINK.gen && LINK.on && LINK.room) {
+      try {
+        const r = await fetch('/api/link?room=' + LINK.room + '&after=' + after, { cache: 'no-store' });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j && j.error);
+        if (my !== LINK.gen) return;
+        LINK.online = true; LINK.ovoziAge = j.ovoziAge;
+        if (after >= 0) (j.msgs || []).forEach((x) => { try { linkHandle(JSON.parse(x), 'online'); } catch (_) {} });
+        after = typeof j.last === 'number' ? j.last : Math.max(after, 0); renderLink();
+      } catch (_) {
+        if (my !== LINK.gen) return;
+        LINK.online = false; renderLink();
+        await new Promise((res) => setTimeout(res, 4000));
+      }
+    }
+  }
+  function linkStart() { linkLocal(); LINK.gen++; LINK.online = false; if (LINK.on) linkPoll(); renderLink(); }
+  function ago(ms) { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? `${s} s oldin` : `${Math.round(s / 60)} daq oldin`; }
+  function renderLink() {
+    const pill = $('#linkPill'), ovOnline = LINK.online && LINK.ovoziAge != null && LINK.ovoziAge < 60000;
+    const ok = LINK.on && (LINK.local || ovOnline);
+    pill.classList.toggle('ok', ok);
+    $('#linkText').textContent = !LINK.on ? '🔊 OVOZ: oʻchiq' : LINK.local ? '🔊 OVOZ · lokal' : ovOnline ? '🔊 OVOZ · online' : LINK.online ? '🔊 OVOZ: kutilmoqda' : '🔊 OVOZ';
+    if (!$('#linkCard')) return;
+    $('#linkOn').checked = LINK.on;
+    $('#linkCode').textContent = LINK.room;
+    const ls = $('#linkLocalSt'), os = $('#linkOnlineSt');
+    ls.className = 'link-st' + (LINK.local ? ' ok' : '');
+    ls.textContent = !LINK.on ? '○ Oʻchiq' : LINK.local ? '● Sahna Ovozi ulangan' : '○ Sahna Ovozi dasturi topilmadi';
+    os.className = 'link-st' + (ovOnline ? ' ok' : '');
+    os.textContent = !LINK.on ? '○ Oʻchiq' : !LINK.online ? '○ Serverga ulanib boʻlmadi (internet?)' : ovOnline ? `● Sahna Ovozi online (${ago(LINK.ovoziAge)})` : '○ Kod tayyor — Sahna Ovozi kutilmoqda';
+    $('#linkLocalCard').classList.toggle('on-link', LINK.on && LINK.local);
+    $('#linkOnlineCard').classList.toggle('on-link', ovOnline);
+    const l = LINK.last, el = $('#linkLast');
+    el.classList.toggle('hit', !!(l && l.ok));
+    el.textContent = l ? `Oxirgi signal: ${l.src} → ${l.res} · ${l.via} · ${ago(Date.now() - l.at)}` : 'Hali signal kelmadi';
+  }
+  $('#linkPill').addEventListener('click', () => { setTab('ulanish'); setTimeout(() => $('#linkCard').scrollIntoView({ block: 'center', behavior: 'smooth' }), 60); });
+  $('#linkOn').addEventListener('change', (e) => { LINK.on = e.target.checked; linkSave(); linkStart(); toast(LINK.on ? 'Sahna Ovozi signallari yoqildi' : 'Sahna Ovozi signallari oʻchirildi'); });
+  $('#linkCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(LINK.room); toast('Kod nusxalandi: ' + LINK.room); } catch (_) { toast('Kod: ' + LINK.room); } });
+  $('#linkNew').addEventListener('click', () => { linkNewRoom(); linkStart(); toast('Yangi kod: ' + LINK.room + ' — Sahna Ovozi’ga ham yozing'); });
+  setInterval(renderLink, 5000);
+
   /* ================= Boshlash ================= */
   function renderAllPult() { renderGroups(); renderFixtures(); renderSel(); renderCues(); renderFaders(); renderAutoBtn(); renderMib(); }
-  function renderAll() { $('#showTitle').value = show.title; document.title = show.title + ' — SAHNA NURI'; renderAllPult(); renderConn(); if (tab !== 'pult') setTab(tab); }
+  function renderAll() { $('#showTitle').value = show.title; document.title = show.title + ' — SAHNA NURI'; renderAllPult(); renderConn(); renderLink(); if (tab !== 'pult') setTab(tab); }
   renderAll();
   // Sahifa qayta ochilsa yoki kompyuter qayta yonsa: oxirgi ijro etilgan cue fade'siz tiklanadi
   (function resumeLastCue() {
@@ -2728,6 +2821,7 @@
   requestAnimationFrame(frame);
   if (patchMigrated) setTimeout(() => toast('Patch FreeStyler’dagi 35 ta chiroqqa yangilandi'), 800);
   SNDmx.autoConnect();
+  linkStart();
   if (L()) { L().onChange(updateLicenseUI); L().start(); }
   window.addEventListener('beforeunload', () => save(true));
   // Til almashganda hamma narsani qayta chizish (matnlar i18n.js orqali o'giriladi)

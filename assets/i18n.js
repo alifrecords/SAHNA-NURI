@@ -409,12 +409,39 @@ window.SNI18N = (() => {
     'Profil oʻchirilsinmi?': ['Удалить профиль?', 'Delete profile?'],
     'Patch Andijon teatrining 35 ta chirogʻiga (FreeStyler) qaytarilsinmi? Cue’lar oʻchmaydi, lekin chiroqlar almashadi.': ['Вернуть патч к 35 приборам Андижанского театра (FreeStyler)? Cue не удалятся, но приборы заменятся.', 'Reset the patch to the 35 Andijan theater fixtures (FreeStyler)? Cues are kept, but fixtures are replaced.'],
     'Sahna rasmi olib tashlansinmi? Chiroqlar joyi saqlanadi.': ['Убрать изображение сцены? Расстановка приборов сохранится.', 'Remove the stage image? Fixture positions are kept.'],
+    // --- Cue-Link (Sahna Ovozi bilan bog'lanish) ---
+    'Sahna Ovozi bilan bogʻlanish (Cue-Link)': ['Связь с Sahna Ovozi (Cue-Link)', 'Link with Sahna Ovozi (Cue-Link)'],
+    '🔊 SAHNA OVOZI BILAN BOGʻLASH · CUE-LINK': ['🔊 СВЯЗЬ С SAHNA OVOZI · CUE-LINK', '🔊 LINK WITH SAHNA OVOZI · CUE-LINK'],
+    'Sahna Ovozi’da cue GO boʻlganda, shu cue’ga biriktirilgan chiroq sahnasi bu yerda oʻzi yonadi.': ['Когда в Sahna Ovozi срабатывает cue (GO), привязанная к нему световая сцена включается здесь автоматически.', 'When a cue fires (GO) in Sahna Ovozi, the light scene linked to it turns on here automatically.'],
+    'Sahna Ovozi’dan signal qabul qilish': ['Принимать сигналы от Sahna Ovozi', 'Receive signals from Sahna Ovozi'],
+    '1 · Shu kompyuter (lokal)': ['1 · Этот компьютер (локально)', '1 · This computer (local)'],
+    'Sahna Ovozi dasturi (.exe) shu kompyuterda ochiq boʻlsa — oʻzi ulanadi. Internet kerak emas, kechikish ~0.': ['Если программа Sahna Ovozi (.exe) открыта на этом компьютере — подключится сама. Интернет не нужен, задержка ~0.', 'If the Sahna Ovozi app (.exe) is open on this computer, it connects by itself. No internet needed, ~0 delay.'],
+    '2 · Online xona kodi': ['2 · Онлайн-код комнаты', '2 · Online room code'],
+    'Boshqa kompyuter, planshet yoki Sahna Ovozi sayti uchun. Shu kodni Sahna Ovozi → 💡 NURI oynasiga yozing.': ['Для другого компьютера, планшета или сайта Sahna Ovozi. Введите этот код в Sahna Ovozi → окно 💡 NURI.', 'For another computer, a tablet or the Sahna Ovozi website. Enter this code in Sahna Ovozi → 💡 NURI window.'],
+    'NUSXALASH': ['КОПИРОВАТЬ', 'COPY'],
+    'YANGI KOD': ['НОВЫЙ КОД', 'NEW CODE'],
+    'Kutilmoqda…': ['Ожидание…', 'Waiting…'],
+    'Hali signal kelmadi': ['Сигналов пока нет', 'No signal yet'],
+    '🔊 OVOZ': ['🔊 ЗВУК', '🔊 SOUND'],
+    '🔊 OVOZ: oʻchiq': ['🔊 ЗВУК: выкл', '🔊 SOUND: off'],
+    '🔊 OVOZ · lokal': ['🔊 ЗВУК · локально', '🔊 SOUND · local'],
+    '🔊 OVOZ · online': ['🔊 ЗВУК · онлайн', '🔊 SOUND · online'],
+    '🔊 OVOZ: kutilmoqda': ['🔊 ЗВУК: ожидание', '🔊 SOUND: waiting'],
+    'Oʻchiq': ['Выключено', 'Off'],
+    'Sahna Ovozi ulangan': ['Sahna Ovozi подключён', 'Sahna Ovozi connected'],
+    'Sahna Ovozi dasturi topilmadi': ['Программа Sahna Ovozi не найдена', 'Sahna Ovozi app not found'],
+    'Serverga ulanib boʻlmadi (internet?)': ['Нет связи с сервером (интернет?)', 'Cannot reach the server (internet?)'],
+    'Kod tayyor — Sahna Ovozi kutilmoqda': ['Код готов — ждём Sahna Ovozi', 'Code ready — waiting for Sahna Ovozi'],
+    '🔊 Sahna Ovozi’dan sinov signali keldi': ['🔊 Получен тестовый сигнал от Sahna Ovozi', '🔊 Test signal received from Sahna Ovozi'],
+    'Sahna Ovozi signallari yoqildi': ['Сигналы Sahna Ovozi включены', 'Sahna Ovozi signals on'],
+    'Sahna Ovozi signallari oʻchirildi': ['Сигналы Sahna Ovozi выключены', 'Sahna Ovozi signals off'],
   };
 
   // ---------- qoliplar (dinamik matn) ----------
   const CORNERS = { 'chap orqa': ['левый задний', 'back left'], 'oʻng orqa': ['правый задний', 'back right'], 'oʻng old': ['правый передний', 'front right'], 'chap old': ['левый передний', 'front left'] };
   const UNIT = (u, i) => (/yil/i.test(u) ? ['год', 'year'] : ['мес.', 'month'])[i];
   const P = [
+    [/^● Sahna Ovozi online \((.+)\)$/, (m, i) => [`● Sahna Ovozi онлайн (${m[1].replace(' s oldin', ' с назад').replace(' daq oldin', ' мин назад')})`, `● Sahna Ovozi online (${m[1].replace(' s oldin', ' s ago').replace(' daq oldin', ' min ago')})`][i]],
     [/^(.*) Tasdiqlash uchun yana bir marta bosing\.$/, (m, i) => tr(m[1]) + [' Нажмите ещё раз для подтверждения.', ' Press again to confirm.'][i]],
     [/^(.+) kalibrlash nuqtalari oʻchirilsinmi\?$/, (m, i) => [`Удалить точки калибровки ${m[1]}?`, `Delete calibration points of ${m[1]}?`][i]],
     [/^„(.+)“ nuqtasi oʻchirilsinmi\?$/, (m, i) => [`Удалить точку «${m[1]}»?`, `Delete point “${m[1]}”?`][i]],
@@ -501,6 +528,10 @@ window.SNI18N = (() => {
     [/^(\d+) kun · oyiga ~(.+)$/, (m, i) => [`${m[1]} дн. · ~${tr(m[2])} в месяц`, `${m[1]} days · ~${tr(m[2])} per month`][i]],
     [/^([\d\s]+) so['ʻ]m$/, (m, i) => `${m[1]} ${['сум', 'UZS'][i]}`],
     [/^Kanal (\d+)$/, (m, i) => [`Канал ${m[1]}`, `Channel ${m[1]}`][i]],
+    [/^Oxirgi signal: (.+)$/, (m, i) => [`Последний сигнал: ${m[1].replace(' s oldin', ' с назад').replace(' daq oldin', ' мин назад').replace('lokal', 'локально')}`, `Last signal: ${m[1].replace(' s oldin', ' s ago').replace(' daq oldin', ' min ago').replace('lokal', 'local')}`][i]],
+    [/^Kod nusxalandi: (.+)$/, (m, i) => [`Код скопирован: ${m[1]}`, `Code copied: ${m[1]}`][i]],
+    [/^Yangi kod: (\S+) — Sahna Ovozi’ga ham yozing$/, (m, i) => [`Новый код: ${m[1]} — введите его и в Sahna Ovozi`, `New code: ${m[1]} — enter it in Sahna Ovozi too`][i]],
+    [/^🔊 (.+): Sahna Nuri’da „(.+)“ cue topilmadi$/, (m, i) => [`🔊 ${m[1]}: в Sahna Nuri нет cue «${m[2]}»`, `🔊 ${m[1]}: cue “${m[2]}” not found in Sahna Nuri`][i]],
   ];
 
   // ---------- murakkab HTML bloklar ----------
