@@ -484,3 +484,10 @@ h2.mt { margin-top: 6px; }
 .sfx.fr.mv { z-index: 1; }
 .stage-wrap.place .sfx.fr:not(.mv) { width: 34px; height: 26px; margin: -13px 0 0 -17px; border-radius: 7px; background: rgba(10,10,10,.72); }
 .stage-wrap.place .sfx.fr:not(.mv) .fxi { display: block; width: 26px; height: 20px; }
+/* Har bir chiroq tugmasi — ingichka qora ramka */
+.ft { border: 1.5px solid #0a0a0a; background: #fff; border-radius: 8px; }
+.ft.g1 { background: #f4f4f5; }
+.ft:hover { background: #e4e4e7; }
+.ft.on { background: var(--on-soft); border-color: var(--on); border-width: 2px; }
+.ft.lit { border-color: #0a0a0a; box-shadow: 0 0 0 2px #22c55e, 0 0 10px 1px rgba(34,197,94,.45); }
+.ft.lit.on { border-color: var(--on); }
