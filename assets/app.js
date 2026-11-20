@@ -207,10 +207,40 @@
     }
     return o;
   }
+  // Alohida kanallar (shutter, rang g'ildiragi, gobo, prizma, funksiya…) silliq "sirpanmaydi" — sakraydi.
+  // Qachon sakrashi: chiroq yorishsa — fade boshida (yangi holat ko'rinmasdan oldin), xira tortsa — fade oxirida.
+  function rawDefault(f, k, p) {
+    const ch = prof(f).ch[k]; if (!ch) return 0;
+    if (ch.r === 'cwheel') return (prof(f).wheel || DEF_WHEEL)[p.col] ?? 0;
+    return ch.d || 0;
+  }
+  // Silliq o'tadigan kanallar: oq (iliq/sovuq), zoom, fokus, frost, iris, CTO, dimmer — qolganlari sakraydi
+  const SMOOTH_RX = /(^|[^a-z])(w|c|ww|cw|warm|cool|white|oq|iliq|sovuq|zoom|focus|fokus|frost|iris|cto|dimmer)([^a-z]|$)/i;
+  const rawSmooth = (ch) => !!ch && ch.r !== 'cwheel' && ch.r !== 'gobo' && ch.r !== 'strobe' && SMOOTH_RX.test(ch.n || '');
+  function stepAttrs(o, a, b, f, k) {
+    const toB = k >= 1 || (b.dim ?? 0) >= (a.dim ?? 0);
+    if (a.raw || b.raw) {
+      o.raw = {};
+      const keys = new Set([...Object.keys(a.raw || {}), ...Object.keys(b.raw || {})]);
+      const chs = prof(f).ch;
+      for (const c of keys) {
+        const va = a.raw && a.raw[c] != null ? a.raw[c] : rawDefault(f, +c, a);
+        const vb = b.raw && b.raw[c] != null ? b.raw[c] : rawDefault(f, +c, b);
+        o.raw[c] = rawSmooth(chs[+c]) ? va + (vb - va) * k : (toB ? vb : va);
+      }
+    }
+    if (a.col !== b.col) o.col = toB ? b.col : a.col;
+    if ((a.gobo || 0) !== (b.gobo || 0)) o.gobo = toB ? b.gobo : a.gobo;
+    return o;
+  }
   function mixFixture(id, a, b, t) {
     const fade = play.fadeMs || 0;
     const f = fxById(id);
-    if (!play.mib || !f || !mibCapable(f) || !posChanged(a, b, f)) return lerpParams(a, b, fade > 0 ? clamp(t / fade, 0, 1) : 1);
+    if (!play.mib || !f || !mibCapable(f) || !posChanged(a, b, f)) {
+      const k = fade > 0 ? clamp(t / fade, 0, 1) : 1;
+      const o = lerpParams(a, b, k);
+      return f ? stepAttrs(o, a, b, f, k) : o;
+    }
     if (b.dim > 0.5) {
       const outMs = a.dim > 0.5 ? MIB_OUT_MS : 0, mv = play.moveMs;
       if (t < outMs) return { ...a, dim: a.dim * (1 - t / outMs) };
@@ -984,8 +1014,12 @@
     bank.undo = { kind: 'merge', id: q.id, look: JSON.parse(JSON.stringify(q.look || {})) };
     const L = bankLook(b); q.look = q.look || {};
     for (const id in L) q.look[id] = mergeP(q.look[id] || defParams(), L[id]);
-    if (i === play.cur) { play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0; }
-    save(); renderCues(); showUndo();
+    if (i === play.cur) {
+      // Ijrodagi sahnaga tashlansa — programmer shu chiroqlarni bosib qolmasin, bank darhol ko'rinsin
+      for (const id in L) delete prog.vals[id];
+      goTo(i);
+    }
+    save(); renderCues(); renderProgrammer(); showUndo();
     toast(`„${b.n}“ → „${q.name}“ga qoʻshildi`);
   }
   function bankNewCue(b, at = show.cues.length) {
