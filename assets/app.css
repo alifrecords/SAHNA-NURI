@@ -520,3 +520,26 @@ h2.mt { margin-top: 6px; }
 .ft.edit .fxi .body * { stroke: #78350f; }
 .ft.edit::before { content: "✎"; position: absolute; top: 2px; left: 4px; z-index: 2; font-size: 11px; font-weight: 900; color: #b45309; }
 .insp-multi.solo { color: #78350f; background: #fef3c7; }
+
+/* ---------- Chiroqlar maydoni chegarasi (sudrab kengaytirish) ---------- */
+.fx-split { flex: 0 0 10px; margin: 0 -12px 0 -12px; align-self: stretch; cursor: col-resize; position: relative; z-index: 2; touch-action: none; display: flex; justify-content: center; }
+.fx-split i { width: 4px; border-radius: 3px; background: #d4d4d8; margin: 18px 0; transition: background .15s, width .15s; }
+.fx-split:hover i, .fx-split.drag i, .fx-split:focus-visible i { background: var(--on); width: 6px; }
+.fx-split:focus-visible { outline: none; }
+body.col-resize, body.col-resize * { cursor: col-resize !important; user-select: none !important; }
+.row3.fx-sized .cue-panel { flex: 1 1 260px; min-width: 240px; }
+.fx-panel { min-width: 0; }
+/* Katta tugmalarda nom ikki qatorgacha to'liq ko'rinadi */
+.fixtures:not(.tight) .ft .ft-n { white-space: normal; }
+.fixtures:not(.tight) .ft .ft-n .pre { overflow: visible; text-overflow: clip; }
+/* ---------- Programmer: yopiladigan panel ---------- */
+.prog-panel { position: relative; transition: flex-basis .28s ease, flex-grow .28s ease; }
+.prog-tab { display: none; }
+.prog-panel.collapsed { flex: 0 0 54px; padding: 0; overflow: hidden; }
+.prog-panel.collapsed .prog-body { display: none; }
+.prog-panel.collapsed .prog-tab { display: flex; }
+.prog-body { display: flex; flex-direction: column; gap: inherit; min-width: 0; }
+.row3.prog-closed .cue-panel { flex-grow: 3; }
+@media (max-width: 1100px) { .fx-split { display: none; } .prog-panel.collapsed { flex: 1 1 100%; } .prog-panel.collapsed .prog-tab { min-height: 48px; flex-direction: row; justify-content: center; padding: 0 16px; } .prog-panel.collapsed .insp-vt { writing-mode: horizontal-tb; transform: none; } }
+.fixtures:not(.tight) .ft .ft-n { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; text-align: center; overflow: hidden; }
+.fixtures:not(.tight) .ft .ft-n .pre, .fixtures:not(.tight) .ft .ft-n b { display: inline; }

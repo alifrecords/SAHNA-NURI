@@ -74,6 +74,7 @@ if (location.protocol === 'file:') {
         <div class="grid4 fixtures" id="fixtureBtns"></div>
       </section>
 
+      <div class="fx-split" id="fxSplit" role="separator" aria-orientation="vertical" aria-label="Chiroqlar maydoni enini oʻzgartirish" tabindex="0" title="Sudrab chiroqlar maydonini kattalashtiring yoki kichiklashtiring"><i></i></div>
       <section class="panel cue-panel">
         <div class="ph"><h2>CUE ROʻYXATI</h2><span class="ph-r"><span class="muted" id="cueInfo"></span><button class="btn sm on" id="autoBtn" type="button" aria-pressed="true">AVTO YOQIQ</button></span></div>
         <div class="edit-bar" id="editBar"><button class="btn sm" id="autoSaveBtn" type="button" title="Sahna almashtirilganda unga qilingan oʻzgarishlar oʻsha sahnaga avtomatik yoziladi">✎ TAHRIR: AVTO-SAQLASH</button><span class="edit-st" id="editSt"></span></div>
@@ -119,8 +120,10 @@ if (location.protocol === 'file:') {
         </div>
       </section>
 
-      <section class="panel prog-panel">
-        <div class="ph"><h2>PROGRAMMER</h2><span class="muted" id="progInfo"></span></div>
+      <section class="panel prog-panel" id="progPanel">
+        <button class="insp-tab prog-tab" id="progTab" type="button" aria-expanded="true" aria-controls="progBody" title="Programmerni ochish / yopish"><span class="insp-chev" aria-hidden="true">‹</span><span class="insp-vt">PROGRAMMER</span><i class="insp-dot" id="progDot" aria-hidden="true"></i></button>
+        <div class="prog-body" id="progBody">
+        <div class="ph"><h2>PROGRAMMER</h2><span class="ph-r"><span class="muted" id="progInfo"></span><button class="btn sm icon" id="progClose" type="button" title="Yopish" aria-label="Programmerni yopish">»</button></span></div>
         <label class="lab" for="dimR"><span>Intensivlik</span><b id="dimV">0%</b></label>
         <input id="dimR" type="range" min="0" max="100" value="0">
         <div class="grid4 quick">
@@ -149,6 +152,7 @@ if (location.protocol === 'file:') {
         <span class="lab">Effekt</span>
         <div class="grid3" id="fxBtns"></div>
         <button class="btn wide" id="progClr" type="button">PROGRAMMERNI TOZALASH</button>
+        </div>
       </section>
     </div>
 

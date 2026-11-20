@@ -418,7 +418,7 @@
     for (let cols = 3; cols <= 10; cols++) {
       const w = (W - gap * (cols - 1)) / cols; if (w < 44) break;
       const rows = Math.ceil(n / cols);
-      const h = Math.min((avail - gap * (rows - 1)) / rows, w * 1.15, 92);
+      const h = Math.min((avail - gap * (rows - 1)) / rows, w * 1.15, 110);
       const score = Math.min(w * 0.85, h); // ikkala o'lcham ham yetarli bo'lsin
       if (h >= 40 && (!best || score > best.score)) best = { cols, h, w, score };
     }
@@ -426,9 +426,50 @@
     box.style.setProperty('--cols', best.cols);
     box.style.setProperty('--th', Math.floor(best.h) + 'px');
     box.classList.toggle('tight', best.h < 54); // juda kichik bo'lsa DMX qatori yashiriladi (sichqoncha ustida ko'rinadi)
-    box.style.setProperty('--fs', Math.max(8, Math.min(11.5, best.h / 6.2, best.w / 6.4)).toFixed(1) + 'px');
+    box.style.setProperty('--fs', Math.max(8, Math.min(13.5, best.h / 6.2, best.w / 6.4)).toFixed(1) + 'px');
   }
   window.addEventListener('resize', () => fitFixtures());
+  /* ---------- Chiroqlar maydoni enini sichqoncha bilan o'zgartirish ---------- */
+  const FXW_KEY = 'sn_fx_w';
+  function setFxW(w, persist) {
+    const row = document.querySelector('#tab-pult .row3'), fx = document.querySelector('#tab-pult .fx-panel');
+    if (!row || !fx) return;
+    if (w == null) { fx.style.flex = ''; row.classList.remove('fx-sized'); return; }
+    const max = Math.max(320, row.clientWidth * 0.62);
+    w = Math.round(clamp(w, 230, max));
+    fx.style.flex = `0 0 ${w}px`; row.classList.add('fx-sized');
+    if (persist) try { localStorage.setItem(FXW_KEY, w); } catch (_) {}
+  }
+  (() => {
+    const sp = $('#fxSplit'); if (!sp) return;
+    try { const w = +localStorage.getItem(FXW_KEY); if (w) setFxW(w); } catch (_) {}
+    sp.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const fx = document.querySelector('#tab-pult .fx-panel'), x0 = e.clientX, w0 = fx.getBoundingClientRect().width;
+      sp.setPointerCapture(e.pointerId); sp.classList.add('drag'); document.body.classList.add('col-resize');
+      const mv = (ev) => setFxW(w0 + ev.clientX - x0);
+      const up = () => { sp.removeEventListener('pointermove', mv); sp.removeEventListener('pointerup', up); sp.removeEventListener('pointercancel', up); sp.classList.remove('drag'); document.body.classList.remove('col-resize'); setFxW(fx.getBoundingClientRect().width, true); };
+      sp.addEventListener('pointermove', mv); sp.addEventListener('pointerup', up); sp.addEventListener('pointercancel', up);
+    });
+    sp.addEventListener('dblclick', () => { setFxW(null); try { localStorage.removeItem(FXW_KEY); } catch (_) {} });
+    sp.addEventListener('keydown', (e) => {
+      const d = { ArrowLeft: -20, ArrowRight: 20 }[e.key]; if (!d) return;
+      e.preventDefault(); e.stopPropagation();
+      setFxW(document.querySelector('#tab-pult .fx-panel').getBoundingClientRect().width + d * (e.shiftKey ? 3 : 1), true);
+    });
+  })();
+  /* ---------- Programmer panelini ochish / yopish ---------- */
+  const PROG_KEY = 'sn_prog_open';
+  function progOpen(v) {
+    const pp = $('#progPanel'), open = v ?? pp.classList.contains('collapsed');
+    pp.classList.toggle('collapsed', !open);
+    document.querySelector('#tab-pult .row3').classList.toggle('prog-closed', !open);
+    $('#progTab').setAttribute('aria-expanded', open);
+    try { localStorage.setItem(PROG_KEY, open ? '1' : '0'); } catch (_) {}
+  }
+  $('#progTab').addEventListener('click', () => progOpen(true));
+  $('#progClose').addEventListener('click', () => progOpen(false));
+  try { if (localStorage.getItem(PROG_KEY) === '0') progOpen(false); } catch (_) {}
   if (window.ResizeObserver) new ResizeObserver(() => fitFixtures()).observe($('#fixtureBtns'));
   // Tugmadagi rasm linzasi yonadigan rang — chiroqqa haqiqatan ketayotgan qiymatlardan
   function outHex(f) {
@@ -532,6 +573,7 @@
     $('#fxBtns').innerHTML = EFFECTS.map((x) => `<button class="btn ${activeFx.has(x.id) ? 'on' : ''}" data-x="${x.id}" type="button" aria-pressed="${activeFx.has(x.id)}">${esc(x.n)}</button>`).join('');
     const n = Object.keys(prog.vals).length;
     $('#progInfo').textContent = n ? `${n} ta chiroq oʻzgartirilgan` : '';
+    $('#progDot').classList.toggle('on', !!n);
     renderEditBar();
     if (!insp.drag) renderInsp();
   }

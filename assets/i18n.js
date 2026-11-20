@@ -9,6 +9,10 @@ window.SNI18N = (() => {
 
   // ---------- aniq moslik: o'zbekcha → [ruscha, inglizcha] ----------
   const D = {
+    'Programmerni ochish / yopish': ['Открыть / закрыть программер', 'Open / close the programmer'],
+    'Programmerni yopish': ['Закрыть программер', 'Close the programmer'],
+    'Sudrab chiroqlar maydonini kattalashtiring yoki kichiklashtiring': ['Тяните, чтобы увеличить или уменьшить область приборов', 'Drag to widen or narrow the fixtures area'],
+    'Chiroqlar maydoni enini oʻzgartirish': ['Изменить ширину области приборов', 'Resize the fixtures area'],
     '✎ Faqat shu chiroq sozlanmoqda · yana bosilsa — tanlovdan olinadi': ['✎ Настраивается только этот прибор · ещё нажатие — снять выбор', '✎ Editing this fixture only · click again to deselect'],
     '✎ AVTO-SAQLASH: YOQIQ': ['✎ АВТОСОХРАНЕНИЕ: ВКЛ', '✎ AUTO-SAVE: ON'],
     '✎ AVTO-SAQLASH: OʻCHIQ': ['✎ АВТОСОХРАНЕНИЕ: ВЫКЛ', '✎ AUTO-SAVE: OFF'],
