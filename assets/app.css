@@ -620,3 +620,11 @@ body.cue-dragging #bankPanel { outline: 2px dashed #6366f1; outline-offset: 3px;
 .cue.mk2 { border-color: #d97706; box-shadow: inset 5px 0 0 #d97706; }
 .cue.mk2::after { background: linear-gradient(170deg, rgba(255,255,255,.6) 0%, rgba(255,255,255,.08) 40%, rgba(255,255,255,0) 65%, rgba(255,255,255,.15) 100%), rgba(245,158,11,.22); box-shadow: inset 0 0 0 1px rgba(255,255,255,.7), inset 0 0 0 2px rgba(217,119,6,.3); }
 .cue.mk2 .cue-grip::before { content: "◆ "; color: #b45309; }
+
+.bank-sec { display: flex; align-items: center; gap: 8px; margin: 10px 2px 2px; font-size: 10.5px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.bank-sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.bank-sec span { order: 2; font-weight: 800; }
+.bank-f.sp { border-color: #bbf7d0; }
+.bk-lim { font-style: normal; font-size: 9.5px; font-weight: 800; background: #fef3c7; color: #92400e; padding: 1px 5px; border-radius: 5px; margin-left: 6px; letter-spacing: 0; }
+.fs-lay { margin-top: 8px; }
+.btn.fsgo { background: #15803d; border-color: #15803d; color: #fff; font-size: 11px; }

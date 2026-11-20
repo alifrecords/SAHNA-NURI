@@ -937,7 +937,12 @@
   function loadBankLib() {
     if (bank.loaded) return;
     bank.loaded = true;
-    fetch('/assets/banks-andijan.json').then((r) => r.json()).then((j) => { bank.lib = j.banks || []; renderBanks(); }).catch(() => { bank.loaded = false; });
+    // 1) Chases.rar banklari; 2) ANDIJAN2026.3.fbf zaxirasidagi spektakl banklari (alohida bo'lim, faqat 1–179 kanal)
+    const get = (u) => fetch(u).then((r) => r.json()).then((j) => (j.banks || []).map((x) => (j.sec ? { ...x, sec: j.sec, lim: j.lim } : x))).catch(() => []);
+    Promise.all([get('/assets/banks-andijan.json'), get('/assets/banks-andijan-2026.json')]).then(([a, c]) => {
+      if (!a.length && !c.length) { bank.loaded = false; return; }
+      bank.lib = [...a, ...c]; renderBanks();
+    });
   }
   const allBanks = () => [...userBanks().map((b) => ({ ...b, f: b.f || 'Mening banklarim', mine: true })), ...bank.lib];
   // DMX qiymatlari → har bir chiroq uchun qisman holat (faqat bankda bor kanallar)
@@ -949,6 +954,7 @@
       const pr = prof(f), p = {};
       let fine = {};
       pr.ch.forEach((ch, k) => {
+        if (b.lim && f.addr + k > b.lim) return; // eski patch banki — undan keyingi kanallarga tegmaydi
         const v = m.get(f.addr + k); if (v == null) return;
         if (PARAM_ROLE[ch.r]) p[PARAM_ROLE[ch.r]] = v;
         else if (ch.r === 'panF' || ch.r === 'tiltF') fine[ch.r] = v;
@@ -985,12 +991,16 @@
     const q = bank.q.trim().toLowerCase();
     const list = allBanks().filter((b) => !q || b.n.toLowerCase().includes(q) || b.f.toLowerCase().includes(q));
     const folders = [];
-    for (const b of list) { let F = folders.find((x) => x.f === b.f); if (!F) folders.push(F = { f: b.f, list: [] }); F.list.push(b); }
+    for (const b of list) { let F = folders.find((x) => x.f === b.f && x.sec === b.sec); if (!F) folders.push(F = { f: b.f, sec: b.sec, lim: b.lim, list: [] }); F.list.push(b); }
+    let secShown = '';
     $('#bankInfo').textContent = `${allBanks().length} ta`;
     if (!list.length) { box.innerHTML = `<div class="empty">${bank.loaded && !bank.lib.length && !userBanks().length ? 'Banklar yuklanmoqda…' : 'Hech narsa topilmadi'}</div>`; return; }
     box.innerHTML = folders.map((F) => {
-      const open = q || bank.open[F.f] !== false;
-      return `<details class="bank-f" data-bf="${esc(F.f)}" ${open ? 'open' : ''}><summary>${esc(F.f)} <span>${F.list.length}</span></summary><div class="bank-items">${F.list.map((b) => {
+      // Spektakl papkalari ko'p — ular boshida yig'iq turadi
+      const open = q || (F.sec ? bank.open[F.f] === true : bank.open[F.f] !== false);
+      let head = '';
+      if (F.sec && secShown !== F.sec) { secShown = F.sec; const n = list.filter((x) => x.sec === F.sec).length; head = `<div class="bank-sec" title="FreeStyler zaxirasi (ANDIJAN2026.3.fbf). Banklar faqat 1–179 kanalni boshqaradi — o'sha paytdagi 25 ta chiroq.">📦 <b>${esc(F.sec)}</b> <span>${n}</span></div>`; }
+      return `${head}<details class="bank-f ${F.sec ? 'sp' : ''}" data-bf="${esc(F.f)}" ${open ? 'open' : ''}><summary>${esc(F.f)}${F.lim ? `<em class="bk-lim" title="Faqat 1–${F.lim} kanal">1–${F.lim}</em>` : ''} <span>${F.list.length}</span></summary><div class="bank-items">${F.list.map((b) => {
         const d = bankDots(b);
         return `<div class="bank-it ${b.mine ? 'mine' : ''}" draggable="true" data-bk="${b.id}" role="button" tabindex="0" title="${esc(b.n)} · ${d.n} ta chiroq — bosing: yuklash, sudrang: sahnaga">
           <span class="bk-n">${esc(b.n)}</span>
@@ -1840,6 +1850,71 @@
     return { toM: homog(c, meters) || homog(virtualCorners(), meters), toI: homog(meters, c) || homog(meters, virtualCorners()) };
   }
 
+  // FreeStyler X2 joylashuvi (Locations/Andijan2026.2.flf): [nomi, adres, x, y] — twips, y=0 orqa parda
+  const FS_LAYOUT = [
+    ["ProPar8-1", 1, 660, 5295],
+    ["ProPar8-2", 9, 13770, 5100],
+    ["ProPar8-3", 17, 7185, 7695],
+    ["ProPar8-4", 25, 7215, 1545],
+    ["Warning8-5", 33, 4500, 3030],
+    ["Warning8-6", 41, 9315, 2970],
+    ["Evro Led 5RC-7", 49, 4545, 1395],
+    ["Evro Led 5RC-8", 54, 9045, 1350],
+    ["Evro Led2Lin5-9", 59, 615, 3105],
+    ["Evro Led2Lin5-10", 64, 540, 6315],
+    ["Evro Led2Lin5-11", 69, 13530, 2910],
+    ["Evro Led2Lin5-12", 74, 13710, 6255],
+    ["Evro Led2Lin5-13", 79, 5700, 7215],
+    ["Evro Led2Lin5-14", 84, 8595, 7110],
+    ["Evro Led2Lin5-15", 89, 7080, 2715],
+    ["Evro Led2Lin5-16", 94, 3120, 2580],
+    ["Evro Led2Lin5-17", 99, 11235, 2580],
+    ["Propar2 4-18", 104, 795, 8085],
+    ["Propar2 4-19", 108, 14010, 8085],
+    ["Propar2 4-20", 112, 4725, 7665],
+    ["Propar2 4-21", 116, 9900, 7695],
+    ["Led Beam 300W-22", 120, 3315, 1110],
+    ["Led Beam 300W-23", 138, 11070, 1095],
+    ["Front Light 800W-24", 156, 2040, 2610],
+    ["Front Light 800W-25", 168, 12480, 2610],
+    ["24 channel dimmerpack-26", 180, 240, 180],
+    ["Led Beam 300W-27", 204, 9405, 0],
+    ["Led Beam 300W-28", 222, 7020, 30],
+    ["Led Beam 300W-29", 240, 5250, 105],
+    ["Warning8-30", 258, 4110, 5730],
+    ["Warning8-31", 266, 5655, 5730],
+    ["Warning8-32", 274, 7200, 5730],
+    ["Warning8-33", 282, 8745, 5730],
+    ["Led Beam 300W-34", 290, 9075, 4155],
+    ["Led Beam 300W-35", 308, 10095, 4155]
+  ];
+  // Bir bosishda: chiroqlar FreeStyler ekranidagi tartibda planga joylashadi (sahna o'lchamiga cho'ziladi)
+  function importFsLayout() {
+    const s = ST();
+    const xs = FS_LAYOUT.map((r) => r[2]), ys = FS_LAYOUT.map((r) => r[3]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const mx = 0.4, my = 0.3, X = (v) => +(mx + (v - x0) / (x1 - x0 || 1) * (s.w - 2 * mx)).toFixed(2), Y = (v) => +(my + (v - y0) / (y1 - y0 || 1) * (s.d - 2 * my)).toFixed(2);
+    const bak = { pos: JSON.parse(JSON.stringify(s.pos)), fpos: JSON.parse(JSON.stringify(s.front.fpos || {})) };
+    let n = 0;
+    for (const f of show.fixtures) {
+      const r = FS_LAYOUT.find((q) => q[0] === f.name) || FS_LAYOUT.find((q) => q[1] === f.addr);
+      if (!r) continue;
+      const old = s.pos[f.id] || {};
+      s.pos[f.id] = { x: X(r[2]), y: Y(r[3]), z: old.z != null ? old.z : (isMover(f) ? s.h : 0) };
+      n++;
+    }
+    if (!n) { toast('FreeStyler joylashuviga mos chiroq topilmadi'); return; }
+    s.posBak = bak; s.front.fpos = {}; // ro'paradan ko'rinish ham yangi joydan hisoblanadi
+    for (const f of show.fixtures) if ((s.cal[f.id] || {}).pts?.length) fitCal(f);
+    save(); renderStageAll();
+    toast(`${n} ta chiroq FreeStyler'dagidek joylashdi`);
+  }
+  function undoFsLayout() {
+    const s = ST(); if (!s.posBak) { toast('Qaytaradigan joylashuv yoʻq'); return; }
+    s.pos = s.posBak.pos; s.front.fpos = s.posBak.fpos; delete s.posBak;
+    save(); renderStageAll(); toast('Avvalgi joylashuv qaytarildi');
+  }
+
   // Joyi berilmagan chiroqlarga boshlang'ich joy (guruh bo'yicha qatorlar)
   function ensurePositions() {
     const s = ST(), gs = groups();
@@ -2306,6 +2381,8 @@
     for (const f of show.fixtures) if (isMover(f)) { s.pos[f.id] = { ...(s.pos[f.id] || { x: 0, y: 0 }), z: s.h }; n++; if ((s.cal[f.id] || {}).pts?.length) fitCal(f); }
     save(); renderStageAll(); toast(`${n} ta moving head balandligi ${s.h} m`);
   });
+  $('#stFsLay').addEventListener('click', importFsLayout);
+  $('#stFsUndo').addEventListener('click', undoFsLayout);
   const posChange = () => {
     const ids = [...sel]; if (ids.length !== 1) return;
     const s = ST(), p = s.pos[ids[0]] || {};
