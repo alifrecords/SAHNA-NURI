@@ -159,7 +159,8 @@
   const sel = new Set();                 // tanlangan chiroqlar
   const prog = { vals: {}, fx: [] };     // programmer: {fid: {param: v}}, fx: [{type, fids}]
   const flash = new Set();               // bosib turilgan FLASH guruhlari
-  const insp = { focus: null, drag: false, solo: null }; // chiroq sozlamalari paneli: fokusdagi chiroq
+  const insp = { focus: null, drag: false, solo: null };
+  const bank = { lib: [], loaded: false, q: '', open: {}, undo: null, undoT: 0 }; // banklar kutubxonasi holati // chiroq sozlamalari paneli: fokusdagi chiroq
   let blackout = false;
   const play = { cur: -1, next: 0, from: null, to: null, start: 0, dur: 0, paused: false, pausedAt: 0, fx: [] };
 
@@ -325,8 +326,8 @@
           case 'a': case 'uv': v = 0; break;
           case 'pan': v = hasRole(pr, 'panF') ? Math.floor(p.pan) : p.pan; break;
           case 'tilt': v = hasRole(pr, 'tiltF') ? Math.floor(p.tilt) : p.tilt; break;
-          case 'panF': v = (p.pan - Math.floor(p.pan)) * 255; break;
-          case 'tiltF': v = (p.tilt - Math.floor(p.tilt)) * 255; break;
+          case 'panF': v = (p.pan - Math.floor(p.pan)) * 256; break;
+          case 'tiltF': v = (p.tilt - Math.floor(p.tilt)) * 256; break;
           case 'strobe': v = ch.d; break;
           case 'cwheel': v = (pr.wheel || DEF_WHEEL)[p.col] ?? 0; break;
           case 'gobo': v = p.gobo || 0; break;
@@ -700,6 +701,7 @@
   function renderEditBar() {
     const on = show.autoSave !== false, n = Object.keys(prog.vals).length, cur = show.cues[play.cur];
     const b = $('#autoSaveBtn'); if (!b) return;
+    const ub = $('#undoBank'); if (ub) ub.hidden = !(bank.undo && Date.now() - bank.undoT < 15000);
     b.textContent = on ? '✎ AVTO-SAQLASH: YOQIQ' : '✎ AVTO-SAQLASH: OʻCHIQ';
     b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
     const st = $('#editSt');
@@ -886,6 +888,204 @@
     return false;
   }
 
+
+  /* ================= BANKLAR =================
+     Tayyor holatlar kutubxonasi: FreeStyler'dan ko'chirilgan banklar (DMX qiymatlari) va
+     shu programmada saqlanganlar (show.banks). Bosish — programmerga yuklash; sudrab sahna
+     ustiga tashlash — sahnaga qo'shish; ro'yxat bo'sh joyiga — yangi sahna. */
+  const BANK_KEY = 'sn_bank_open';
+  const userBanks = () => (show.banks = show.banks || []);
+  function loadBankLib() {
+    if (bank.loaded) return;
+    bank.loaded = true;
+    fetch('/assets/banks-andijan.json').then((r) => r.json()).then((j) => { bank.lib = j.banks || []; renderBanks(); }).catch(() => { bank.loaded = false; });
+  }
+  const allBanks = () => [...userBanks().map((b) => ({ ...b, f: b.f || 'Mening banklarim', mine: true })), ...bank.lib];
+  // DMX qiymatlari → har bir chiroq uchun qisman holat (faqat bankda bor kanallar)
+  function bankLook(b) {
+    if (b.look) return JSON.parse(JSON.stringify(b.look));
+    const m = new Map(); for (let i = 0; i + 1 < b.c.length; i += 2) m.set(b.c[i], b.c[i + 1]);
+    const out = {};
+    for (const f of show.fixtures) {
+      const pr = prof(f), p = {};
+      let fine = {};
+      pr.ch.forEach((ch, k) => {
+        const v = m.get(f.addr + k); if (v == null) return;
+        if (PARAM_ROLE[ch.r]) p[PARAM_ROLE[ch.r]] = v;
+        else if (ch.r === 'panF' || ch.r === 'tiltF') fine[ch.r] = v;
+        else {
+          (p.raw = p.raw || {})[k] = v;
+          if (ch.r === 'cwheel') { const n = Object.entries(pr.wheel || DEF_WHEEL).find(([, x]) => x === v); if (n) p.col = n[0]; }
+        }
+      });
+      if (p.pan != null && fine.panF != null) p.pan += fine.panF / 256;
+      if (p.tilt != null && fine.tiltF != null) p.tilt += fine.tiltF / 256;
+      if (Object.keys(p).length) out[f.id] = p;
+    }
+    return out;
+  }
+  // Bank tugmasidagi kichik ko'rinish: qaysi chiroqlar va qanday rangda yonadi
+  function bankDots(b) {
+    if (b._dots) return b._dots;
+    const L = bankLook(b), dots = [];
+    for (const f of show.fixtures) {
+      const p = L[f.id]; if (!p) continue;
+      const pr = prof(f), on = p.dim != null ? p.dim > 8 : (p.r || p.g || p.b || p.w) > 8;
+      if (!on) continue;
+      let c = '#FFE7B0';
+      if (p.r != null || p.g != null || p.b != null) { const R = (p.r || 0) + (p.w || 0) * 0.7, G = (p.g || 0) + (p.w || 0) * 0.6, B = (p.b || 0) + (p.w || 0) * 0.4, mx = Math.max(R, G, B, 1); c = `rgb(${Math.round(R / mx * 255)},${Math.round(G / mx * 255)},${Math.round(B / mx * 255)})`; }
+      else if (p.col) { const x = COLORS.find((z) => z.n === p.col); if (x) c = x.hex; }
+      else if (hasRole(pr, 'cwheel')) c = '#e9d5ff';
+      dots.push(c);
+    }
+    b._dots = { n: Object.keys(L).length, lit: dots.length, cols: [...new Set(dots)].slice(0, 6) };
+    return b._dots;
+  }
+  function renderBanks() {
+    const box = $('#bankList'); if (!box) return;
+    const q = bank.q.trim().toLowerCase();
+    const list = allBanks().filter((b) => !q || b.n.toLowerCase().includes(q) || b.f.toLowerCase().includes(q));
+    const folders = [];
+    for (const b of list) { let F = folders.find((x) => x.f === b.f); if (!F) folders.push(F = { f: b.f, list: [] }); F.list.push(b); }
+    $('#bankInfo').textContent = `${allBanks().length} ta`;
+    if (!list.length) { box.innerHTML = `<div class="empty">${bank.loaded && !bank.lib.length && !userBanks().length ? 'Banklar yuklanmoqda…' : 'Hech narsa topilmadi'}</div>`; return; }
+    box.innerHTML = folders.map((F) => {
+      const open = q || bank.open[F.f] !== false;
+      return `<details class="bank-f" data-bf="${esc(F.f)}" ${open ? 'open' : ''}><summary>${esc(F.f)} <span>${F.list.length}</span></summary><div class="bank-items">${F.list.map((b) => {
+        const d = bankDots(b);
+        return `<div class="bank-it ${b.mine ? 'mine' : ''}" draggable="true" data-bk="${b.id}" role="button" tabindex="0" title="${esc(b.n)} · ${d.n} ta chiroq — bosing: yuklash, sudrang: sahnaga">
+          <span class="bk-n">${esc(b.n)}</span>
+          <span class="bk-d">${d.cols.map((c) => `<i style="background:${c}"></i>`).join('')}<small>${d.lit}/${d.n}</small></span>
+          ${b.mine ? `<button class="bk-x" data-bkdel="${b.id}" type="button" title="Oʻchirish" aria-label="Bankni oʻchirish">✕</button>` : ''}
+        </div>`;
+      }).join('')}</div></details>`;
+    }).join('');
+  }
+  const findBank = (id) => allBanks().find((b) => b.id === id);
+  function bankToProg(b) {
+    if (!guardAction()) return;
+    const L = bankLook(b);
+    for (const id in L) prog.vals[id] = mergeP(prog.vals[id] || {}, L[id]);
+    renderProgrammer();
+    toast(`„${b.n}“ yuklandi — ${Object.keys(L).length} ta chiroq`);
+  }
+  function bankToCue(b, i) {
+    if (!guardAction()) return;
+    const q = show.cues[i]; if (!q) return;
+    bank.undo = { kind: 'merge', id: q.id, look: JSON.parse(JSON.stringify(q.look || {})) };
+    const L = bankLook(b); q.look = q.look || {};
+    for (const id in L) q.look[id] = mergeP(q.look[id] || defParams(), L[id]);
+    if (i === play.cur) { play.to = cueLook(q); play.from = null; play.dur = 0; play.fadeMs = 0; }
+    save(); renderCues(); showUndo();
+    toast(`„${b.n}“ → „${q.name}“ga qoʻshildi`);
+  }
+  function bankNewCue(b, at = show.cues.length) {
+    if (!guardAction()) return;
+    if (isStart() && show.cues.length >= LIMITS.cues) { toast(`Start tarifida ${LIMITS.cues} tagacha cue. PRO’ga oʻting.`); openPaywall(); return; }
+    const L = bankLook(b), look = {};
+    for (const id in L) look[id] = mergeP(defParams(), L[id]);
+    const q = { id: uid(), num: nextNum(), name: b.n, fade: 2, look, fx: [] };
+    show.cues.splice(at, 0, q);
+    bank.undo = { kind: 'new', id: q.id };
+    save(); renderCues(); showUndo();
+    toast(`„${b.n}“ — yangi sahna sifatida qoʻshildi`);
+  }
+  function showUndo() { bank.undoT = Date.now(); renderEditBar(); setTimeout(renderEditBar, 15100); }
+  function doUndo() {
+    const u = bank.undo; if (!u) return;
+    const i = show.cues.findIndex((q) => q.id === u.id);
+    if (i >= 0) {
+      if (u.kind === 'new') { show.cues.splice(i, 1); if (play.cur >= show.cues.length) play.cur = show.cues.length - 1; }
+      else { show.cues[i].look = u.look; if (i === play.cur) { play.to = cueLook(show.cues[i]); play.from = null; play.dur = 0; play.fadeMs = 0; } }
+    }
+    bank.undo = null; save(); renderCues(); toast('Qaytarildi');
+  }
+  function bankOpen(v) {
+    const pp = $('#bankPanel'), open = v ?? !pp.classList.contains('open');
+    pp.classList.toggle('open', open);
+    $('#bankTab').setAttribute('aria-expanded', open);
+    try { localStorage.setItem(BANK_KEY, open ? '1' : '0'); } catch (_) {}
+    if (open) {
+      loadBankLib(); renderBanks();
+      // Joy yetmasa — boshqa panellar o'zi yig'iladi (hammasi bitta qatorda qolsin)
+      setTimeout(fitRow, 330); // kenglik animatsiyasi tugagach tekshiriladi
+
+    }
+  }
+  // Pult qatori sig'masa (panel pastga tushib qolsa) — avval Programmer, keyin Chiroq sozlamalari yig'iladi
+  function fitRow() {
+    const row = document.querySelector('#tab-pult .row3'); if (!row || !row.offsetParent) return;
+    const top = document.querySelector('#tab-pult .fx-panel').getBoundingClientRect().top;
+    const wrapped = () => [...row.children].some((c) => c.offsetParent && c.getBoundingClientRect().top > top + 5);
+    if (wrapped() && !$('#progPanel').classList.contains('collapsed')) { progOpen(false); }
+    if (wrapped() && $('#insp').classList.contains('open')) inspOpen(false);
+  }
+  $('#bankTab').addEventListener('click', () => bankOpen(true));
+  $('#undoBank').addEventListener('click', doUndo);
+  $('#bankClose').addEventListener('click', () => bankOpen(false));
+  $('#bankQ').addEventListener('input', (e) => { bank.q = e.target.value; renderBanks(); });
+  $('#bankList').addEventListener('toggle', (e) => { const d = e.target.closest('[data-bf]'); if (d && !bank.q) bank.open[d.dataset.bf] = d.open; }, true);
+  $('#bankList').addEventListener('click', (e) => {
+    const del = e.target.closest('[data-bkdel]');
+    if (del) {
+      e.stopPropagation();
+      const b = userBanks().find((x) => x.id === del.dataset.bkdel);
+      if (b && confirmSoft(`„${b.n}“ banki oʻchirilsinmi?`)) { show.banks = userBanks().filter((x) => x !== b); save(); renderBanks(); }
+      return;
+    }
+    const it = e.target.closest('[data-bk]'); if (!it) return;
+    const b = findBank(it.dataset.bk); if (b) { bankToProg(b); flashBtn(it); }
+  });
+  $('#bankList').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const it = e.target.closest('[data-bk]'); if (!it) return;
+    e.preventDefault(); e.stopPropagation();
+    const b = findBank(it.dataset.bk); if (b) bankToProg(b);
+  });
+  // ---- Sudrab tashlash ----
+  $('#bankList').addEventListener('dragstart', (e) => {
+    const it = e.target.closest('[data-bk]'); if (!it) return;
+    e.dataTransfer.setData('text/sn-bank', it.dataset.bk); e.dataTransfer.setData('text/plain', it.dataset.bk);
+    e.dataTransfer.effectAllowed = 'copy';
+    document.body.classList.add('bank-dragging');
+  });
+  $('#bankList').addEventListener('dragend', () => { document.body.classList.remove('bank-dragging'); $$('.cue.drop-on').forEach((x) => x.classList.remove('drop-on')); $('#cueList').classList.remove('drop-new'); });
+  const isBankDrag = (e) => [...(e.dataTransfer?.types || [])].includes('text/sn-bank');
+  $('#cueList').addEventListener('dragover', (e) => {
+    if (!isBankDrag(e)) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+    const row = e.target.closest('[data-i]');
+    $$('.cue.drop-on').forEach((x) => { if (x !== row) x.classList.remove('drop-on'); });
+    if (row) { row.classList.add('drop-on'); $('#cueList').classList.remove('drop-new'); } else $('#cueList').classList.add('drop-new');
+  });
+  $('#cueList').addEventListener('dragleave', (e) => { if (!$('#cueList').contains(e.relatedTarget)) { $$('.cue.drop-on').forEach((x) => x.classList.remove('drop-on')); $('#cueList').classList.remove('drop-new'); } });
+  $('#cueList').addEventListener('drop', (e) => {
+    if (!isBankDrag(e)) return;
+    e.preventDefault();
+    const b = findBank(e.dataTransfer.getData('text/sn-bank'));
+    const row = e.target.closest('[data-i]');
+    $$('.cue.drop-on').forEach((x) => x.classList.remove('drop-on')); $('#cueList').classList.remove('drop-new'); document.body.classList.remove('bank-dragging');
+    if (!b) return;
+    if (row) bankToCue(b, +row.dataset.i); else bankNewCue(b);
+  });
+  // ---- Yangi bank saqlash ----
+  $('#bankSave').addEventListener('click', () => {
+    if (!guardAction()) return;
+    const n = $('#bankName').value.trim();
+    if (!n) { $('#bankName').focus(); toast('Bank nomini yozing'); return; }
+    let look = {};
+    if (Object.keys(prog.vals).length) look = JSON.parse(JSON.stringify(prog.vals));
+    else { const live = liveLook(); for (const f of show.fixtures) { const p = live[f.id]; if (p && (p.dim > 0 || p.raw)) look[f.id] = JSON.parse(JSON.stringify(p)); } }
+    if (!Object.keys(look).length) { toast('Saqlash uchun holat yoʻq: chiroqlarni yoqing yoki sahnani tanlang'); return; }
+    userBanks().unshift({ id: uid(), n: n.slice(0, 40), f: 'Mening banklarim', look });
+    $('#bankName').value = '';
+    bank.open['Mening banklarim'] = true;
+    save(); renderBanks();
+    toast(`„${n}“ banki saqlandi`);
+  });
+  $('#bankName').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#bankSave').click(); } e.stopPropagation(); });
+  $('#bankQ').addEventListener('keydown', (e) => e.stopPropagation());
+  try { if (localStorage.getItem(BANK_KEY) === '1') setTimeout(() => bankOpen(true), 0); } catch (_) {}
 
   /* ================= CHIROQ SOZLAMALARI (inspektor) =================
      Pultda chiroq bosilganda uning har bir kanali ko'rinadi va boshqariladi.

@@ -77,7 +77,7 @@ if (location.protocol === 'file:') {
       <div class="fx-split" id="fxSplit" role="separator" aria-orientation="vertical" aria-label="Chiroqlar maydoni enini oʻzgartirish" tabindex="0" title="Sudrab chiroqlar maydonini kattalashtiring yoki kichiklashtiring"><i></i></div>
       <section class="panel cue-panel">
         <div class="ph"><h2>CUE ROʻYXATI</h2><span class="ph-r"><span class="muted" id="cueInfo"></span><button class="btn sm on" id="autoBtn" type="button" aria-pressed="true">AVTO YOQIQ</button></span></div>
-        <div class="edit-bar" id="editBar"><button class="btn sm" id="autoSaveBtn" type="button" title="Sahna almashtirilganda unga qilingan oʻzgarishlar oʻsha sahnaga avtomatik yoziladi">✎ TAHRIR: AVTO-SAQLASH</button><span class="edit-st" id="editSt"></span></div>
+        <div class="edit-bar" id="editBar"><button class="btn sm" id="autoSaveBtn" type="button" title="Sahna almashtirilganda unga qilingan oʻzgarishlar oʻsha sahnaga avtomatik yoziladi">✎ TAHRIR: AVTO-SAQLASH</button><span class="edit-st" id="editSt"></span><button class="btn sm" id="undoBank" type="button" hidden>↶ QAYTARISH</button></div>
         <div class="cue-head"><span>№</span><span>NOMI</span><span>FADE (s)</span><span>AVTO (daq:son)</span><span>HOLAT</span></div>
         <div class="cue-list" id="cueList"></div>
         <div class="cue-opts">
@@ -99,6 +99,23 @@ if (location.protocol === 'file:') {
         </div>
         <div class="fade-bar" aria-hidden="true"><i id="fadeBar"></i></div>
         <div class="auto-bar" aria-hidden="true" title="Avtomatik oʻtishgacha"><i id="autoBar"></i></div>
+      </section>
+
+      <section class="panel bank-panel" id="bankPanel" aria-label="Banklar">
+        <button class="insp-tab bank-tab" id="bankTab" type="button" aria-expanded="false" aria-controls="bankBody" title="Banklarni ochish / yopish">
+          <span class="insp-chev" aria-hidden="true">‹</span><span class="insp-vt">BANKLAR</span><i class="insp-dot on" aria-hidden="true"></i>
+        </button>
+        <div class="bank-body" id="bankBody">
+          <div class="ph"><h2>BANKLAR</h2><span class="ph-r"><span class="muted" id="bankInfo"></span><button class="btn sm icon" id="bankClose" type="button" title="Yopish" aria-label="Banklarni yopish">»</button></span></div>
+          <input class="bank-q" id="bankQ" type="search" placeholder="Qidirish: nomi yoki papka…" aria-label="Banklarni qidirish">
+          <p class="bank-hint muted small">Bosing — chiroqlarga yuklanadi. <b>Sudrab</b> sahnaning ustiga tashlang — shu sahnaga qoʻshiladi; roʻyxatning boʻsh joyiga — yangi sahna.</p>
+          <div class="bank-list" id="bankList"></div>
+          <div class="bank-save">
+            <input id="bankName" maxlength="40" placeholder="Yangi bank nomi" aria-label="Yangi bank nomi">
+            <button class="btn go" id="bankSave" type="button">+ BANK</button>
+          </div>
+          <p class="muted small" id="bankSaveHint">Saqlanadi: programmerdagi oʻzgarishlar, ular boʻlmasa — sahnadagi hozirgi holat.</p>
+        </div>
       </section>
 
       <section class="panel insp-panel" id="insp" aria-label="Chiroq sozlamalari">
