@@ -2,7 +2,7 @@
 //  • Slayderlar (intensivlik, pan/tilt, faderlar, kanal slayderlari…): sichqoncha ustida turganda g'ildirak bilan.
 //  • Raqam maydonlari (fade, qiymat…): faqat bosib tanlangan (fokusdagi) bo'lsa — sahifani aylantirganda
 //    tasodifan o'zgarib ketmasligi uchun.
-//  • Pan/Tilt maydoni: g'ildirak — Tilt, Shift + g'ildirak — Pan.
+//  • Pan/Tilt maydoni: g'ildirak — Tilt, Shift + g'ildirak — Pan. Pan/Tilt slayderlari: bir chiq ≈ 3°.
 //  G'ildirak yuqoriga — oshadi, pastga — kamayadi. Shift — aniq (eng kichik qadam), Alt — tez (5 barobar).
 (() => {
   const STEP_PX = 60;          // trackpad uchun: shuncha piksel = 1 qadam
@@ -28,6 +28,7 @@
     const min = el.min === '' ? 0 : +el.min, max = el.max === '' ? 100 : +el.max;
     const base = el.step && el.step !== 'any' ? +el.step : 1;
     if (e.shiftKey) return base;                                   // aniq
+    if (el.dataset.wstep) return (+el.dataset.wstep || base) * (e.altKey ? 5 : 1); // pan/tilt: ~3° qadam
     const span = isFinite(max - min) ? max - min : 100;
     let st = Math.max(base, Math.round(span / 50 / base) * base);  // ~2% qadam
     if (span <= 20) st = base;                                     // kichik diapazonda — eng kichik qadam

@@ -107,7 +107,7 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .sw { width: 13px; height: 13px; border-radius: 50%; border: 1px solid #fff; flex-shrink: 0; }
 
 /* ---------- cue ro'yxati ---------- */
-.cue-head, .cue { display: grid; grid-template-columns: 48px minmax(0, 1fr) 70px 92px 104px; gap: 8px; align-items: center; }
+.cue-head, .cue { display: grid; grid-template-columns: 48px minmax(0, 1fr) 70px 92px 104px 44px; gap: 8px; align-items: center; }
 .cue-head { padding: 0 12px; font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--muted); }
 .cue-list { display: flex; flex-direction: column; gap: 6px; max-height: 470px; overflow-y: auto; padding-right: 2px; flex: 1; min-height: 120px; }
 .cue { border: 1px solid var(--line); border-radius: 10px; min-height: 46px; padding: 0 12px; background: #fff; cursor: pointer; font-size: 14px; }
@@ -235,7 +235,7 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
   .top-act { flex-basis: 100%; }
   .top-act .btn { flex: 1; }
   .title-pill input { width: 140px; }
-  .cue-head, .cue { grid-template-columns: 34px minmax(0, 1fr) 48px 62px 72px; gap: 5px; }
+  .cue-head, .cue { grid-template-columns: 34px minmax(0, 1fr) 48px 62px 72px 38px; gap: 5px; }
   .pc-info { grid-template-columns: 1fr 1fr; }
   .fader input[type=range] { height: 120px; }
 }
@@ -349,7 +349,7 @@ input[type=range] { width: 100%; accent-color: var(--on); height: 28px; margin: 
 .insp-panel { flex: 0 0 54px; padding: 0; overflow: hidden; position: relative; }
 .insp-panel.open { flex: 1.15 1 330px; padding: 14px; overflow: visible; }
 .row3.insp-open .cue-panel { flex: 1 1 280px; }
-.row3.insp-open .cue-head, .row3.insp-open .cue { grid-template-columns: 26px minmax(0, 1fr) 40px 54px 64px; gap: 4px; font-size: 13px; }
+.row3.insp-open .cue-head, .row3.insp-open .cue { grid-template-columns: 26px minmax(0, 1fr) 40px 54px 64px 34px; gap: 4px; font-size: 13px; }
 .row3.insp-open .cue-head { font-size: 9.5px; }
 .row3.insp-open .cue-opts .muted { display: none; }
 .row3.insp-open .cue input[type=number] { -moz-appearance: textfield; appearance: textfield; text-align: center; }
@@ -671,3 +671,11 @@ body.cue-dragging #bankPanel { outline: 2px dashed #6366f1; outline-offset: 3px;
 .ccard.on-link { border-color: var(--on); box-shadow: 0 0 0 2px var(--on-soft) inset; }
 .link-last { font-size: 13px; padding: 10px 12px; border-radius: 10px; background: var(--soft); }
 .link-last.hit { background: var(--on-soft); color: #14532d; font-weight: 600; }
+
+/* Har bir sahna qatorida GO (▶) — bir bosishda shu sahnaga o'tadi */
+.cue-go { position: relative; z-index: 1; justify-self: end; width: 36px; height: 30px; border-radius: 8px; border: 1.5px solid #0a0a0a; background: #0a0a0a; color: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.cue-go svg { width: 13px; height: 13px; }
+.cue-go:hover { background: #15803d; border-color: #15803d; }
+.cue-go:active { transform: scale(.94); }
+.cue.cur .cue-go { background: #15803d; border-color: #15803d; }
+.row3.insp-open .cue-go { width: 30px; height: 26px; }

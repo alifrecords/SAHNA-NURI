@@ -697,7 +697,8 @@
           <input data-name="${i}" value="${esc(q.name)}" aria-label="Cue nomi">
           <input data-fade="${i}" type="number" min="0" max="600" step="0.5" value="${q.fade}" aria-label="Fade soniya">
           <input class="auto" data-auto="${i}" inputmode="numeric" placeholder="qoʻlda" value="${q.auto ? fmtTime(q.auto) : ''}" aria-label="Avtomatik oʻtish vaqti (daqiqa:soniya)">
-          <span class="st" id="cst${i}">${st}</span></div>`;
+          <span class="st" id="cst${i}">${st}</span>
+          <button class="cue-go" data-go="${i}" type="button" title="GO — shu sahnaga darhol oʻtish (chiroqlar yonadi)" aria-label="GO: ${esc(q.name)}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg></button></div>`;
       }).join('');
     }
     const cur = show.cues[play.cur];
@@ -706,6 +707,8 @@
   }
   $('#cueList').addEventListener('click', (e) => {
     if (e.target.closest('input')) return;
+    const go = e.target.closest('[data-go]');
+    if (go) { cueMark.id = null; cueMark.stage = 0; goTo(+go.dataset.go); return; } // ▶ — 3 bosishsiz, darhol
     const row = e.target.closest('[data-i]'); if (!row) return;
     // 1-bosish: tanlash (keyingi bo'ladi) · 2-bosish: belgilash · 3-bosish: ijroga — chiroqlar yonadi.
     // 1–2-bosishda sahnadagi chiroqlar o'zgarmaydi (spektakl paytida tasodifan almashib ketmaydi).
@@ -1422,7 +1425,7 @@
           const v = chVal(f, ch, k, p), held = inProg(f.id, ch, k);
           return `<div class="ir ${held ? 'held' : ''}" data-k="${k}">
             <span class="ir-n"><i>${f.addr + k}</i>${esc(ch.n)}<em style="${ROLE_TINT[ch.r] ? `--t:${ROLE_TINT[ch.r]}` : ''}">${ROLE_CHIP[ch.r] || ch.r}</em></span>
-            <input type="range" min="0" max="255" value="${v}" data-ik="${k}" aria-label="${esc(ch.n)}" style="${ROLE_TINT[ch.r] ? `accent-color:${ROLE_TINT[ch.r]}` : ''}">
+            <input type="range" min="0" max="255" value="${v}" data-ik="${k}" ${ch.r === 'pan' || ch.r === 'tilt' ? `data-wstep="${Math.max(1, Math.round(3 * 255 / ((ch.r === 'pan' ? prof(f).panRange : prof(f).tiltRange) || (ch.r === 'pan' ? 540 : 270))))}"` : ''} aria-label="${esc(ch.n)}" style="${ROLE_TINT[ch.r] ? `accent-color:${ROLE_TINT[ch.r]}` : ''}">
             <input class="n" type="number" min="0" max="255" value="${v}" data-ikn="${k}" aria-label="${esc(ch.n)} qiymati">
             <span class="ir-t" data-it="${k}">${chText(f, ch, v)}</span>
             <button class="btn sm x" data-ir="${k}" type="button" title="Oʻz holiga qaytarish" ${held ? '' : 'disabled'}>↺</button>
