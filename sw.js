@@ -1,6 +1,6 @@
 // SAHNA NURI — oflayn ishlash: dastur fayllari keshda saqlanadi, internet uzilsa ham pult ochiladi.
-const CACHE = 'sahna-nuri-v41';
-const CORE = ['/', '/index.html', '/assets/app.css', '/assets/app.js', '/assets/gobos.js', '/assets/install.js', '/assets/wheel.js', '/assets/banks-andijan.json', '/assets/banks-andijan-2026.json', '/assets/i18n.js', '/assets/dmx.js', '/assets/license.js', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE = 'sahna-nuri-v42';
+const CORE = ['/', '/index.html', '/assets/app.css', '/assets/app.js', '/assets/gobos.js', '/assets/install.js', '/assets/wheel.js', '/assets/banks-andijan.json', '/assets/banks-andijan-2026.json', '/assets/stage-andijan.jpg', '/assets/i18n.js', '/assets/dmx.js', '/assets/license.js', '/manifest.webmanifest', '/icons/icon.svg', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(CORE)).then(() => self.skipWaiting()));

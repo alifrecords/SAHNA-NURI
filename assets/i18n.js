@@ -32,6 +32,8 @@ window.SNI18N = (() => {
     'Qaytaradigan joylashuv yoʻq': ['Нечего отменять', 'No layout to restore'],
     'Avvalgi joylashuv qaytarildi': ['Прежняя расстановка восстановлена', 'Previous layout restored'],
     'Boshqalar': ['Прочие', 'Other'],
+    '◉ ANDIJAN SAHNASI SURATI (TAYYOR)': ['◉ ФОТО СЦЕНЫ АНДИЖАНА (ГОТОВО)', '◉ ANDIJAN STAGE PHOTO (READY)'],
+    'Andijan sahnasi surati qoʻyildi — pol burchaklari moslangan. Kerak boʻlsa „4 BURCHAK“ bilan aniqlashtiring.': ['Фото сцены Андижана установлено — углы пола подогнаны. При необходимости уточните через «4 УГЛА».', 'Andijan stage photo set — floor corners matched. Refine with “4 CORNERS” if needed.'],
     'Bridge ishga tushirilmoqda…': ['Запуск Bridge…', 'Starting Bridge…'],
     'SAHNA NURI Bridge ishga tushirilmoqda… Brauzer „SahnaNuriBridge ochilsinmi?“ deb soʻrasa — Ochish (Открыть) ni bosing.': ['SAHNA NURI Bridge запускается… Если браузер спросит «Открыть SahnaNuriBridge?» — нажмите «Открыть».', 'Starting SAHNA NURI Bridge… If the browser asks “Open SahnaNuriBridge?”, click Open.'],
     'SAHNA NURI Bridge ishga tushmadi. Uni bir marta yuklab olib oching (YUKLAB OLISH .exe) — keyin BRIDGE ULASH oʻzi yoqadi.': ['SAHNA NURI Bridge не запустился. Скачайте и откройте его один раз (YUKLAB OLISH .exe) — дальше BRIDGE ULASH будет запускать его сам.', 'SAHNA NURI Bridge did not start. Download and open it once (YUKLAB OLISH .exe) — after that BRIDGE ULASH starts it by itself.'],

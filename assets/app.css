@@ -679,3 +679,5 @@ body.cue-dragging #bankPanel { outline: 2px dashed #6366f1; outline-offset: 3px;
 .cue-go:active { transform: scale(.94); }
 .cue.cur .cue-go { background: #15803d; border-color: #15803d; }
 .row3.insp-open .cue-go { width: 30px; height: 26px; }
+
+.btn.fs-and { margin-top: 6px; background: #15803d; border-color: #15803d; color: #fff; font-size: 11px; }

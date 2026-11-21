@@ -118,6 +118,8 @@
     return ANDIJAN_PATCH.map(([name, prof, addr]) => ({ id: uid(), name, prof, addr }));
   }
 
+  // Andijan teatri sahnasi: surat 1600×901; pol burchaklari — orqa (dekoratsiya asosi) chap/o'ng, old chet o'ng/chap
+  const ANDIJAN_STAGE = { src: '/assets/stage-andijan.jpg', w: 1600, h: 901, corners: [[205, 724], [1447, 724], [1584, 795], [62, 798]] };
   function newStage() { return { w: 12, d: 7, h: 6, img: null, corners: null, pos: {}, cal: {}, points: [], view: 'plan', tz: 0, front: { img: null, corners: null, fpos: {}, grid: true, op: 100 } }; }
   function newShow() {
     const profiles = DEFAULT_PROFILES();
@@ -1894,6 +1896,8 @@
     const s = show.stage;
     if (!s.front) s.front = { img: null, corners: null, fpos: {}, grid: true, op: 100 };
     if (!s.front.fpos) s.front.fpos = {};
+    // Andijan sahnasining haqiqiy surati (zaldan, operator joyidan) — surat hali yo'q bo'lsa bir marta qo'yiladi
+    if (!s.front.img && !s.front.auto) { s.front.img = ANDIJAN_STAGE.src; s.front.corners = ANDIJAN_STAGE.corners.map((q) => [...q]); s.front.fpos = {}; s.front.auto = 1; }
     if (!s.view) s.view = 'plan';
     return s;
   };
@@ -2279,6 +2283,7 @@
     $('#stageTitle').textContent = FRONT() ? (s.front.img ? 'SAHNA · ROʻPARADAN · SURAT' : 'SAHNA · ROʻPARADAN · NAMUNA (surat yuklang)') : s.img ? 'SAHNA · YUKLANGAN RASM' : `SAHNA PLANI · YUQORIDAN · ${s.w} × ${s.d} m`;
     $('#stClear').disabled = !curImg();
     $('#stUpload').textContent = FRONT() ? 'SAHNA SURATINI YUKLASH' : 'RASM YUKLASH';
+    $('#stAndijan').hidden = !FRONT();
     const ids = [...sel], f = ids.length === 1 ? show.fixtures.find((x) => x.id === ids[0]) : null;
     const p = f && s.pos[f.id];
     $('#stSelTitle').textContent = f ? 'TANLANGAN: ' + f.name.toUpperCase() : ids.length ? `TANLANGAN: ${ids.length} TA CHIROQ` : 'TANLANGAN CHIROQ';
@@ -2440,6 +2445,11 @@
     const b = e.target.closest('[data-tz]'); if (!b) return;
     ST().tz = +b.dataset.tz; save(); renderStageSide();
     if (stageTarget) aimAt(stageTarget.x, stageTarget.y);
+  });
+  $('#stAndijan').addEventListener('click', () => {
+    const s = ST(); s.view = 'front'; s.front.img = ANDIJAN_STAGE.src; s.front.corners = ANDIJAN_STAGE.corners.map((q) => [...q]); s.front.fpos = {}; s.front.auto = 1;
+    imgNat = null; stageMode = 'aim'; save(true); renderStageAll();
+    toast('Andijan sahnasi surati qoʻyildi — pol burchaklari moslangan. Kerak boʻlsa „4 BURCHAK“ bilan aniqlashtiring.');
   });
   $('#stUpload').addEventListener('click', () => $('#stFile').click());
   $('#stFile').addEventListener('change', async (e) => {
