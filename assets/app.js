@@ -2066,15 +2066,13 @@
     return { ...sols[0], az, el };
   }
   // Kalibrlash: nuqtalar bo'yicha ofset va yo'nalishni topish
-  function fitCal(f) {
-    const pts = (ST().cal[f.id] && ST().cal[f.id].pts) || [];
-    const pr = prof(f), PR = pr.panRange || 540, TR = pr.tiltRange || 270, kp = 255 / PR, kt = 255 / TR;
-    const base = { pts };
-    if (!pts.length) { ST().cal[f.id] = base; return; }
+  // Kalibrlash yadrosi: berilgan chiroq joyi (pos) uchun ofset/yo'nalishni topadi, xatoni qaytaradi
+  function fitCore(pts, pos, PR, TR) {
+    const kp = 255 / PR, kt = 255 / TR, H = (q) => { const dx = q.x - pos.x, dy = q.y - pos.y, h = Math.max(0.3, pos.z); return { az: Math.atan2(dx, dy) * 180 / Math.PI, el: Math.atan2(Math.hypot(dx, dy), h) * 180 / Math.PI }; };
+    const ang = pts.map(H);
     let best = null;
     const signs = pts.length >= 2 ? [[1, 1], [1, -1], [-1, 1], [-1, -1]] : [[1, 1]];
     for (const [sp, st] of signs) for (const alt0 of [0, 1]) {
-      const ang = pts.map((p) => angles(f, p.x, p.y));
       const a0 = alt0 ? [ang[0].az + 180, -ang[0].el] : [ang[0].az, ang[0].el];
       let po = pts[0].pan - sp * a0[0] * kp, to = pts[0].tilt - st * a0[1] * kt, err = 0;
       for (let it = 0; it < 4; it++) {
@@ -2093,7 +2091,38 @@
       }
       if (!best || err < best.err) best = { sp, st, po, to, err };
     }
-    ST().cal[f.id] = { ...base, ...best, err: Math.sqrt(best.err / pts.length) };
+    return best;
+  }
+  // Kalibrlash: 1–2 nuqta — ofset va yo'nalish; 3+ nuqta — chiroqning haqiqiy JOYI (X, Y, balandlik) ham topiladi.
+  // Shundan keyin suratda bosilgan nuqtaga haqiqiy sahnada ham aynan o'sha joyga boradi.
+  function fitCal(f) {
+    const S = ST(), pts = (S.cal[f.id] && S.cal[f.id].pts) || [];
+    const pr = prof(f), PR = pr.panRange || 540, TR = pr.tiltRange || 270;
+    const base = { pts };
+    if (!pts.length) { S.cal[f.id] = base; return; }
+    const pos = S.pos[f.id] || { x: S.w / 2, y: 0, z: S.h };
+    let P = { x: pos.x, y: pos.y, z: pos.z || S.h }, best = fitCore(pts, P, PR, TR), moved = false;
+    if (pts.length >= 3) {
+      // qo'pol qidiruv: sahna atrofida joy va balandlik, keyin aniqlashtirish
+      const xs = [], ys = [], zs = [];
+      for (let x = -2; x <= S.w + 2 + 1e-6; x += 0.5) xs.push(x);
+      for (let y = -3; y <= S.d + 4 + 1e-6; y += 0.5) ys.push(y);
+      for (let z = 2.5; z <= 10 + 1e-6; z += 0.5) zs.push(z);
+      let B = { ...P, r: best };
+      for (const x of xs) for (const y of ys) for (const z of zs) { const r = fitCore(pts, { x, y, z }, PR, TR); if (r.err < B.r.err) B = { x, y, z, r }; }
+      for (let stp = 0.25; stp >= 0.02; stp /= 2) {
+        let imp = true;
+        while (imp) {
+          imp = false;
+          for (const [dx, dy, dz] of [[stp, 0, 0], [-stp, 0, 0], [0, stp, 0], [0, -stp, 0], [0, 0, stp], [0, 0, -stp]]) {
+            const q = { x: B.x + dx, y: B.y + dy, z: Math.max(1, B.z + dz) }, r = fitCore(pts, q, PR, TR);
+            if (r.err < B.r.err - 1e-9) { B = { ...q, r }; imp = true; }
+          }
+        }
+      }
+      if (B.r.err < best.err * 0.8) { P = { x: +B.x.toFixed(2), y: +B.y.toFixed(2), z: +B.z.toFixed(2) }; best = B.r; S.pos[f.id] = P; moved = true; }
+    }
+    S.cal[f.id] = { ...base, ...best, err: Math.sqrt(best.err / pts.length), solved: moved ? P : null };
   }
 
   // ---- Chizish ----
@@ -2423,8 +2452,10 @@
       const c = ST().cal[f.id] = ST().cal[f.id] || { pts: [] };
       c.pts = c.pts || [];
       c.pts.push({ x: +X.toFixed(2), y: +Y.toFixed(2), pan: +live.pan.toFixed(2), tilt: +live.tilt.toFixed(2) });
-      fitCal(f); save(); renderStageSvg(); renderStageSide();
-      toast(`${f.name}: ${c.pts.length}-nuqta saqlandi`);
+      fitCal(f); save(); renderStageSvg(); renderStageFx(); renderStageSide();
+      const cc = ST().cal[f.id], sv = cc.solved;
+      toast(c.pts.length < 3 ? `${f.name}: ${c.pts.length}-nuqta saqlandi — yana ${3 - c.pts.length} ta nuqta bersangiz, chiroqning haqiqiy joyi ham topiladi`
+        : sv ? `${f.name}: joyi aniqlandi — X ${sv.x} m, Y ${sv.y} m, balandlik ${sv.z} m · xato ±${cc.err.toFixed(1)} DMX` : `${f.name}: ${c.pts.length}-nuqta saqlandi · xato ±${cc.err.toFixed(1)} DMX`);
       return;
     }
     if (stageMode === 'place') return;
