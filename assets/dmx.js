@@ -151,10 +151,23 @@ window.SNDmx = (() => {
     if (!wantBridge) return;
     bridgeTimer = setTimeout(async () => { if (!driver && wantBridge) { const ok = await attach(bridgeDriver(true), true); if (!ok) scheduleBridgeRetry(); } }, 3000);
   }
+  // Bridge Windows bilan o'zi yonmaydi (v1.2): tugma bosilganda ishlamayotgan bo'lsa — sahnanuri:// orqali ishga tushiramiz
+  function launchBridge() {
+    try {
+      const f = document.createElement('iframe'); f.style.display = 'none'; f.src = 'sahnanuri://start';
+      document.body.appendChild(f); setTimeout(() => f.remove(), 3000);
+    } catch (_) {}
+  }
   async function connectBridge(silent) {
     wantBridge = true;
     if (!silent) setPref('bridge');
-    const ok = await attach(bridgeDriver(silent), silent);
+    let ok = await attach(bridgeDriver(true), true);
+    if (!ok && !silent) {
+      setStatus({ kind: 'none', label: 'Bridge ishga tushirilmoqda…', ok: false, error: 'SAHNA NURI Bridge ishga tushirilmoqda… Brauzer „SahnaNuriBridge ochilsinmi?“ deb soʻrasa — Ochish (Открыть) ni bosing.' });
+      launchBridge();
+      for (let i = 0; i < 15 && !ok; i++) { await new Promise((r) => setTimeout(r, 1000)); if (driver) { ok = true; break; } ok = await attach(bridgeDriver(true), true); }
+      if (!ok) setStatus({ kind: 'none', label: 'Ulanmagan', ok: false, error: 'SAHNA NURI Bridge ishga tushmadi. Uni bir marta yuklab olib oching (YUKLAB OLISH .exe) — keyin BRIDGE ULASH oʻzi yoqadi.' });
+    }
     if (!ok && silent) scheduleBridgeRetry();
     return ok;
   }

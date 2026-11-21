@@ -2,7 +2,8 @@
 # Kompyuterdagi uDMX kabelni SAHNA NURI pultiga ulaydi.
 #  • Drayver almashtirish shart emas: FreeStyler o'rnatgan libusbK / libusb0 drayveri bilan ishlaydi
 #    (WinUSB bo'lsa ham ishlaydi).
-#  • Windows bilan birga o'zi ishga tushadi, kabel chiqib qolsa o'zi qayta ulanadi.
+#  • v1.2: Windows bilan birga O'ZI YONMAYDI — pultdagi "BRIDGE ULASH" bosilganda ishga tushadi
+#    (sahnanuri:// havolasi orqali). Kabel chiqib qolsa o'zi qayta ulanadi.
 #  • Qayta ulanganda va kompyuter qayta yonganda chiroqlarni oxirgi holatiga qaytaradi.
 #  • Pult bilan aloqa: ws://127.0.0.1:47800 (faqat sahna-nuri.pages.dev dan).
 #  • Holat sahifasi: http://127.0.0.1:47800
@@ -20,7 +21,7 @@ from http import HTTPStatus
 
 import websockets
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 PORT = 47800
 VID, PID = 0x16C0, 0x05DC
 ALLOWED_ORIGINS = [
@@ -396,6 +397,31 @@ def remove_autostart():
         pass
 
 
+PROTO = "sahnanuri"
+
+
+def register_protocol(path):
+    """sahnanuri:// havolasi — pultdagi tugma Bridge'ni ishga tushira olishi uchun (faqat shu foydalanuvchi)."""
+    import winreg
+    try:
+        base = rf"Software\Classes\{PROTO}"
+        with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, base, 0, winreg.KEY_SET_VALUE) as k:
+            winreg.SetValueEx(k, "", 0, winreg.REG_SZ, "URL:SAHNA NURI Bridge")
+            winreg.SetValueEx(k, "URL Protocol", 0, winreg.REG_SZ, "")
+        with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, base + r"\DefaultIcon", 0, winreg.KEY_SET_VALUE) as k:
+            winreg.SetValueEx(k, "", 0, winreg.REG_SZ, f'"{path}",0')
+        with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, base + r"\shell\open\command", 0, winreg.KEY_SET_VALUE) as k:
+            winreg.SetValueEx(k, "", 0, winreg.REG_SZ, f'"{path}" "%1"')
+    except OSError as e:
+        log(f"sahnanuri:// ni ro'yxatdan o'tkazib bo'lmadi: {e}")
+
+
+def setup_launch(path):
+    """Avtomatik ishga tushish o'chiriladi (foydalanuvchi so'rovi), o'rniga pultdan ishga tushirish."""
+    remove_autostart()
+    register_protocol(path)
+
+
 def port_busy():
     """Boshqa nusxa ishlayaptimi: portga ulanib ko'ramiz."""
     import socket
@@ -414,7 +440,7 @@ def ensure_installed():
     target_dir = install_dir()
     target = os.path.join(target_dir, APP_NAME + ".exe")
     if os.path.normcase(exe) == os.path.normcase(target):
-        set_autostart(target)
+        setup_launch(target)
         return False
     os.makedirs(target_dir, exist_ok=True)
     # Eski nusxa ishlayotgan bo'lsa — yopamiz (yangilash uchun fayl band bo'lmasin)
@@ -428,9 +454,9 @@ def ensure_installed():
         shutil.copy2(exe, target)
     except OSError as e:
         log(f"Ko'chirib bo'lmadi ({e}) — joyida ishlaydi")
-        set_autostart(exe)
+        setup_launch(exe)
         return False
-    set_autostart(target)
+    setup_launch(target)
     subprocess.Popen([target, "--first-run"], close_fds=True, creationflags=0x00000008 | 0x00000200)
     return True
 
@@ -446,7 +472,10 @@ def main():
         return
     if ensure_installed():
         return
+    from_pult = any(a.lower().startswith(PROTO + ":") for a in args)
     if port_busy():
+        if from_pult:
+            return  # pult tugmasi qayta bosildi — Bridge allaqachon ishlayapti
         message_box("SAHNA NURI Bridge allaqachon ishlayapti.\nHolatini ko'rish: http://127.0.0.1:47800")
         time.sleep(3)
         return
@@ -454,8 +483,9 @@ def main():
     threading.Thread(target=OUT.run, daemon=True).start()
     if "--first-run" in args:
         message_box("SAHNA NURI Bridge o'rnatildi va ishga tushdi.\n\n"
-                    "• Endi u har safar Windows bilan birga o'zi yonadi.\n"
-                    "• Pultda: Ulanish → BRIDGE ULASH.\n"
+                    "• Windows bilan birga o'zi YONMAYDI — kompyuter qayta yonganda kabel bo'sh turadi.\n"
+                    "• Kerak bo'lganda pultda: Ulanish → BRIDGE ULASH — Bridge o'zi ishga tushadi\n"
+                    "  (brauzer \"SahnaNuriBridge ochilsinmi?\" deb so'rasa — Ochish / Открыть).\n"
                     "• Holat: http://127.0.0.1:47800\n\n"
                     "FreeStyler'ni yopib qo'ying — kabelni bir vaqtda bitta dastur ishlatadi.")
     try:

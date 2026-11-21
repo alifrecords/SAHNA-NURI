@@ -53,7 +53,7 @@ Kompyuterga bir marta oʻrnatiladigan kichik dastur — Zadig va drayver almasht
 
 1. Pult → **Ulanish** → **YUKLAB OLISH (.exe)** (yoki [SahnaNuriBridge.exe](https://github.com/alifrecords/SAHNA-NURI/releases/latest/download/SahnaNuriBridge.exe)).
 2. Faylni ishga tushiring. Windows „Неизвестный издатель“ desa: **Подробнее → Выполнить в любом случае**.
-3. „Oʻrnatildi va ishga tushdi“ xabari chiqadi — endi u har safar Windows bilan birga yonadi.
+3. „Oʻrnatildi va ishga tushdi“ xabari chiqadi. Windows bilan oʻzi yonmaydi — keyingi safar pultda **BRIDGE ULASH** bosilganda oʻzi ishga tushadi (brauzer soʻrasa — „Ochish“).
 4. Pult sahifasi ochilganda Bridge’ga **oʻzi ulanadi** (yoki Ulanish → **BRIDGE ULASH**).
 
 | Holat | Bridge nima qiladi |
