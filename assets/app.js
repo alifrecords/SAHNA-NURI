@@ -2726,7 +2726,10 @@
   function linkFind(ref) {
     const r = String(ref || '').trim(); if (!r) return -1;
     let i = show.cues.findIndex((q) => String(q.num) === r);
-    if (i < 0) { const l = r.toLowerCase(); i = show.cues.findIndex((q) => String(q.name || '').trim().toLowerCase() === l); }
+    const norm = (x) => String(x || '').toLowerCase().replace(/[\s'ʻʼ‘’`"«»„“”.\-_]+/g, '');
+    if (i < 0) { const l = norm(r); i = show.cues.findIndex((q) => norm(q.name) === l); }
+    // "Sahna 1", "Cue 3", "Q2", "#4" — nomi o'zgartirilgan bo'lsa ham oxiridagi raqam bo'yicha topamiz
+    if (i < 0) { const m = r.match(/(\d+(?:[.,]\d+)?)\s*$/); if (m) { const n = m[1].replace(',', '.'); i = show.cues.findIndex((q) => String(q.num) === n || Number(q.num) === Number(n)); } }
     return i;
   }
   let linkFlashT = 0;
