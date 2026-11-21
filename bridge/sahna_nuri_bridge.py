@@ -6,6 +6,8 @@
 #  • Qayta ulanganda va kompyuter qayta yonganda chiroqlarni oxirgi holatiga qaytaradi.
 #  • Pult bilan aloqa: ws://127.0.0.1:47800 (faqat sahna-nuri.pages.dev dan).
 #  • Holat sahifasi: http://127.0.0.1:47800
+#  • v1.1: pult yopilsa yoki FreeStyler ochilsa — uDMX'ni bo'shatadi (ikki dastur bir kabelga
+#    yozib, chiroqlar "o'ynab" qolmasin). Pult qayta ochilsa — o'zi qayta egallaydi.
 import asyncio
 import json
 import os
@@ -18,7 +20,7 @@ from http import HTTPStatus
 
 import websockets
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 PORT = 47800
 VID, PID = 0x16C0, 0x05DC
 ALLOWED_ORIGINS = [
@@ -128,6 +130,21 @@ def find_udmx():
     return None, "; ".join(errors) or "uDMX topilmadi"
 
 
+RELEASE_AFTER = 3.0   # pult yopilgandan keyin necha soniyada kabel bo'shatiladi (sahifa yangilanishiga vaqt)
+
+
+def freestyler_running():
+    """FreeStyler ochiqmi (Windows jarayonlari ro'yxatidan)."""
+    if not IS_WIN:
+        return False
+    try:
+        out = subprocess.run(["tasklist", "/FO", "CSV", "/NH"], capture_output=True, text=True,
+                             timeout=4, creationflags=0x08000000).stdout.lower()
+        return "freestyler" in out
+    except Exception:  # noqa: BLE001
+        return False
+
+
 class Output:
     """512 kanalni uDMX ga yuborib turadi, uzilsa qayta ulanadi."""
 
@@ -143,6 +160,12 @@ class Output:
         self.saved_at = 0
         self.changed_since_save = False
         self.frames = 0
+        self.hold = ""            # bo'sh bo'lmasa — kabel bo'shatilgan, sababi shu
+        self.boot_frame = True    # yonganda oxirgi holatni bir marta yuboradi
+        self.t0 = time.monotonic()
+        self.last_client = 0.0
+        self.fs_checked = 0.0
+        self.fs_open = False
         self._load_state()
 
     def _load_state(self):
@@ -175,13 +198,53 @@ class Output:
 
     def status(self):
         return {"type": "status", "ok": self.dev is not None, "device": "uDMX" if self.dev is not None else "",
-                "backend": self.backend, "error": self.error, "version": VERSION}
+                "backend": self.backend, "error": self.error, "version": VERSION, "hold": self.hold}
+
+    def _release(self, reason):
+        if self.dev is not None:
+            try:
+                import usb.util
+                usb.util.dispose_resources(self.dev)
+            except Exception:  # noqa: BLE001
+                pass
+            self.dev = None
+            log("uDMX bo'shatildi: " + reason)
+        if self.hold != reason:
+            self.hold = reason
+            self.on_status()
+
+    def _want(self, now):
+        """Kabelni egallash kerakmi? Bo'sh satr — ha; aks holda bo'shatish sababi."""
+        if now - self.fs_checked > 2.0:
+            self.fs_checked = now
+            self.fs_open = freestyler_running()
+        if self.fs_open:
+            return "FreeStyler ochiq — kabel unga berildi"
+        if CLIENTS:
+            self.last_client = now
+            return ""
+        if self.boot_frame:
+            return ""
+        if now - self.last_client < RELEASE_AFTER:
+            return ""
+        return "Pult yopiq — kabel boshqa dasturlar uchun boʻsh"
+
 
     def run(self):
         last_send = 0.0
         next_try = 0.0
         while self.running:
             now = time.monotonic()
+            why = self._want(now)
+            if why:
+                self._release(why)
+                time.sleep(0.25)
+                continue
+            if self.hold:
+                self.hold = ""
+                self.dirty = True
+                log("Pult ochildi — uDMX qayta egallanmoqda")
+                self.on_status()
             if self.dev is None:
                 if now >= next_try:
                     dev, info = find_udmx()
@@ -196,6 +259,8 @@ class Output:
                             log("uDMX kutilmoqda: " + info)
                             self.on_status()
                         next_try = now + 1.0
+                        if self.boot_frame and now - self.t0 > 10.0 and not CLIENTS:
+                            self.boot_frame = False
                 time.sleep(0.05)
                 continue
             if self.dirty or now - last_send >= 1.0:
@@ -207,6 +272,9 @@ class Output:
                     self.dev.ctrl_transfer(0x40, 2, 512, 0, buf, timeout=1000)
                     last_send = now
                     self.frames += 1
+                    if self.boot_frame:
+                        self.boot_frame = False
+                        self.last_client = now
                 except Exception as e:  # noqa: BLE001
                     log(f"uDMX bilan aloqa uzildi: {e}")
                     try:
@@ -261,8 +329,8 @@ def process_request(path, headers):
     st = OUT.status()
     body = STATUS_HTML % {
         "version": VERSION, "cls": "ok" if st["ok"] else "no",
-        "state": "● uDMX ulangan" if st["ok"] else "○ uDMX topilmadi",
-        "detail": ("Drayver: " + st["backend"]) if st["ok"] else ("Kabelni tekshiring. " + (st["error"] or "")),
+        "state": "● uDMX ulangan" if st["ok"] else ("◐ Kutmoqda" if st["hold"] else "○ uDMX topilmadi"),
+        "detail": ("Drayver: " + st["backend"]) if st["ok"] else (st["hold"] or ("Kabelni tekshiring. " + (st["error"] or ""))),
         "clients": len(CLIENTS), "frames": OUT.frames,
     }
     return HTTPStatus.OK, [("Content-Type", "text/html; charset=utf-8")], body.encode("utf-8")
@@ -287,7 +355,8 @@ async def handler(ws, path=None):
         pass
     finally:
         CLIENTS.discard(ws)
-        log("Pult uzildi — chiroqlar oxirgi holatda qoladi")
+        OUT.last_client = time.monotonic()
+        log("Pult uzildi — chiroqlar oxirgi holatda qoladi, %ds dan keyin kabel boʻshatiladi" % RELEASE_AFTER)
 
 
 async def serve():
@@ -348,6 +417,13 @@ def ensure_installed():
         set_autostart(target)
         return False
     os.makedirs(target_dir, exist_ok=True)
+    # Eski nusxa ishlayotgan bo'lsa — yopamiz (yangilash uchun fayl band bo'lmasin)
+    try:
+        subprocess.run(["taskkill", "/F", "/IM", APP_NAME + ".exe", "/FI", f"PID ne {os.getpid()}"],
+                       capture_output=True, timeout=8, creationflags=0x08000000)
+        time.sleep(1.0)
+    except Exception:  # noqa: BLE001
+        pass
     try:
         shutil.copy2(exe, target)
     except OSError as e:

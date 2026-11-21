@@ -32,6 +32,7 @@ window.SNI18N = (() => {
     'Qaytaradigan joylashuv yoʻq': ['Нечего отменять', 'No layout to restore'],
     'Avvalgi joylashuv qaytarildi': ['Прежняя расстановка восстановлена', 'Previous layout restored'],
     'Boshqalar': ['Прочие', 'Other'],
+    'FreeStyler ochiq — kabel unga berilgan. FreeStyler’ni yopsangiz, pult oʻzi davom etadi.': ['FreeStyler открыт — кабель отдан ему. Закройте FreeStyler, и пульт продолжит сам.', 'FreeStyler is open — the cable is handed to it. Close FreeStyler and the console resumes by itself.'],
     'Ochiq': ['Открыто', 'Open'],
     'Nuqta': ['Точка', 'Dot'],
     'Halqa': ['Кольцо', 'Ring'],

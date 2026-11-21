@@ -125,7 +125,7 @@ window.SNDmx = (() => {
             dev = m;
             if (driver === d) {
               d.label = m.ok ? 'SAHNA NURI Bridge · uDMX' : 'SAHNA NURI Bridge';
-              setStatus({ kind: 'bridge', label: d.label, ok: !!m.ok, error: m.ok ? '' : 'Bridge ishlayapti, lekin uDMX kabel topilmadi. Kabelni tekshiring — ulanishi bilan oʻzi davom etadi.' });
+              setStatus({ kind: 'bridge', label: d.label, ok: !!m.ok, error: m.ok ? '' : m.hold ? 'FreeStyler ochiq — kabel unga berilgan. FreeStyler’ni yopsangiz, pult oʻzi davom etadi.' : 'Bridge ishlayapti, lekin uDMX kabel topilmadi. Kabelni tekshiring — ulanishi bilan oʻzi davom etadi.' });
               dirty = true;
             }
           };
